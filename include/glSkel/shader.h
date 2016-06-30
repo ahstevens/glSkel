@@ -59,8 +59,6 @@ public:
         const GLchar * fShaderCode = fragmentCode.c_str();
         // 2. Compile shaders
         GLuint vertex, fragment;
-        GLint success;
-        GLchar infoLog[512];
         // Vertex Shader
         vertex = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex, 1, &vShaderCode, NULL);
