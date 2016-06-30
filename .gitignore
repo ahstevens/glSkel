@@ -40,6 +40,7 @@ $RECYCLE.BIN/
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
+[Bb]uild/
 x86/
 bld/
 [Bb]in/
@@ -300,7 +301,6 @@ paket-files/
 # Compiled Static libraries
 *.lai
 *.la
-*.a
 
 # Executables
 *.exe
