@@ -102,23 +102,23 @@ private:
 	{
 		GLint success;
 		GLchar infoLog[1024];
-		if(type != "PROGRAM")
+		if(type == "PROGRAM")
 		{
-			glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-			if(!success)
-			{
-				glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-                std::cout << "| ERROR::::SHADER-COMPILATION-ERROR of type: " << type << "|\n" << infoLog << "\n| -- --------------------------------------------------- -- |" << std::endl;
-			}
+            glGetProgramiv(shader, GL_LINK_STATUS, &success);
+            if(!success)
+            {
+                glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+                std::cout << "| ERROR::::PROGRAM-LINKING-ERROR of type: " << type << "|\n" << infoLog << "\n| -- --------------------------------------------------- -- |" << std::endl;
+            }
 		}
 		else
 		{
-			glGetProgramiv(shader, GL_LINK_STATUS, &success);
-			if(!success)
-			{
-				glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-                std::cout << "| ERROR::::PROGRAM-LINKING-ERROR of type: " << type << "|\n" << infoLog << "\n| -- --------------------------------------------------- -- |" << std::endl;
-			}
+            glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+            if(!success)
+            {
+                glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+                std::cout << "| ERROR::::SHADER-COMPILATION-ERROR of type: " << type << "|\n" << infoLog << "\n| -- --------------------------------------------------- -- |" << std::endl;
+            }
 		}
 	}
 };
