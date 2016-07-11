@@ -10,10 +10,12 @@
 // glSkeleton headers
 #include <glSkel/shader.h>
 #include <glSkel/camera.h>
+#include <glSkel/mesh.h>
 
 // Standard Headers
 #include <cstdio>
 #include <cstdlib>
+#include <algorithm>
 
 // Define Some Constants
 const int mWidth = 1280;
@@ -83,10 +85,196 @@ int main(int argc, char * argv[]) {
 	Shader lampShader("shaders/lamp.vs", "shaders/lamp.frag");
 
 
+	vector<Vertex> vertices;
+	vector<GLuint> indices;
+	Vertex tempVert;
+	vector<GLuint> tempInds = { 0, 1, 2, 2, 3, 0 };
 
+	// Face 1
+	tempVert.Normal = glm::vec3(0.0f, 0.0f, -1.0f);
+
+	tempVert.Position = glm::vec3(-0.5f, -0.5f, -0.5f);
+	tempVert.TexCoords = glm::vec2(0.0f, 0.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(0.5f, -0.5f, -0.5f);
+	tempVert.TexCoords = glm::vec2(1.0f, 0.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(0.5f, 0.5f, -0.5f);
+	tempVert.TexCoords = glm::vec2(1.0f, 1.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(-0.5f, 0.5f, -0.5f);
+	tempVert.TexCoords = glm::vec2(0.0f, 1.0f);
+	vertices.push_back(tempVert);
+		
+	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
+
+	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(),
+		[](GLuint n) { return n + 4; });
+
+	// Face 2
+	tempVert.Normal = glm::vec3(0.0f, 0.0f, 1.0f);
+
+	tempVert.Position = glm::vec3(-0.5f, -0.5f, 0.5f);
+	tempVert.TexCoords = glm::vec2(0.0f, 0.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(0.5f, -0.5f, 0.5f);
+	tempVert.TexCoords = glm::vec2(1.0f, 0.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(0.5f, 0.5f, 0.5f);
+	tempVert.TexCoords = glm::vec2(1.0f, 1.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(-0.5f, 0.5f, 0.5f);
+	tempVert.TexCoords = glm::vec2(0.0f, 1.0f);
+	vertices.push_back(tempVert);
+
+	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
+
+	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(),
+		[](GLuint n) { return n + 4; });
+
+	// Face 3
+	tempVert.Normal = glm::vec3(-1.0f, 0.0f, 0.0f);
+
+	tempVert.Position = glm::vec3(-0.5f, 0.5f, 0.5f);
+	tempVert.TexCoords = glm::vec2(1.0f, 0.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(-0.5f, 0.5f, -0.5f);
+	tempVert.TexCoords = glm::vec2(1.0f, 1.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(-0.5f, -0.5f, -0.5f);
+	tempVert.TexCoords = glm::vec2(0.0f, 1.0);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(-0.5f, -0.5f, 0.5f);
+	tempVert.TexCoords = glm::vec2(0.0f, 0.0f);
+	vertices.push_back(tempVert);
+
+	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
+
+	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(),
+		[](GLuint n) { return n + 4; });
+
+	// Face 4
+	tempVert.Normal = glm::vec3(1.0f, 0.0f, 0.0f);
+
+	tempVert.Position = glm::vec3(0.5f, 0.5f, 0.5f);
+	tempVert.TexCoords = glm::vec2(1.0f, 0.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(0.5f, 0.5f, -0.5f);
+	tempVert.TexCoords = glm::vec2(1.0f, 1.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(0.5f, -0.5f, -0.5f);
+	tempVert.TexCoords = glm::vec2(0.0f, 1.0);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(0.5f, -0.5f, 0.5f);
+	tempVert.TexCoords = glm::vec2(0.0f, 0.0f);
+	vertices.push_back(tempVert);
+
+	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
+
+	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(),
+		[](GLuint n) { return n + 4; });
+
+	// Face 5
+	tempVert.Normal = glm::vec3(0.0f, -1.0f, 0.0f);
+
+	tempVert.Position = glm::vec3(-0.5f, -0.5f, -0.5f);
+	tempVert.TexCoords = glm::vec2(0.0f, 1.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(0.5f, -0.5f, -0.5f);
+	tempVert.TexCoords = glm::vec2(1.0f, 1.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(0.5f, -0.5f, 0.5f);
+	tempVert.TexCoords = glm::vec2(1.0f, 0.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(-0.5f, -0.5f, 0.5f);
+	tempVert.TexCoords = glm::vec2(0.0f, 0.0f);
+	vertices.push_back(tempVert);
+
+	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
+
+	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(),
+		[](GLuint n) { return n + 4; });
+
+	// Face 6
+	tempVert.Normal = glm::vec3(0.0f, 1.0f, 0.0f);
+
+	tempVert.Position = glm::vec3(-0.5f, 0.5f, -0.5f);
+	tempVert.TexCoords = glm::vec2(0.0f, 1.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(0.5f, 0.5f, -0.5f);
+	tempVert.TexCoords = glm::vec2(1.0f, 1.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(0.5f, 0.5f, 0.5f);
+	tempVert.TexCoords = glm::vec2(1.0f, 0.0f);
+	vertices.push_back(tempVert);
+	tempVert.Position = glm::vec3(-0.5f, 0.5f, 0.5f);
+	tempVert.TexCoords = glm::vec2(0.0f, 0.0f);
+	vertices.push_back(tempVert);
+
+	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
+
+
+	// Load textures
+	Texture diffuseMap, specularMap;
+	glGenTextures(1, &diffuseMap.id);
+	glGenTextures(1, &specularMap.id);
+	int width = 1, height = 1;
+	unsigned char image[3];
+	// Diffuse map
+	diffuseMap.type = "texture_diffuse";
+	image[0] = 0xFF;
+	image[1] = 0x88;
+	image[2] = 0x11;
+	glBindTexture(GL_TEXTURE_2D, diffuseMap.id);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &image);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	// Specular map
+	specularMap.type = "texture_specular";
+	image[0] = 0xFF;
+	image[1] = 0xFF;
+	image[2] = 0xFF;
+	glBindTexture(GL_TEXTURE_2D, specularMap.id);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &image);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	vector<Texture> textures = { diffuseMap, specularMap };
+
+	Mesh m(vertices, indices, textures);
+
+	// Positions all containers
+	glm::vec3 cubePositions[] = {
+		glm::vec3(0.0f,  0.0f,  0.0f),
+		glm::vec3(2.0f,  5.0f, -15.0f),
+		glm::vec3(-1.5f, -2.2f, -2.5f),
+		glm::vec3(-3.8f, -2.0f, -12.3f),
+		glm::vec3(2.4f, -0.4f, -3.5f),
+		glm::vec3(-1.7f,  3.0f, -7.5f),
+		glm::vec3(1.3f, -2.0f, -2.5f),
+		glm::vec3(1.5f,  2.0f, -2.5f),
+		glm::vec3(1.5f,  0.2f, -1.5f),
+		glm::vec3(-1.3f,  1.0f, -1.5f)
+	};
+
+
+	// Positions of the point lights
+	glm::vec3 pointLightPositions[] = {
+		glm::vec3(0.7f,  0.2f,  2.0f),
+		glm::vec3(2.3f, -3.3f, -4.0f),
+		glm::vec3(-4.0f,  2.0f, -12.0f),
+		glm::vec3(0.0f,  0.0f, -3.0f)
+	};
 
 	// Set up vertex data (and buffer(s)) and attribute pointers
-	GLfloat vertices[] = {
+	GLfloat lvertices[] = {
 		// Positions          // Normals           // Texture Coords
 		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
 		0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
@@ -130,86 +318,22 @@ int main(int argc, char * argv[]) {
 		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
 		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
 	};
-	// Positions all containers
-	glm::vec3 cubePositions[] = {
-		glm::vec3(0.0f,  0.0f,  0.0f),
-		glm::vec3(2.0f,  5.0f, -15.0f),
-		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3(2.4f, -0.4f, -3.5f),
-		glm::vec3(-1.7f,  3.0f, -7.5f),
-		glm::vec3(1.3f, -2.0f, -2.5f),
-		glm::vec3(1.5f,  2.0f, -2.5f),
-		glm::vec3(1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f)
-	};
-	// Positions of the point lights
-	glm::vec3 pointLightPositions[] = {
-		glm::vec3(0.7f,  0.2f,  2.0f),
-		glm::vec3(2.3f, -3.3f, -4.0f),
-		glm::vec3(-4.0f,  2.0f, -12.0f),
-		glm::vec3(0.0f,  0.0f, -3.0f)
-	};
-	// First, set the container's VAO (and VBO)
-	GLuint VBO, containerVAO;
-	glGenVertexArrays(1, &containerVAO);
+
+	GLuint VBO, lightVAO;
+
+	glGenVertexArrays(1, &lightVAO);
 	glGenBuffers(1, &VBO);
-
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glBindVertexArray(containerVAO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
-	glEnableVertexAttribArray(2);
-	glBindVertexArray(0);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), lvertices, GL_STATIC_DRAW);
 
 	// Then, we set the light's VAO (VBO stays the same. After all, the vertices are the same for the light object (also a 3D cube))
-	GLuint lightVAO;
-	glGenVertexArrays(1, &lightVAO);
 	glBindVertexArray(lightVAO);
 	// We only need to bind to the VBO (to link it with glVertexAttribPointer), no need to fill it; the VBO's data already contains all we need.
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	// Set the vertex attributes (only position data for the lamp))
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0); // Note that we skip over the other data in our buffer object (we don't need the normals/textures, only positions).
 	glEnableVertexAttribArray(0);
-	glBindVertexArray(0);
-
-	
-	// Load textures
-	GLuint diffuseMap, specularMap, emissionMap;
-	glGenTextures(1, &diffuseMap);
-	glGenTextures(1, &specularMap);
-	glGenTextures(1, &emissionMap);
-	int width = 1, height = 1;
-	unsigned char image[3];
-	// Diffuse map
-	image[0] = 0xFF;
-	image[1] = 0x88;
-	image[2] = 0x11;
-	glBindTexture(GL_TEXTURE_2D, diffuseMap);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &image);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	// Specular map
-	image[0] = 0xFF;
-	image[1] = 0xFF;
-	image[2] = 0xFF;
-	glBindTexture(GL_TEXTURE_2D, specularMap);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &image);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	
+	glBindVertexArray(0);	
 
 	// Set texture units
 	lightingShader.Use();
@@ -308,30 +432,15 @@ int main(int argc, char * argv[]) {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 
-		
-		// Bind diffuse map
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, diffuseMap);
-		// Bind specular map
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, specularMap);
-		
-
 
 		// Draw 10 containers with the same VAO and VBO information; only their world space coordinates differ
-		glm::mat4 model;
-		glBindVertexArray(containerVAO);
 		for (GLuint i = 0; i < 10; i++)
 		{
-			model = glm::mat4();
-			model = glm::translate(model, cubePositions[i]);
-			GLfloat angle = 20.0f * i;
-			model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.5f));
-			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+			m.position = cubePositions[i];
+			m.angle = 20.0f * i;
 
-			glDrawArrays(GL_TRIANGLES, 0, 36);
+			m.Draw(lightingShader);
 		}
-		glBindVertexArray(0);
 
 
 		// Also draw the lamp object, again binding the appropriate shader
@@ -344,6 +453,7 @@ int main(int argc, char * argv[]) {
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
+		glm::mat4 model = glm::mat4();
 		// We now draw as many light bulbs as we have point lights.
 		glBindVertexArray(lightVAO);
 		for (GLuint i = 0; i < 4; i++)
