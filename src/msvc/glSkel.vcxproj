@@ -122,12 +122,16 @@ exit 0</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="Cube.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\shaders\lamp.frag" />
     <None Include="..\shaders\lamp.vs" />
     <None Include="..\shaders\multiple_lights.frag" />
     <None Include="..\shaders\multiple_lights.vs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Cube.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

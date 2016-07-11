@@ -85,10 +85,10 @@ int main(int argc, char * argv[]) {
 	Shader lampShader("shaders/lamp.vs", "shaders/lamp.frag");
 
 
-	vector<Vertex> vertices;
-	vector<GLuint> indices;
+	std::vector<Vertex> vertices;
+	std::vector<GLuint> indices;
 	Vertex tempVert;
-	vector<GLuint> tempInds = { 0, 1, 2, 2, 3, 0 };
+	std::vector<GLuint> tempInds = { 0, 1, 2, 2, 3, 0 };
 
 	// Face 1
 	tempVert.Normal = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -105,7 +105,7 @@ int main(int argc, char * argv[]) {
 	tempVert.Position = glm::vec3(-0.5f, 0.5f, -0.5f);
 	tempVert.TexCoords = glm::vec2(0.0f, 1.0f);
 	vertices.push_back(tempVert);
-		
+
 	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
 
 	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(),
@@ -220,6 +220,7 @@ int main(int argc, char * argv[]) {
 	glGenTextures(1, &specularMap.id);
 	int width = 1, height = 1;
 	unsigned char image[3];
+
 	// Diffuse map
 	diffuseMap.type = "texture_diffuse";
 	image[0] = 0xFF;
@@ -232,6 +233,7 @@ int main(int argc, char * argv[]) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+
 	// Specular map
 	specularMap.type = "texture_specular";
 	image[0] = 0xFF;
@@ -246,7 +248,7 @@ int main(int argc, char * argv[]) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	vector<Texture> textures = { diffuseMap, specularMap };
+	std::vector<Texture> textures = { diffuseMap, specularMap };
 
 	Mesh m(vertices, indices, textures);
 
@@ -324,7 +326,7 @@ int main(int argc, char * argv[]) {
 	glGenVertexArrays(1, &lightVAO);
 	glGenBuffers(1, &VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), lvertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(lvertices), lvertices, GL_STATIC_DRAW);
 
 	// Then, we set the light's VAO (VBO stays the same. After all, the vertices are the same for the light object (also a 3D cube))
 	glBindVertexArray(lightVAO);

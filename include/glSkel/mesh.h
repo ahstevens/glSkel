@@ -5,11 +5,14 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
-using namespace std;
+
 // GL Includes
 #include <GL/glew.h> // Contains all the necessery OpenGL includes
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include <glSkel/shader.h>
 
 
 struct Vertex {
@@ -20,15 +23,15 @@ struct Vertex {
 
 struct Texture {
     GLuint id;
-    string type;
+    std::string type;
 };
 
 class Mesh {
 public:
     /*  Mesh Data  */
-    vector<Vertex> vertices;
-    vector<GLuint> indices;
-    vector<Texture> textures;
+	std::vector<Vertex> vertices;
+	std::vector<GLuint> indices;
+	std::vector<Texture> textures;
     GLuint VAO;
 
 	glm::vec3 position;
@@ -36,7 +39,7 @@ public:
 
     /*  Functions  */
     // Constructor
-    Mesh(vector<Vertex> vertices, vector<GLuint> indices, vector<Texture> textures)
+    Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<Texture> textures)
     {
         this->vertices = vertices;
         this->indices = indices;
@@ -58,9 +61,9 @@ public:
         {
             glActiveTexture(GL_TEXTURE0 + i); // Active proper texture unit before binding
             // Retrieve texture number (the N in diffuse_textureN)
-            stringstream ss;
-            string number;
-            string name = this->textures[i].type;
+			std::stringstream ss;
+			std::string number;
+			std::string name = this->textures[i].type;
             if(name == "texture_diffuse")
                 ss << diffuseNr++;
             else if(name == "texture_specular")
@@ -101,7 +104,7 @@ private:
 
     /*  Functions    */
     // Initializes all the buffer objects/arrays
-    void setupMesh()
+    virtual void setupMesh()
     {
         // Create buffers/arrays
         glGenVertexArrays(1, &this->VAO);
