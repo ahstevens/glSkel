@@ -65,7 +65,6 @@ public:
 			std::string name = "pointLights[" + std::to_string(i);
 			name += "]";
 
-			std::cout << name << std::endl;
 			glUniform3fv(glGetUniformLocation(s.Program, (name + ".position").c_str()), 3, glm::value_ptr(pLights[i].position));
 			glUniform3fv(glGetUniformLocation(s.Program, (name + ".ambient").c_str()), 3, glm::value_ptr(pLights[i].ambient));
 			glUniform3fv(glGetUniformLocation(s.Program, (name + ".diffuse").c_str()), 3, glm::value_ptr(pLights[i].diffuse));
@@ -122,7 +121,7 @@ public:
 	bool addSLight(glm::vec3 position = glm::vec3(1.0f), glm::vec3 direction = glm::vec3(0.0f),
 		glm::vec3 ambient = glm::vec3(0.0f), glm::vec3 diffuse = glm::vec3(1.0f), glm::vec3 specular = glm::vec3(1.0f),
 		GLfloat constant = 1.0f, GLfloat linear = 0.09f, GLfloat quadratic = 0.032f,
-		GLfloat cutOffDeg = glm::cos(glm::radians(12.5f)), GLfloat outerCutOffDeg = glm::cos(glm::radians(15.0f)))
+		GLfloat cutOffDeg = 12.5f, GLfloat outerCutOffDeg = 15.0f)
 	{
 		this->sLight.position = position;
 		this->sLight.direction = direction;
@@ -174,31 +173,14 @@ private:
 		glm::vec3 backTopRight = glm::vec3(0.5f, 0.5f, -0.5f);  // 7
 
 		vertices = { frontBotLeft, frontBotRight, frontTopRight, frontTopLeft,
-			backBotRight, backBotLeft, backTopLeft, backTopRight };
-
-		// Face 1		
-		faceInds = { 0, 1, 2, 2, 3, 0 };
-		indices.insert(indices.end(), faceInds.begin(), faceInds.end());
-
-		// Face 2
-		faceInds = { 4, 5, 6, 6, 7, 4 };
-		indices.insert(indices.end(), faceInds.begin(), faceInds.end());
-
-		// Face 3
-		faceInds = { 4, 0, 2, 2, 6, 4 };
-		indices.insert(indices.end(), faceInds.begin(), faceInds.end());
-
-		// Face 4
-		faceInds = { 5, 1, 3, 3, 7, 5 };
-		indices.insert(indices.end(), faceInds.begin(), faceInds.end());
-
-		// Face 5
-		faceInds = { 2, 3, 7, 7, 6, 2 };
-		indices.insert(indices.end(), faceInds.begin(), faceInds.end());
-
-		// Face 6
-		faceInds = { 0, 1, 5, 5, 4, 0 };
-		indices.insert(indices.end(), faceInds.begin(), faceInds.end());
+					 backBotRight, backBotLeft, backTopLeft, backTopRight };
+		
+		indices = { 0, 1, 2, 2, 3, 0,   // Face 1
+					4, 5, 6, 6, 7, 4,   // Face 2
+					1, 4, 7, 7, 2, 1,   // Face 3
+					5, 0, 3, 3, 6, 5,   // Face 4
+					3, 2, 7, 7, 6, 3,   // Face 5
+					1, 0, 5, 5, 4, 1 }; // Face 6
 
 		glGenVertexArrays(1, &this->VAO);
 		glGenBuffers(1, &this->VBO);
@@ -213,7 +195,7 @@ private:
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
 
 		// Set the vertex attributes (only position data for the lamp))
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
 		glEnableVertexAttribArray(0);
 		glBindVertexArray(0);
 

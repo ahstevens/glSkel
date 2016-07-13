@@ -3,7 +3,7 @@
 #
 #---------------------------------------------------------------------
 
-PROG = glSkel
+PROG = main
 
 BASE_DIR = ${PWD}/../
 BUILD_DIR = $(BASE_DIR)build/
@@ -62,4 +62,4 @@ run: build
 	$(BUILD_DIR)$(PROG)
 
 clear:
-	rm -f $(BUILD_DIR)*.o $(BUILD_DIR)$(PROG)
+	rm -f $(BUILD_DIR)*.o $(BUILD_DIR)$(PROG) $(PWD)/*.o
