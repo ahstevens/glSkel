@@ -41,6 +41,7 @@ GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
 GLfloat lastFrame = 0.0f;  	// Time of last frame
 
 bool firstMouse = true;
+bool showLights = true;
 
 int main(int argc, char * argv[]) {
 
@@ -162,17 +163,15 @@ int main(int argc, char * argv[]) {
 
 		c.Draw(lightingShader);
 
-		
-		// Also draw the lamp object, again binding the appropriate shader
-		lampShader.Use();
-		// Get location objects for the matrices on the lamp shader (these could be different on a different shader)
-		viewLoc = glGetUniformLocation(lampShader.Program, "view");
-		projLoc = glGetUniformLocation(lampShader.Program, "projection");
-		// Set matrices
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+		if (showLights)
+		{
+			lampShader.Use();
 
-		ls.Draw(lampShader);
+			glUniformMatrix4fv(glGetUniformLocation(lampShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glUniformMatrix4fv(glGetUniformLocation(lampShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+			ls.Draw(lampShader);
+		}
 
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
@@ -189,6 +188,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
+	if (key == GLFW_KEY_L && action == GLFW_PRESS)
+		showLights = !showLights;
 	if (key >= 0 && key < 1024)
 	{
 		if (action == GLFW_PRESS)
