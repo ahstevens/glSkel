@@ -46,18 +46,12 @@ public:
 
     // Uses the current shader
     void SetupLighting(Shader s) 
-	{ 
-		// == ==========================
-		// Here we set all the uniforms for the 5/6 types of lights we have. We have to set them manually and index 
-		// the proper PointLight struct in the array to set each uniform variable. This can be done more code-friendly
-		// by defining light types as classes and set their values in there, or by using a more efficient uniform approach
-		// by using 'Uniform buffer objects', but that is something we discuss in the 'Advanced GLSL' tutorial.
-		// == ==========================
+	{
 		// Directional light
-		glUniform3fv(glGetUniformLocation(s.Program, "dirLight.direction"), 3, glm::value_ptr(dLight.direction));
-		glUniform3fv(glGetUniformLocation(s.Program, "dirLight.ambient"), 3, glm::value_ptr(dLight.ambient));
-		glUniform3fv(glGetUniformLocation(s.Program, "dirLight.diffuse"), 3, glm::value_ptr(dLight.diffuse));
-		glUniform3fv(glGetUniformLocation(s.Program, "dirLight.specular"), 3, glm::value_ptr(dLight.specular));
+		glUniform3f(glGetUniformLocation(s.Program, "dirLight.direction"), dLight.direction.x, dLight.direction.y, dLight.direction.z);
+		glUniform3f(glGetUniformLocation(s.Program, "dirLight.ambient"), dLight.ambient.x, dLight.ambient.y, dLight.ambient.z);
+		glUniform3f(glGetUniformLocation(s.Program, "dirLight.diffuse"), dLight.diffuse.x, dLight.diffuse.y, dLight.diffuse.z);
+		glUniform3f(glGetUniformLocation(s.Program, "dirLight.specular"), dLight.specular.x, dLight.specular.y, dLight.specular.z);
 
 		// Point light
 		for (int i = 0; i < pLights.size(); ++i)
@@ -65,21 +59,21 @@ public:
 			std::string name = "pointLights[" + std::to_string(i);
 			name += "]";
 
-			glUniform3fv(glGetUniformLocation(s.Program, (name + ".position").c_str()), 3, glm::value_ptr(pLights[i].position));
-			glUniform3fv(glGetUniformLocation(s.Program, (name + ".ambient").c_str()), 3, glm::value_ptr(pLights[i].ambient));
-			glUniform3fv(glGetUniformLocation(s.Program, (name + ".diffuse").c_str()), 3, glm::value_ptr(pLights[i].diffuse));
-			glUniform3fv(glGetUniformLocation(s.Program, (name + ".specular").c_str()), 3, glm::value_ptr(pLights[i].specular));
+			glUniform3f(glGetUniformLocation(s.Program, (name + ".position").c_str()), pLights[i].position.x, pLights[i].position.y, pLights[i].position.z);
+			glUniform3f(glGetUniformLocation(s.Program, (name + ".ambient").c_str()), pLights[i].ambient.r, pLights[i].ambient.g, pLights[i].ambient.b);
+			glUniform3f(glGetUniformLocation(s.Program, (name + ".diffuse").c_str()), pLights[i].diffuse.r, pLights[i].diffuse.g, pLights[i].diffuse.b);
+			glUniform3f(glGetUniformLocation(s.Program, (name + ".specular").c_str()), pLights[i].specular.r, pLights[i].specular.g, pLights[i].specular.b);
 			glUniform1f(glGetUniformLocation(s.Program, (name + ".constant").c_str()), pLights[i].constant);
 			glUniform1f(glGetUniformLocation(s.Program, (name + ".linear").c_str()), pLights[i].linear);
 			glUniform1f(glGetUniformLocation(s.Program, (name + ".quadratic").c_str()), pLights[i].quadratic);
 		}
 
 		// SpotLight
-		glUniform3fv(glGetUniformLocation(s.Program, "spotLight.position"), 3, glm::value_ptr(sLight.position));
-		glUniform3fv(glGetUniformLocation(s.Program, "spotLight.direction"), 3, glm::value_ptr(sLight.direction));
-		glUniform3fv(glGetUniformLocation(s.Program, "spotLight.ambient"), 3, glm::value_ptr(sLight.ambient));
-		glUniform3fv(glGetUniformLocation(s.Program, "spotLight.diffuse"), 3, glm::value_ptr(sLight.diffuse));
-		glUniform3fv(glGetUniformLocation(s.Program, "spotLight.specular"), 3, glm::value_ptr(sLight.specular));
+		glUniform3f(glGetUniformLocation(s.Program, "spotLight.position"), sLight.position.x, sLight.position.y, sLight.position.z);
+		glUniform3f(glGetUniformLocation(s.Program, "spotLight.direction"), sLight.direction.x, sLight.direction.y, sLight.direction.z);
+		glUniform3f(glGetUniformLocation(s.Program, "spotLight.ambient"), sLight.ambient.r, sLight.ambient.g, sLight.ambient.b);
+		glUniform3f(glGetUniformLocation(s.Program, "spotLight.diffuse"), sLight.diffuse.r, sLight.diffuse.g, sLight.diffuse.b);
+		glUniform3f(glGetUniformLocation(s.Program, "spotLight.specular"), sLight.specular.r, sLight.specular.g, sLight.specular.b);
 		glUniform1f(glGetUniformLocation(s.Program, "spotLight.constant"), sLight.constant);
 		glUniform1f(glGetUniformLocation(s.Program, "spotLight.linear"), sLight.linear);
 		glUniform1f(glGetUniformLocation(s.Program, "spotLight.quadratic"), sLight.quadratic);
@@ -139,7 +133,7 @@ public:
 
 	void Draw(Shader s)
 	{
-		glm::mat4 model = glm::mat4();
+		glm::mat4 model;
 
 		glBindVertexArray(this->VAO);
 		for (GLuint i = 0; i < pLights.size(); ++i)
