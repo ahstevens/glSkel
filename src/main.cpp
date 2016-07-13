@@ -32,6 +32,7 @@ void do_movement();
 
 // Camera
 Camera  camera(glm::vec3(0.0f, 0.0f, 3.0f));
+LightingSystem ls;
 GLfloat lastX = mWidth / 2.0;
 GLfloat lastY = mHeight / 2.0;
 bool    keys[1024];
@@ -104,7 +105,6 @@ int main(int argc, char * argv[]) {
 	for (GLuint i = 0; i < 10; i++)	c.angles.push_back(20.0f * i);
 
 	// Initialize the lighting system
-	LightingSystem ls;
 
 	// Directional light
 	ls.addDLight(glm::vec3(-0.2f, -1.0f, -0.3f));
@@ -190,6 +190,18 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	if (key == GLFW_KEY_L && action == GLFW_PRESS)
 		showLights = !showLights;
+	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
+		ls.dLight.on = !ls.dLight.on;
+	if (key == GLFW_KEY_2 && action == GLFW_PRESS)
+		ls.pLights[0].on = !ls.pLights[0].on;
+	if (key == GLFW_KEY_3 && action == GLFW_PRESS)
+		ls.pLights[1].on = !ls.pLights[1].on;
+	if (key == GLFW_KEY_4 && action == GLFW_PRESS)
+		ls.pLights[2].on = !ls.pLights[2].on;
+	if (key == GLFW_KEY_5 && action == GLFW_PRESS)
+		ls.pLights[3].on = !ls.pLights[3].on;
+	if (key == GLFW_KEY_6 && action == GLFW_PRESS)
+		ls.sLight.on = !ls.sLight.on;
 	if (key >= 0 && key < 1024)
 	{
 		if (action == GLFW_PRESS)

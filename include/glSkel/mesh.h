@@ -104,7 +104,7 @@ private:
 
     /*  Functions    */
     // Initializes all the buffer objects/arrays
-    virtual void setupMesh()
+    void setupMesh()
     {
         // Create buffers/arrays
         glGenVertexArrays(1, &this->VAO);
