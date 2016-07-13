@@ -153,9 +153,9 @@ private:
 
     void setupLightMesh()
 	{
+		// Construct light geometry
 		std::vector<glm::vec3> vertices;
 		std::vector<GLuint> indices;
-		std::vector<GLuint> faceInds;
 
 		glm::vec3 frontBotLeft = glm::vec3(-0.5f, -0.5f, 0.5f); // 0
 		glm::vec3 frontBotRight = glm::vec3(0.5f, -0.5f, 0.5f); // 1
@@ -176,19 +176,19 @@ private:
 					3, 2, 7, 7, 6, 3,   // Face 5
 					1, 0, 5, 5, 4, 1 }; // Face 6
 
+		// Send data and its description to GPU
 		glGenVertexArrays(1, &this->VAO);
 		glGenBuffers(1, &this->VBO);
 		glGenBuffers(1, &this->EBO);
 
 		glBindVertexArray(this->VAO);
-		// Load data into vertex buffers
+
 		glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
 
-		// Set the vertex attributes (only position data for the lamp))
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (GLvoid*)0);
 		glEnableVertexAttribArray(0);
 		glBindVertexArray(0);

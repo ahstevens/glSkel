@@ -36,13 +36,11 @@ GLfloat lastX = mWidth / 2.0;
 GLfloat lastY = mHeight / 2.0;
 bool    keys[1024];
 
-// Light attributes
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-
 // Deltatime
 GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
 GLfloat lastFrame = 0.0f;  	// Time of last frame
 
+bool firstMouse = true;
 
 int main(int argc, char * argv[]) {
 
@@ -213,7 +211,6 @@ void do_movement()
 		camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
-bool firstMouse = true;
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	if (firstMouse)
