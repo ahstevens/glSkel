@@ -41,6 +41,15 @@
     <None Include="..\shaders\multiple_lights.vs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\shaders\normals.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\shaders\normals.geom">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\shaders\normals.vs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Cube.h">

@@ -32,7 +32,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void do_movement();
 
 // Camera
-Camera  camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera  camera(glm::vec3(0.0f, 5.0f, 15.0f));
 LightingSystem ls;
 GLfloat lastX = mWidth / 2.0;
 GLfloat lastY = mHeight / 2.0;
@@ -44,6 +44,7 @@ GLfloat lastFrame = 0.0f;  	// Time of last frame
 
 bool firstMouse = true;
 bool showLights = true;
+bool showNormals = false;
 
 int main(int argc, char * argv[]) {
 
@@ -87,16 +88,17 @@ int main(int argc, char * argv[]) {
 	// Build and compile our shader program
 	Shader lightingShader("shaders/multiple_lights.vs", "shaders/multiple_lights.frag");
 	Shader lampShader("shaders/lamp.vs", "shaders/lamp.frag");
+	Shader normalsShader("shaders/normals.vs", "shaders/normals.frag", "shaders/normals.geom");
 
 
 	// Initialize the lighting system
 	// Directional light
 	ls.addDLight(glm::vec3(-0.2f, -1.0f, -0.3f));
 	// Positions of the point lights
-	ls.addPLight(glm::vec3(0.7f, 0.2f, 2.0f));
-	ls.addPLight(glm::vec3(2.3f, -3.3f, -4.0f));
-	ls.addPLight(glm::vec3(-4.0f, 2.0f, -12.0f));
-	ls.addPLight(glm::vec3(0.0f, 0.0f, -3.0f));
+	ls.addPLight(glm::vec3(-5.f, 5.f, -5.f));
+	ls.addPLight(glm::vec3( 5.f, 5.f, -5.f));
+	ls.addPLight(glm::vec3( 5.f, 5.f,  5.f));
+	ls.addPLight(glm::vec3(-5.f, 5.f,  5.f));
 	// Spotlight
 	ls.addSLight(camera.Position, camera.Front);
 
@@ -120,7 +122,7 @@ int main(int argc, char * argv[]) {
 	// for (GLuint i = 0; i < 10; i++)	c.angles.push_back(20.0f * i);
 
 
-	Slatissima s(10.f, 1.f, 0.1f);
+	Slatissima s(10.f, 2.5f, 0.5f);
 	s.positions.push_back(glm::vec3(0.f, 0.f, 0.f));
 	s.angles.push_back(0.f);
 
@@ -171,6 +173,14 @@ int main(int argc, char * argv[]) {
 
 		s.Draw(lightingShader);
 
+		if (showNormals)
+		{
+			normalsShader.Use();
+			glUniformMatrix4fv(glGetUniformLocation(normalsShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glUniformMatrix4fv(glGetUniformLocation(normalsShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+			s.Draw(normalsShader);
+		}
+
 		if (showLights)
 		{
 			lampShader.Use();
@@ -210,6 +220,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		ls.pLights[3].on = !ls.pLights[3].on;
 	if (key == GLFW_KEY_6 && action == GLFW_PRESS)
 		ls.sLight.on = !ls.sLight.on;
+	if (key == GLFW_KEY_N && action == GLFW_PRESS)
+		showNormals = !showNormals;
 	if (key >= 0 && key < 1024)
 	{
 		if (action == GLFW_PRESS)
