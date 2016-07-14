@@ -123,6 +123,7 @@ exit 0</Command>
   <ItemGroup>
     <ClCompile Include="..\Cube.cpp" />
     <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="..\Slatissima.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\shaders\lamp.frag" />
@@ -132,6 +133,7 @@ exit 0</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Cube.h" />
+    <ClInclude Include="..\Slatissima.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
