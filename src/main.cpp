@@ -19,6 +19,7 @@
 
 // Our classes
 #include "Cube.h"
+#include "SLatissima.h"
 
 // Define Some Constants
 const int mWidth = 1280;
@@ -53,7 +54,7 @@ int main(int argc, char * argv[]) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    auto mWindow = glfwCreateWindow(mWidth, mHeight, "OpenGL Skeleton", nullptr, nullptr);
+    auto mWindow = glfwCreateWindow(mWidth, mHeight, "Saccharina latissima", nullptr, nullptr);
 
     // Check for Valid Context
     if (mWindow == nullptr) {
@@ -87,36 +88,41 @@ int main(int argc, char * argv[]) {
 	Shader lightingShader("shaders/multiple_lights.vs", "shaders/multiple_lights.frag");
 	Shader lampShader("shaders/lamp.vs", "shaders/lamp.frag");
 
-	Cube c;	
-
-	// Positions all cubes
-	c.positions.push_back(glm::vec3( 0.0f,  0.0f,  0.0f));
-	c.positions.push_back(glm::vec3( 2.0f,  5.0f, -15.0f));
-	c.positions.push_back(glm::vec3(-1.5f, -2.2f, -2.5f));
-	c.positions.push_back(glm::vec3(-3.8f, -2.0f, -12.3f));
-	c.positions.push_back(glm::vec3( 2.4f, -0.4f, -3.5f));
-	c.positions.push_back(glm::vec3(-1.7f,  3.0f, -7.5f));
-	c.positions.push_back(glm::vec3( 1.3f, -2.0f, -2.5f));
-	c.positions.push_back(glm::vec3( 1.5f,  2.0f, -2.5f));
-	c.positions.push_back(glm::vec3( 1.5f,  0.2f, -1.5f));
-	c.positions.push_back(glm::vec3(-1.3f,  1.0f, -1.5f));
-
-	// Angles of cubes
-	for (GLuint i = 0; i < 10; i++)	c.angles.push_back(20.0f * i);
 
 	// Initialize the lighting system
-
 	// Directional light
 	ls.addDLight(glm::vec3(-0.2f, -1.0f, -0.3f));
-	
 	// Positions of the point lights
 	ls.addPLight(glm::vec3(0.7f, 0.2f, 2.0f));
 	ls.addPLight(glm::vec3(2.3f, -3.3f, -4.0f));
 	ls.addPLight(glm::vec3(-4.0f, 2.0f, -12.0f));
 	ls.addPLight(glm::vec3(0.0f, 0.0f, -3.0f));
-
 	// Spotlight
 	ls.addSLight(camera.Position, camera.Front);
+
+
+	// Example cube objects
+	// Cube c;	
+
+	// // Positions all cubes
+	// c.positions.push_back(glm::vec3( 0.0f,  0.0f,  5.0f));
+	// c.positions.push_back(glm::vec3( 2.0f,  5.0f, -15.0f));
+	// c.positions.push_back(glm::vec3(-1.5f, -2.2f, -2.5f));
+	// c.positions.push_back(glm::vec3(-3.8f, -2.0f, -12.3f));
+	// c.positions.push_back(glm::vec3( 2.4f, -0.4f, -3.5f));
+	// c.positions.push_back(glm::vec3(-1.7f,  3.0f, -7.5f));
+	// c.positions.push_back(glm::vec3( 1.3f, -2.0f, -2.5f));
+	// c.positions.push_back(glm::vec3( 1.5f,  2.0f, -2.5f));
+	// c.positions.push_back(glm::vec3( 1.5f,  0.2f, -1.5f));
+	// c.positions.push_back(glm::vec3(-1.3f,  1.0f, -1.5f));
+
+	// // Angles of cubes
+	// for (GLuint i = 0; i < 10; i++)	c.angles.push_back(20.0f * i);
+
+
+	Slatissima s(10.f, 1.f, 0.1f);
+	s.positions.push_back(glm::vec3(0.f, 0.f, 0.f));
+	s.angles.push_back(0.f);
 
 	// Set texture units
 	lightingShader.Use();
@@ -161,7 +167,9 @@ int main(int argc, char * argv[]) {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 
-		c.Draw(lightingShader);
+		//c.Draw(lightingShader);
+
+		s.Draw(lightingShader);
 
 		if (showLights)
 		{
