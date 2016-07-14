@@ -1,5 +1,7 @@
 #include "Slatissima.h"
 
+#include <algorithm>
+
 
 Slatissima::Slatissima(GLfloat length, GLfloat width, GLfloat thickness)
 {
@@ -25,95 +27,214 @@ void Slatissima::Draw(Shader s)
 
 void Slatissima::buildModel(GLfloat length, GLfloat width, GLfloat thickness)
 {
-	std::vector<Vertex> vertices;
-	std::vector<GLuint> indices;
 	Vertex tempVert;
-	std::vector<GLuint> tempInds = { 0, 1, 2, 2, 3, 0 };
 
-	length /= 2;
-	width /= 2;
-	thickness /= 2;
+	GLuint nSamples = 100;
 
-	glm::vec3 backTopLeft   = glm::vec3(-width,  length, -thickness);
-	glm::vec3 backTopRight  = glm::vec3( width,  length, -thickness);
-	glm::vec3 backBotLeft   = glm::vec3(-width, -length, -thickness);
-	glm::vec3 backBotRight  = glm::vec3( width, -length, -thickness);
-	glm::vec3 frontTopLeft  = glm::vec3(-width,  length,  thickness);
-	glm::vec3 frontTopRight = glm::vec3( width,  length,  thickness);
-	glm::vec3 frontBotLeft  = glm::vec3(-width, -length,  thickness);
-	glm::vec3 frontBotRight = glm::vec3( width, -length,  thickness);
+	GLuint counter = 0;
 
-	// Face 1
-	tempVert.Normal = glm::vec3(0.0f, 0.0f, -1.0f);
+	tempVert.Normal = glm::vec3(0.f, 0.f, 1.f);
 
-	tempVert.Position = backBotLeft;  tempVert.TexCoords = glm::vec2(0.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = backBotRight; tempVert.TexCoords = glm::vec2(1.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = backTopRight; tempVert.TexCoords = glm::vec2(1.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = backTopLeft;  tempVert.TexCoords = glm::vec2(0.0f, 1.0f); vertices.push_back(tempVert);
+	for (GLuint i = 0; i < nSamples; ++i)
+	{
+		GLfloat lengthRatio = ((float)i / (float)(nSamples - 1));
+		GLfloat x_offset = glm::sin(lengthRatio * 3.14159);
+		GLfloat y_coord = lengthRatio * length;
+		GLfloat z_offset = glm::sin(lengthRatio * 3.14159 * length) * (thickness / 2.f);
 
-	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
+		// Center point first
+		tempVert.TexCoords = glm::vec2(0.5f, lengthRatio);
+		tempVert.Position = glm::vec3(0.f, y_coord, 0.f);
 
-	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(), [](GLuint n) { return n + 4; });
+		vertices.push_back(tempVert);
 
-	// Face 2
-	tempVert.Normal = glm::vec3(0.0f, 0.0f, 1.0f);
+		// Left side
+		tempVert.TexCoords = glm::vec2(0.5f - x_offset / 2.f, lengthRatio);
+		tempVert.Position = glm::vec3( -(x_offset * width / 2.f), y_coord, z_offset);
 
-	tempVert.Position = frontBotLeft;  tempVert.TexCoords = glm::vec2(0.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontBotRight; tempVert.TexCoords = glm::vec2(1.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontTopRight; tempVert.TexCoords = glm::vec2(1.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontTopLeft;  tempVert.TexCoords = glm::vec2(0.0f, 1.0f); vertices.push_back(tempVert);
+		vertices.push_back(tempVert);
 
-	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
+		// Right side
 
-	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(), [](GLuint n) { return n + 4; });
+		tempVert.TexCoords = glm::vec2(0.5f + x_offset / 2.f, lengthRatio);
+		tempVert.Position = glm::vec3(x_offset / 2.f * width, y_coord, z_offset);
 
-	// Face 3
-	tempVert.Normal = glm::vec3(-1.0f, 0.0f, 0.0f);
+		vertices.push_back(tempVert);
 
-	tempVert.Position = frontTopLeft; tempVert.TexCoords = glm::vec2(1.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = backTopLeft;  tempVert.TexCoords = glm::vec2(1.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = backBotLeft;  tempVert.TexCoords = glm::vec2(0.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontBotLeft; tempVert.TexCoords = glm::vec2(0.0f, 0.0f); vertices.push_back(tempVert);
+		if (i == nSamples - 1) break;
 
-	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
+		// Indices
+		indices.push_back(counter + 0);
+		indices.push_back(counter + 3);
+		indices.push_back(counter + 1);
+		
+		indices.push_back(counter + 1);
+		indices.push_back(counter + 3);
+		indices.push_back(counter + 4);
+		
+		indices.push_back(counter + 0);
+		indices.push_back(counter + 2);
+		indices.push_back(counter + 3);
 
-	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(), [](GLuint n) { return n + 4; });
+		indices.push_back(counter + 2);
+		indices.push_back(counter + 5);
+		indices.push_back(counter + 3);
 
-	// Face 4
-	tempVert.Normal = glm::vec3(1.0f, 0.0f, 0.0f);
+		counter += 3;
+	}
 
-	tempVert.Position = frontTopRight; tempVert.TexCoords = glm::vec2(1.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = backTopRight;  tempVert.TexCoords = glm::vec2(1.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = backBotRight;  tempVert.TexCoords = glm::vec2(0.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontBotRight; tempVert.TexCoords = glm::vec2(0.0f, 0.0f); vertices.push_back(tempVert);
 
-	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
-
-	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(), [](GLuint n) { return n + 4; });
-
-	// Face 5
-	tempVert.Normal = glm::vec3(0.0f, -1.0f, 0.0f);
-
-	tempVert.Position = backBotLeft;   tempVert.TexCoords = glm::vec2(0.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = backBotRight;  tempVert.TexCoords = glm::vec2(1.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontBotRight; tempVert.TexCoords = glm::vec2(1.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontBotLeft;  tempVert.TexCoords = glm::vec2(0.0f, 0.0f); vertices.push_back(tempVert);
-
-	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
-
-	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(), [](GLuint n) { return n + 4; });
-
-	// Face 6
-	tempVert.Normal = glm::vec3(0.0f, 1.0f, 0.0f);
-
-	tempVert.Position = backTopLeft;   tempVert.TexCoords = glm::vec2(0.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = backTopRight;  tempVert.TexCoords = glm::vec2(1.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontTopRight; tempVert.TexCoords = glm::vec2(1.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontTopLeft;  tempVert.TexCoords = glm::vec2(0.0f, 0.0f); vertices.push_back(tempVert);
-
-	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
+	calcSpineNormals();
+	calcEdgeNormals();
 
 	mesh = new Mesh(vertices, indices, this->loadTextures());
+}
+
+void Slatissima::calcSpineNormals()
+{
+	glm::vec3 a, b, normal;
+
+	for (GLuint i = 0; i < vertices.size(); i += 3)
+	{
+		if (i == 0)
+		{
+			a = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
+			normal = glm::cross(a, b);
+
+			a = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+		}
+		else if (i == vertices.size() - 3)
+		{
+			a = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
+			normal = glm::cross(a, b);
+
+			a = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+
+			a = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+
+			a = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+		}
+		else
+		{
+			a = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
+			normal = glm::cross(a, b);
+
+			a = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+
+			a = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+
+			a = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+
+			a = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+
+			a = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+		}
+
+		vertices[i].Normal = glm::normalize(normal);
+
+	}
+}
+
+void Slatissima::calcEdgeNormals()
+{
+	glm::vec3 a, b, normal;
+
+	// Left-side verts first
+	for (GLuint i = 1; i < vertices.size(); i += 3)
+	{
+
+		if (i == 1)
+		{
+			a = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
+			normal = glm::cross(a, b);
+
+			a = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+		}
+		else if (i == vertices.size() - 2)
+		{
+			a = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
+			normal = glm::cross(a, b);
+		}
+		else
+		{
+			a = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
+			normal = glm::cross(a, b);
+
+			a = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+			
+			a = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+		}
+		
+		vertices[i].Normal = glm::normalize(normal);
+	}
+
+	// Right-side verts
+	for (GLuint i = 2; i < vertices.size(); i += 3)
+	{
+
+		if (i == 2)
+		{
+			a = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
+			normal = glm::cross(a, b);
+
+			a = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+		}
+		else if (i == vertices.size() - 1)
+		{
+			a = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
+			normal = glm::cross(a, b);
+		}
+		else
+		{
+			a = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
+			normal = glm::cross(a, b);
+
+			a = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+
+			a = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
+			b = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
+			normal += glm::cross(a, b);
+		}
+
+		vertices[i].Normal = glm::normalize(normal);
+	}
 }
 
 std::vector<Texture> Slatissima::loadTextures()
@@ -140,9 +261,9 @@ std::vector<Texture> Slatissima::loadTextures()
 
 	// Specular map
 	specularMap.type = "texture_specular";
-	image[0] = 0xFF;
+	image[0] = 0x55;
 	image[1] = 0xFF;
-	image[2] = 0xFF;
+	image[2] = 0x11;
 	glBindTexture(GL_TEXTURE_2D, specularMap.id);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &image);
 	glGenerateMipmap(GL_TEXTURE_2D);

@@ -15,8 +15,12 @@ public:
 
 private:
 	Mesh* mesh;
+	std::vector<Vertex> vertices;
+	std::vector<GLuint> indices;
 
 	void buildModel(GLfloat length, GLfloat width, GLfloat thickness);
+	void calcSpineNormals();
+	void calcEdgeNormals();
 	std::vector<Texture> loadTextures();
 };
 
