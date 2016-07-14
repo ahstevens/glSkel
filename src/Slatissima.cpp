@@ -3,9 +3,15 @@
 #include <algorithm>
 
 
-Slatissima::Slatissima(GLfloat length, GLfloat width, GLfloat thickness)
+Slatissima::Slatissima(GLfloat length, GLfloat width, GLfloat thickness, GLfloat spinePadding, GLfloat wavinessMulti, GLuint nSegments)
 {
-	this->buildModel(length, width, thickness);
+	this->length = length;
+	this->width = width;
+	this->thickness = thickness;
+	this->spinePadding = spinePadding;
+	this->wavinessMulti = wavinessMulti;
+	this->nSegments = nSegments;
+	this->buildModel();
 }
 
 
@@ -17,30 +23,22 @@ Slatissima::~Slatissima()
 
 void Slatissima::Draw(Shader s)
 {
-	for (int i = 0; i < positions.size(); ++i)
-	{
-		mesh->position = positions[i];
-		mesh->angle = angles[i];
-		mesh->Draw(s);
-	}
+	mesh->Draw(s);
 }
 
-void Slatissima::buildModel(GLfloat length, GLfloat width, GLfloat thickness)
+void Slatissima::buildModel()
 {
 	Vertex tempVert;
-
-	GLuint nSamples = 100;
-
 	GLuint counter = 0;
 
 	tempVert.Normal = glm::vec3(0.f, 0.f, 1.f);
 
-	for (GLuint i = 0; i < nSamples; ++i)
+	for (GLuint i = 0; i < nSegments; ++i)
 	{
-		GLfloat lengthRatio = ((float)i / (float)(nSamples - 1));
-		GLfloat x_offset = glm::sin(lengthRatio * 3.14159);
+		GLfloat lengthRatio = ((float)i / (float)(nSegments - 1));
+		GLfloat x_offset = glm::sin(lengthRatio * 3.14159) + spinePadding;
 		GLfloat y_coord = lengthRatio * length;
-		GLfloat z_offset = glm::sin(lengthRatio * 3.14159 * length) * (thickness / 2.f);
+		GLfloat z_offset = glm::sin(lengthRatio * 3.14159 * length * wavinessMulti) * (thickness / 2.f);
 
 		// Center point first
 		tempVert.TexCoords = glm::vec2(0.5f, lengthRatio);
@@ -61,7 +59,7 @@ void Slatissima::buildModel(GLfloat length, GLfloat width, GLfloat thickness)
 
 		vertices.push_back(tempVert);
 
-		if (i == nSamples - 1) break;
+		if (i == nSegments - 1) break;
 
 		// Indices
 		indices.push_back(counter + 0);
@@ -92,107 +90,46 @@ void Slatissima::buildModel(GLfloat length, GLfloat width, GLfloat thickness)
 
 void Slatissima::calcSpineNormals()
 {
-	glm::vec3 a, b, normal;
+	glm::vec3 normal;
 
 	for (GLuint i = 0; i < vertices.size(); i += 3)
 	{
-		if (i == 0)
-		{
-			a = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
-			normal = glm::cross(a, b);
+		normal = glm::vec3(0.f);
 
-			a = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
+		if (i != vertices.size() - 3)
+		{
+			normal += getNormalFromIndices(i + 3, i, i + 1, i);
+			normal += getNormalFromIndices(i + 2, i, i + 3, i);
 		}
-		else if (i == vertices.size() - 3)
+		else if (i != 0)
 		{
-			a = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
-			normal = glm::cross(a, b);
-
-			a = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
-
-			a = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
-
-			a = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
-		}
-		else
-		{
-			a = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
-			normal = glm::cross(a, b);
-
-			a = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
-
-			a = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
-
-			a = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
-
-			a = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
-
-			a = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
+			normal += getNormalFromIndices(i - 2, i, i - 3, i);
+			normal += getNormalFromIndices(i + 1, i, i - 2, i);
+			normal += getNormalFromIndices(i - 1, i, i + 2, i);
+			normal += getNormalFromIndices(i - 3, i, i - 1, i);
 		}
 
 		vertices[i].Normal = glm::normalize(normal);
-
 	}
 }
 
 void Slatissima::calcEdgeNormals()
 {
-	glm::vec3 a, b, normal;
+	glm::vec3 normal;
 
 	// Left-side verts first
 	for (GLuint i = 1; i < vertices.size(); i += 3)
 	{
+		normal = glm::vec3(0.f);
 
-		if (i == 1)
+		if (i != vertices.size() - 2)
 		{
-			a = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
-			normal = glm::cross(a, b);
-
-			a = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
+			normal += getNormalFromIndices(i - 1, i, i + 2, i);
+			normal += getNormalFromIndices(i + 2, i, i + 3, i);
 		}
-		else if (i == vertices.size() - 2)
+		else if (i != 1)
 		{
-			a = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
-			normal = glm::cross(a, b);
-		}
-		else
-		{
-			a = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
-			normal = glm::cross(a, b);
-
-			a = glm::normalize(vertices[i + 2].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
-			
-			a = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i - 1].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
+			normal += getNormalFromIndices(i - 3, i, i - 1, i);
 		}
 		
 		vertices[i].Normal = glm::normalize(normal);
@@ -201,40 +138,33 @@ void Slatissima::calcEdgeNormals()
 	// Right-side verts
 	for (GLuint i = 2; i < vertices.size(); i += 3)
 	{
+		normal = glm::vec3(0.f);
 
-		if (i == 2)
-		{
-			a = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
-			normal = glm::cross(a, b);
-
-			a = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
+		if (i != vertices.size() - 1)
+		{			
+			normal += getNormalFromIndices(i + 1, i, i - 2, i);
+			normal += getNormalFromIndices(i + 3, i, i + 1, i);
 		}
-		else if (i == vertices.size() - 1)
+		else if (i != 2)
 		{
-			a = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
-			normal = glm::cross(a, b);
-		}
-		else
-		{
-			a = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
-			normal = glm::cross(a, b);
-
-			a = glm::normalize(vertices[i + 3].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i + 1].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
-
-			a = glm::normalize(vertices[i - 2].Position - vertices[i].Position);
-			b = glm::normalize(vertices[i - 3].Position - vertices[i].Position);
-			normal += glm::cross(a, b);
+			normal += getNormalFromIndices(i - 2, i, i - 3, i);
 		}
 
 		vertices[i].Normal = glm::normalize(normal);
 	}
+}
+
+glm::vec3 Slatissima::getNormalFromIndices(GLuint aInd1, GLuint aInd2, GLuint bInd1, GLuint bInd2)
+{
+	glm::vec3 a, b;
+
+	a = vertices[aInd1].Position - vertices[aInd2].Position;
+	if (glm::length(a) == 0.f) return glm::vec3(0.f);
+
+	b = vertices[bInd1].Position - vertices[bInd2].Position;
+	if (glm::length(b) == 0.f) return glm::vec3(0.f);
+
+	return glm::cross(glm::normalize(a), glm::normalize(b));
 }
 
 std::vector<Texture> Slatissima::loadTextures()

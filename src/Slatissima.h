@@ -5,11 +5,8 @@
 class Slatissima
 {
 public:
-	Slatissima(GLfloat length, GLfloat width, GLfloat thickness);
+	Slatissima(GLfloat length, GLfloat width, GLfloat thickness, GLfloat spinePadding, GLfloat wavinessMulti, GLuint nSegments);
 	~Slatissima();
-
-	std::vector<glm::vec3> positions;
-	std::vector<GLfloat> angles;
 
 	void Draw(Shader s);
 
@@ -18,9 +15,13 @@ private:
 	std::vector<Vertex> vertices;
 	std::vector<GLuint> indices;
 
-	void buildModel(GLfloat length, GLfloat width, GLfloat thickness);
+	GLfloat length, width, thickness, spinePadding, wavinessMulti;
+	GLuint nSegments;
+
+	void buildModel();
 	void calcSpineNormals();
 	void calcEdgeNormals();
+	glm::vec3 getNormalFromIndices(GLuint aInd1, GLuint aInd2, GLuint bInd1, GLuint bInd2);
 	std::vector<Texture> loadTextures();
 };
 

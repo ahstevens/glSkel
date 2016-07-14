@@ -122,9 +122,7 @@ int main(int argc, char * argv[]) {
 	// for (GLuint i = 0; i < 10; i++)	c.angles.push_back(20.0f * i);
 
 
-	Slatissima s(10.f, 2.5f, 0.5f);
-	s.positions.push_back(glm::vec3(0.f, 0.f, 0.f));
-	s.angles.push_back(0.f);
+	Slatissima s(10.f, 2.5f, 0.25f, 0.01f, 2.5f, 1000);
 
 	// Set texture units
 	lightingShader.Use();
