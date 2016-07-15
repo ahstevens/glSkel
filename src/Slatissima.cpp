@@ -1,6 +1,7 @@
 #include "Slatissima.h"
 
 #include <algorithm>
+#include <complex>
 
 
 Slatissima::Slatissima(GLfloat length, GLfloat width, GLfloat thickness, GLfloat spinePadding, GLfloat wavinessMulti, GLuint nSegments)
@@ -39,6 +40,11 @@ void Slatissima::buildModel()
 		GLfloat x_offset = glm::sin(lengthRatio * 3.14159) + spinePadding;
 		GLfloat y_coord = lengthRatio * length;
 		GLfloat z_offset = glm::sin(lengthRatio * 3.14159 * length * wavinessMulti) * (thickness / 2.f);
+
+		z_offset *= glm::cosh(x_offset) * sin(y_coord);
+
+		std::complex<GLfloat> inp(x_offset, lengthRatio * 3.14159 * 10.f);
+		z_offset = std::sinh(inp).real() * (thickness / 2.f);
 
 		// Center point first
 		tempVert.TexCoords = glm::vec2(0.5f, lengthRatio);

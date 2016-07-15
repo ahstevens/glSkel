@@ -45,6 +45,7 @@ GLfloat lastFrame = 0.0f;  	// Time of last frame
 bool firstMouse = true;
 bool showLights = true;
 bool showNormals = false;
+bool explode = false;
 
 int main(int argc, char * argv[]) {
 
@@ -89,6 +90,7 @@ int main(int argc, char * argv[]) {
 	Shader lightingShader("shaders/multiple_lights.vs", "shaders/multiple_lights.frag");
 	Shader lampShader("shaders/lamp.vs", "shaders/lamp.frag");
 	Shader normalsShader("shaders/normals.vs", "shaders/normals.frag", "shaders/normals.geom");
+	Shader explodeShader("shaders/explode.vs", "shaders/explode.frag", "shaders/explode.geom");
 
 
 	// Initialize the lighting system
@@ -125,9 +127,6 @@ int main(int argc, char * argv[]) {
 	Slatissima s(10.f, 2.5f, 0.25f, 0.01f, 2.5f, 1000);
 
 	// Set texture units
-	lightingShader.Use();
-	glUniform1i(glGetUniformLocation(lightingShader.Program, "material.diffuse"), 0);
-	glUniform1i(glGetUniformLocation(lightingShader.Program, "material.specular"), 1);	
 
 
     // Main Rendering Loop
@@ -179,6 +178,14 @@ int main(int argc, char * argv[]) {
 			s.Draw(normalsShader);
 		}
 
+		if (explode)
+		{
+			explodeShader.Use();
+			glUniformMatrix4fv(glGetUniformLocation(explodeShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glUniformMatrix4fv(glGetUniformLocation(explodeShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+			s.Draw(explodeShader);
+		}
+
 		if (showLights)
 		{
 			lampShader.Use();
@@ -220,6 +227,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		ls.sLight.on = !ls.sLight.on;
 	if (key == GLFW_KEY_N && action == GLFW_PRESS)
 		showNormals = !showNormals;
+	if (key == GLFW_KEY_B && action == GLFW_PRESS)
+		explode = !explode;
 	if (key >= 0 && key < 1024)
 	{
 		if (action == GLFW_PRESS)

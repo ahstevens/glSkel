@@ -50,6 +50,15 @@
     <None Include="..\shaders\normals.vs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\shaders\explode.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\shaders\explode.geom">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\shaders\explode.vs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Cube.h">

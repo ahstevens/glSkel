@@ -126,6 +126,9 @@ exit 0</Command>
     <ClCompile Include="..\Slatissima.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\shaders\explode.frag" />
+    <None Include="..\shaders\explode.geom" />
+    <None Include="..\shaders\explode.vs" />
     <None Include="..\shaders\lamp.frag" />
     <None Include="..\shaders\lamp.vs" />
     <None Include="..\shaders\multiple_lights.frag" />
