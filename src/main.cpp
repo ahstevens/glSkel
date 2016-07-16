@@ -132,7 +132,7 @@ int main(int argc, char * argv[]) {
     // Main Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
 		// Calculate deltatime of current frame
-		GLfloat currentFrame = glfwGetTime();
+		GLfloat currentFrame = static_cast<GLfloat>( glfwGetTime() );
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 		
@@ -255,21 +255,21 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	if (firstMouse)
 	{
-		lastX = xpos;
-		lastY = ypos;
+		lastX = static_cast<GLfloat>( xpos );
+		lastY = static_cast<GLfloat>( ypos );
 		firstMouse = false;
 	}
 
-	GLfloat xoffset = xpos - lastX;
-	GLfloat yoffset = lastY - ypos;  // Reversed since y-coordinates go from bottom to left
-
-	lastX = xpos;
-	lastY = ypos;
+	GLfloat xoffset = static_cast<GLfloat>( xpos ) - lastX;
+	GLfloat yoffset = lastY - static_cast<GLfloat>( ypos );  // Reversed since y-coordinates go from bottom to left
+	
+	lastX = static_cast<GLfloat>( xpos );
+	lastY = static_cast<GLfloat>( ypos );
 
 	camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	camera.ProcessMouseScroll(yoffset);
+	camera.ProcessMouseScroll( static_cast<GLfloat>( yoffset ));
 }

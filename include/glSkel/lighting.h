@@ -191,7 +191,8 @@ public:
 	}
 
 private:
-	GLuint VBO, VAO, EBO, nIndices;
+	GLuint VBO, VAO, EBO;
+	GLsizei nIndices;
 	GLboolean meshInitiated;
 
     void setupLightMesh()
@@ -236,7 +237,7 @@ private:
 		glEnableVertexAttribArray(0);
 		glBindVertexArray(0);
 
-		nIndices = indices.size();
+		nIndices = static_cast<GLsizei>( indices.size() );
 
 		meshInitiated = true;
 	}
