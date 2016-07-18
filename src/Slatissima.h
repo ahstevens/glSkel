@@ -16,12 +16,15 @@ private:
 	std::vector<GLuint> indices;
 
 	GLfloat length, width, thickness, spinePadding, wavinessMulti;
-	GLuint nSegments;
+	GLuint nSpineVerts;
 
 	void buildModel();
+	void buildCenterBladeGeometry();
 	void calcSpineNormals();
-	void calcEdgeNormals();
-	glm::vec3 getNormalFromIndices(GLuint aInd1, GLuint aInd2, GLuint bInd1, GLuint bInd2);
+	void calcCenterBladeEdgeNormals();
+	glm::vec3 getNormalFromIndices(std::vector<Vertex> &v, GLuint aInd1, GLuint aInd2, GLuint bInd1, GLuint bInd2);
 	std::vector<Texture> loadTextures();
+	
+	void buildStrip(GLuint widthGranularity = 1);
 };
 

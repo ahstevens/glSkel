@@ -11,7 +11,7 @@ Slatissima::Slatissima(GLfloat length, GLfloat width, GLfloat thickness, GLfloat
 	this->thickness = thickness;
 	this->spinePadding = spinePadding;
 	this->wavinessMulti = wavinessMulti;
-	this->nSegments = nSegments;
+	this->nSpineVerts = nSegments + 1;
 	this->buildModel();
 }
 
@@ -34,9 +34,9 @@ void Slatissima::buildModel()
 
 	tempVert.Normal = glm::vec3(0.f, 0.f, 1.f);
 
-	for (GLuint i = 0; i < nSegments; ++i)
+	for (GLuint i = 0; i < nSpineVerts; ++i)
 	{
-		GLfloat lengthRatio = ((float)i / (float)(nSegments - 1));
+		GLfloat lengthRatio = ((float)i / (float)(nSpineVerts - 1));
 		GLfloat x_offset = glm::sin(lengthRatio * 3.14159f) + spinePadding;
 		GLfloat y_coord = lengthRatio * length;
 		GLfloat z_offset = glm::sin(lengthRatio * 3.14159f * length * wavinessMulti) * (thickness / 2.f);
@@ -65,7 +65,7 @@ void Slatissima::buildModel()
 
 		vertices.push_back(tempVert);
 
-		if (i == nSegments - 1) break;
+		if (i == nSpineVerts - 1) break;
 
 		// Indices
 		indices.push_back(counter + 0);
@@ -89,7 +89,7 @@ void Slatissima::buildModel()
 
 
 	calcSpineNormals();
-	calcEdgeNormals();
+	calcCenterBladeEdgeNormals();
 
 	mesh = new Mesh(vertices, indices, this->loadTextures());
 }
@@ -119,7 +119,7 @@ void Slatissima::calcSpineNormals()
 	}
 }
 
-void Slatissima::calcEdgeNormals()
+void Slatissima::calcCenterBladeEdgeNormals()
 {
 	glm::vec3 normal;
 
@@ -160,14 +160,14 @@ void Slatissima::calcEdgeNormals()
 	}
 }
 
-glm::vec3 Slatissima::getNormalFromIndices(GLuint aInd1, GLuint aInd2, GLuint bInd1, GLuint bInd2)
+glm::vec3 Slatissima::getNormalFromIndices(Vertex &v, GLuint aInd1, GLuint aInd2, GLuint bInd1, GLuint bInd2)
 {
 	glm::vec3 a, b;
 
-	a = vertices[aInd1].Position - vertices[aInd2].Position;
+	a = (&v)[aInd1].Position - (&v)[aInd2].Position;
 	if (glm::length(a) == 0.f) return glm::vec3(0.f);
 
-	b = vertices[bInd1].Position - vertices[bInd2].Position;
+	b = (&v)[bInd1].Position - (&v)[bInd2].Position;
 	if (glm::length(b) == 0.f) return glm::vec3(0.f);
 
 	return glm::cross(glm::normalize(a), glm::normalize(b));
@@ -212,4 +212,63 @@ std::vector<Texture> Slatissima::loadTextures()
 	std::vector<Texture> textures = { diffuseMap, specularMap };
 
 	return textures;
+}
+
+void Slatissima::buildStrip(GLuint widthGranularity = 1)
+{
+	std::vector<Vertex> verts;
+	std::vector<GLuint> inds;
+
+	GLuint k = nSpineVerts;
+
+	glm::vec3 v, n, a, b;
+	glm::vec2 t;
+
+	Vertex tempVert;
+
+	// VERTICES
+	for (GLuint i = 0; i < k; ++i)
+	{
+		v.x = (static_cast<GLfloat>(i) / static_cast<GLfloat>(k - 1) - 0.5f) * 3.14159 * width;
+		t.x = static_cast<GLfloat>(i) / static_cast<GLfloat>(k - 1);
+		for (GLuint j = 0; j < 2 * widthGranularity + 1; ++j)
+		{
+			v.y = (static_cast<GLfloat>(j) / static_cast<GLfloat>(2 * widthGranularity)) * 3.14159 * length;
+			t.y = static_cast<GLfloat>(j) / static_cast<GLfloat>(2 * widthGranularity);
+
+			std::complex<GLfloat> inp(v.x, v.y);
+			v.z = (std::sinh(inp).real() / 2.f) * 10.f * thickness;
+
+			tempVert.Position = v;
+			tempVert.Normal = glm::vec3(0.f);
+			tempVert.TexCoords = t;
+			verts.push_back(tempVert);
+		}
+	}
+
+	//NORMALS
+	for (GLuint i = 0; i < k; ++i)
+	{
+		n = glm::vec3(0.f);
+		for (GLuint j = 0; j < 2 * widthGranularity + 1; ++j)
+		{
+				n += getNormalFromIndices(verts, (i*j) - 1, i, i + k, i);  //
+				n += getNormalFromIndices(verts, i - 1, i, i + k, i);  // BELOW, RIGHT
+		}
+	}
+
+	// INDICES
+	for (GLuint i = 0; i < k - 1; ++i)
+	{
+		for (GLuint j = 0; j < 2 * widthGranularity; ++j)
+		{
+			inds.push_back(i);
+			inds.push_back(i + k*(j + 1));
+			inds.push_back(i + k*(j + 1) + 1);
+			
+			inds.push_back(i);
+			inds.push_back(i + k*(j + 1) + 1);
+			inds.push_back(i + 1);			
+		}
+	}
 }
