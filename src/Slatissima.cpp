@@ -12,7 +12,7 @@ Slatissima::Slatissima(GLfloat length, GLfloat width, GLfloat thickness, GLfloat
 	this->spinePadding = spinePadding;
 	this->wavinessMulti = wavinessMulti;
 	this->nSpineVerts = nSegments + 1;
-	this->buildModel();
+	this->buildStrip();
 }
 
 
@@ -104,15 +104,15 @@ void Slatissima::calcSpineNormals()
 
 		if (i != vertices.size() - 3)
 		{
-			normal += getNormalFromIndices(i + 3, i, i + 1, i);
-			normal += getNormalFromIndices(i + 2, i, i + 3, i);
+			normal += getNormalFromIndices(vertices, i + 3, i, i + 1, i);
+			normal += getNormalFromIndices(vertices, i + 2, i, i + 3, i);
 		}
 		else if (i != 0)
 		{
-			normal += getNormalFromIndices(i - 2, i, i - 3, i);
-			normal += getNormalFromIndices(i + 1, i, i - 2, i);
-			normal += getNormalFromIndices(i - 1, i, i + 2, i);
-			normal += getNormalFromIndices(i - 3, i, i - 1, i);
+			normal += getNormalFromIndices(vertices, i - 2, i, i - 3, i);
+			normal += getNormalFromIndices(vertices, i + 1, i, i - 2, i);
+			normal += getNormalFromIndices(vertices, i - 1, i, i + 2, i);
+			normal += getNormalFromIndices(vertices, i - 3, i, i - 1, i);
 		}
 
 		vertices[i].Normal = glm::normalize(normal);
@@ -130,12 +130,12 @@ void Slatissima::calcCenterBladeEdgeNormals()
 
 		if (i != vertices.size() - 2)
 		{
-			normal += getNormalFromIndices(i - 1, i, i + 2, i);
-			normal += getNormalFromIndices(i + 2, i, i + 3, i);
+			normal += getNormalFromIndices(vertices, i - 1, i, i + 2, i);
+			normal += getNormalFromIndices(vertices, i + 2, i, i + 3, i);
 		}
 		else if (i != 1)
 		{
-			normal += getNormalFromIndices(i - 3, i, i - 1, i);
+			normal += getNormalFromIndices(vertices, i - 3, i, i - 1, i);
 		}
 		
 		vertices[i].Normal = glm::normalize(normal);
@@ -148,26 +148,26 @@ void Slatissima::calcCenterBladeEdgeNormals()
 
 		if (i != vertices.size() - 1)
 		{			
-			normal += getNormalFromIndices(i + 1, i, i - 2, i);
-			normal += getNormalFromIndices(i + 3, i, i + 1, i);
+			normal += getNormalFromIndices(vertices, i + 1, i, i - 2, i);
+			normal += getNormalFromIndices(vertices, i + 3, i, i + 1, i);
 		}
 		else if (i != 2)
 		{
-			normal += getNormalFromIndices(i - 2, i, i - 3, i);
+			normal += getNormalFromIndices(vertices, i - 2, i, i - 3, i);
 		}
 
 		vertices[i].Normal = glm::normalize(normal);
 	}
 }
 
-glm::vec3 Slatissima::getNormalFromIndices(Vertex &v, GLuint aInd1, GLuint aInd2, GLuint bInd1, GLuint bInd2)
+glm::vec3 Slatissima::getNormalFromIndices(std::vector<Vertex> &v, GLuint aInd1, GLuint aInd2, GLuint bInd1, GLuint bInd2)
 {
 	glm::vec3 a, b;
 
-	a = (&v)[aInd1].Position - (&v)[aInd2].Position;
+	a = v[aInd1].Position - v[aInd2].Position;
 	if (glm::length(a) == 0.f) return glm::vec3(0.f);
 
-	b = (&v)[bInd1].Position - (&v)[bInd2].Position;
+	b = v[bInd1].Position - v[bInd2].Position;
 	if (glm::length(b) == 0.f) return glm::vec3(0.f);
 
 	return glm::cross(glm::normalize(a), glm::normalize(b));
@@ -214,12 +214,13 @@ std::vector<Texture> Slatissima::loadTextures()
 	return textures;
 }
 
-void Slatissima::buildStrip(GLuint widthGranularity = 1)
+void Slatissima::buildStrip(GLuint widthGranularity)
 {
 	std::vector<Vertex> verts;
 	std::vector<GLuint> inds;
 
-	GLuint k = nSpineVerts;
+	GLuint height = nSpineVerts;
+	GLuint width = 2 * widthGranularity + 1;
 
 	glm::vec3 v, n, a, b;
 	glm::vec2 t;
@@ -227,11 +228,11 @@ void Slatissima::buildStrip(GLuint widthGranularity = 1)
 	Vertex tempVert;
 
 	// VERTICES
-	for (GLuint i = 0; i < k; ++i)
+	for (GLuint i = 0; i < 2 * widthGranularity + 1; ++i)
 	{
 		v.x = (static_cast<GLfloat>(i) / static_cast<GLfloat>(k - 1) - 0.5f) * 3.14159 * width;
 		t.x = static_cast<GLfloat>(i) / static_cast<GLfloat>(k - 1);
-		for (GLuint j = 0; j < 2 * widthGranularity + 1; ++j)
+		for (GLuint j = 0; j < k; ++j)
 		{
 			v.y = (static_cast<GLfloat>(j) / static_cast<GLfloat>(2 * widthGranularity)) * 3.14159 * length;
 			t.y = static_cast<GLfloat>(j) / static_cast<GLfloat>(2 * widthGranularity);
@@ -246,29 +247,69 @@ void Slatissima::buildStrip(GLuint widthGranularity = 1)
 		}
 	}
 
-	//NORMALS
-	for (GLuint i = 0; i < k; ++i)
+	calculateStripNormals(verts, 2 * widthGranularity + 1, nSpineVerts);
+
+	calculateStripIndices(inds, 2 * widthGranularity + 1, nSpineVerts);
+
+
+	mesh = new Mesh(verts, inds, this->loadTextures());
+}
+
+void Slatissima::calculateStripNormals(std::vector<Vertex> &verts, GLuint width, GLuint height)
+{
+	for (GLuint i = 0; i < width; ++i)
 	{
-		n = glm::vec3(0.f);
-		for (GLuint j = 0; j < 2 * widthGranularity + 1; ++j)
+		glm::vec3 n = glm::vec3(0.f);
+		for (GLuint j = 0; j < height; ++j)
 		{
-				n += getNormalFromIndices(verts, (i*j) - 1, i, i + k, i);  //
-				n += getNormalFromIndices(verts, i - 1, i, i + k, i);  // BELOW, RIGHT
+			GLuint b = i * width + j;
+
+			// BELOW, LEFT TRIANGLES 1 and 2
+			if(i > 0 && j > 0)
+			{
+				n += getNormalFromIndices(verts, b - height - 1, b, b - 1, b);
+				n += getNormalFromIndices(verts, b - height, b, b - height - 1, b);
+			}
+
+			// BELOW, RIGHT TRIANGLE
+			if(i < width - 1 && j > 0)
+			{
+				n += getNormalFromIndices(verts, b - 1, b, b + height, b);
+			}
+
+			// ABOVE, LEFT TRIANGLE
+			if(i > 0 && j < height - 1)
+			{
+				n += getNormalFromIndices(verts, b + 1, b, b - height, b);  // ABOVE, LEFT
+			}
+
+			// ABOVE, RIGHT TRIANGLES
+			if(i < width - 1 && j < height - 1)
+			{
+				n += getNormalFromIndices(verts, b + height + 1, b, b + 1, b);
+				n += getNormalFromIndices(verts, b + height, b, b + height + 1, b);
+			}
+
+			verts[b].Normal = glm::normalize(n);
 		}
 	}
+}
 
-	// INDICES
-	for (GLuint i = 0; i < k - 1; ++i)
+void Slatissima::calculateStripIndices(std::vector<GLuint> &inds, GLuint width, GLuint height)
+{
+	for (GLuint i = 0; i < width - 1; ++i)
 	{
-		for (GLuint j = 0; j < 2 * widthGranularity; ++j)
+		for (GLuint j = 0; j < height - 1; ++j)
 		{
-			inds.push_back(i);
-			inds.push_back(i + k*(j + 1));
-			inds.push_back(i + k*(j + 1) + 1);
+			GLuint b = i * width + j;
+
+			inds.push_back(b);
+			inds.push_back(b + height);
+			inds.push_back(b + height + 1);
 			
-			inds.push_back(i);
-			inds.push_back(i + k*(j + 1) + 1);
-			inds.push_back(i + 1);			
+			inds.push_back(b);
+			inds.push_back(b + height + 1);
+			inds.push_back(b + 1);
 		}
 	}
 }

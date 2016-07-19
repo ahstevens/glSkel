@@ -26,5 +26,7 @@ private:
 	std::vector<Texture> loadTextures();
 	
 	void buildStrip(GLuint widthGranularity = 1);
+	void calculateStripNormals(std::vector<Vertex> &v, GLuint width, GLuint height);
+	void calculateStripIndices(std::vector<GLuint> &i, GLuint width, GLuint height);
 };
 
