@@ -1,12 +1,15 @@
 #pragma once
 #include <glSkel/mesh.h>
 #include <glSkel/shader.h>
+#include <complex>
 
 struct GaussianKernel {
 	glm::vec2 center;
 	GLfloat amplitude;
 	GLfloat a, b, c;
 };
+
+
 
 class Slatissima
 {
@@ -25,11 +28,8 @@ private:
 	GLuint nVertsTall, nVertsWide;
 
 	void buildStrip();
-	void calculateStripNormals(std::vector<Vertex> &v, GLuint nVertsWide, GLuint nVertsTall);
-	std::vector<GLuint> getStripIndices(GLuint nVertsWide, GLuint nVertsTall);
-	glm::vec3 getNormalFromIndices(std::vector<Vertex> &v, GLuint aInd1, GLuint aInd2, GLuint bInd1, GLuint bInd2);
-	std::vector<Texture> loadTextures();
 	GaussianKernel getGaussianKernel(glm::vec2 center, glm::vec2 spread, GLfloat angle, GLfloat amplitude);
 	GLfloat gaussian(glm::vec2 pos, GaussianKernel k);
+	std::complex<GLfloat> complexSinusoid(glm::vec2 pos, glm::vec2 spatialCentralFreq, GLfloat theta = 1.f);
 };
 
