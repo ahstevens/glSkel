@@ -4,7 +4,7 @@
 #include <complex>
 #include <cmath>
 
-const GLuint resolution = 10;
+const GLuint resolution = 1000;
 
 Slatissima::Slatissima(GLfloat length, GLfloat width, GLfloat thickness, GLfloat spinePadding, GLfloat wavinessMulti)
 {
@@ -63,9 +63,9 @@ void Slatissima::calculateStripNormals(std::vector<Vertex> &verts, GLuint nVerts
 {
 	for (GLuint i = 0; i < nVertsWide; ++i)
 	{
-		glm::vec3 n = glm::vec3(0.f);
 		for (GLuint j = 0; j < nVertsTall; ++j)
 		{
+			glm::vec3 n = glm::vec3(0.f);
 			GLuint b = i * nVertsTall + j;
 
 			// BELOW, LEFT TRIANGLES 1 and 2
