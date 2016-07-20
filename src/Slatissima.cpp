@@ -2,16 +2,18 @@
 
 #include <algorithm>
 #include <complex>
+#include <cmath>
 
+const GLuint resolution = 10;
 
-Slatissima::Slatissima(GLfloat length, GLfloat width, GLfloat thickness, GLfloat spinePadding, GLfloat wavinessMulti, GLuint nSegments)
+Slatissima::Slatissima(GLfloat length, GLfloat width, GLfloat thickness, GLfloat spinePadding, GLfloat wavinessMulti)
 {
 	this->length = length;
 	this->width = width;
 	this->thickness = thickness;
 	this->spinePadding = spinePadding;
 	this->wavinessMulti = wavinessMulti;
-	this->nSpineVerts = nSegments + 1;
+	this->nVertsTall = this->nVertsWide = (resolution % 2 == 0) ? resolution + 1 : resolution;
 	this->buildStrip();
 }
 
@@ -22,142 +24,101 @@ Slatissima::~Slatissima()
 		delete(mesh);
 }
 
-void Slatissima::Draw(Shader s)
+void Slatissima::buildStrip()
 {
-	mesh->Draw(s);
-}
+	glm::vec3 v;
+	glm::vec2 t;
 
-void Slatissima::buildModel()
-{
 	Vertex tempVert;
-	GLuint counter = 0;
 
-	tempVert.Normal = glm::vec3(0.f, 0.f, 1.f);
+	GaussianKernel k = getGaussianKernel(glm::vec2(0.f, length / 2.f), glm::vec2(1.f / glm::e<GLfloat>(), 1.f / glm::e<GLfloat>()), 0.f, 1.f);
 
-	for (GLuint i = 0; i < nSpineVerts; ++i)
+	// VERTICES
+	for (GLuint i = 0; i < nVertsWide; ++i)
 	{
-		GLfloat lengthRatio = ((float)i / (float)(nSpineVerts - 1));
-		GLfloat x_offset = glm::sin(lengthRatio * 3.14159f) + spinePadding;
-		GLfloat y_coord = lengthRatio * length;
-		GLfloat z_offset = glm::sin(lengthRatio * 3.14159f * length * wavinessMulti) * (thickness / 2.f);
+		GLfloat widthRatio = static_cast<GLfloat>(i) / static_cast<GLfloat>(nVertsWide - 1);
+		v.x = (widthRatio - 0.5f) * width;
+		t.x = static_cast<GLfloat>(i) / static_cast<GLfloat>(nVertsWide - 1);
+		for (GLuint j = 0; j < nVertsTall; ++j)
+		{
+			GLfloat heightRatio = static_cast<GLfloat>(j) / static_cast<GLfloat>(nVertsTall - 1);
+			v.y = heightRatio * length;
+			t.y = heightRatio;
+			
+			v.z = gaussian(glm::vec2(v), k);
 
-		z_offset *= glm::cosh(x_offset) * sin(y_coord);
-
-		std::complex<GLfloat> inp(x_offset, lengthRatio * 3.14159f * 10.f);
-		z_offset = std::sinh(inp).real() * (thickness / 2.f);
-
-		// Center point first
-		tempVert.TexCoords = glm::vec2(0.5f, lengthRatio);
-		tempVert.Position = glm::vec3(0.f, y_coord, 0.f);
-
-		vertices.push_back(tempVert);
-
-		// Left side
-		tempVert.TexCoords = glm::vec2(0.5f - x_offset / 2.f, lengthRatio);
-		tempVert.Position = glm::vec3( -(x_offset * width / 2.f), y_coord, z_offset);
-
-		vertices.push_back(tempVert);
-
-		// Right side
-
-		tempVert.TexCoords = glm::vec2(0.5f + x_offset / 2.f, lengthRatio);
-		tempVert.Position = glm::vec3(x_offset / 2.f * width, y_coord, z_offset);
-
-		vertices.push_back(tempVert);
-
-		if (i == nSpineVerts - 1) break;
-
-		// Indices
-		indices.push_back(counter + 0);
-		indices.push_back(counter + 3);
-		indices.push_back(counter + 1);
-		
-		indices.push_back(counter + 1);
-		indices.push_back(counter + 3);
-		indices.push_back(counter + 4);
-		
-		indices.push_back(counter + 0);
-		indices.push_back(counter + 2);
-		indices.push_back(counter + 3);
-
-		indices.push_back(counter + 2);
-		indices.push_back(counter + 5);
-		indices.push_back(counter + 3);
-
-		counter += 3;
+			tempVert.Position = v;
+			tempVert.Normal = glm::vec3(0.f);
+			tempVert.TexCoords = t;
+			vertices.push_back(tempVert);
+		}
 	}
 
+	calculateStripNormals(vertices, nVertsWide, nVertsTall);
 
-	calcSpineNormals();
-	calcCenterBladeEdgeNormals();
-
-	mesh = new Mesh(vertices, indices, this->loadTextures());
+	mesh = new Mesh(vertices, getStripIndices(nVertsWide, nVertsTall), this->loadTextures());
 }
 
-void Slatissima::calcSpineNormals()
+void Slatissima::calculateStripNormals(std::vector<Vertex> &verts, GLuint nVertsWide, GLuint nVertsTall)
 {
-	glm::vec3 normal;
-
-	for (GLuint i = 0; i < vertices.size(); i += 3)
+	for (GLuint i = 0; i < nVertsWide; ++i)
 	{
-		normal = glm::vec3(0.f);
-
-		if (i != vertices.size() - 3)
+		glm::vec3 n = glm::vec3(0.f);
+		for (GLuint j = 0; j < nVertsTall; ++j)
 		{
-			normal += getNormalFromIndices(vertices, i + 3, i, i + 1, i);
-			normal += getNormalFromIndices(vertices, i + 2, i, i + 3, i);
-		}
-		else if (i != 0)
-		{
-			normal += getNormalFromIndices(vertices, i - 2, i, i - 3, i);
-			normal += getNormalFromIndices(vertices, i + 1, i, i - 2, i);
-			normal += getNormalFromIndices(vertices, i - 1, i, i + 2, i);
-			normal += getNormalFromIndices(vertices, i - 3, i, i - 1, i);
-		}
+			GLuint b = i * nVertsTall + j;
 
-		vertices[i].Normal = glm::normalize(normal);
+			// BELOW, LEFT TRIANGLES 1 and 2
+			if (i > 0 && j > 0)
+			{
+				n += getNormalFromIndices(verts, b - nVertsTall - 1, b, b - 1, b);
+				n += getNormalFromIndices(verts, b - nVertsTall, b, b - nVertsTall - 1, b);
+			}
+
+			// BELOW, RIGHT TRIANGLE
+			if (i < nVertsWide - 1 && j > 0)
+			{
+				n += getNormalFromIndices(verts, b - 1, b, b + nVertsTall, b);
+			}
+
+			// ABOVE, LEFT TRIANGLE
+			if (i > 0 && j < nVertsTall - 1)
+			{
+				n += getNormalFromIndices(verts, b + 1, b, b - nVertsTall, b);  // ABOVE, LEFT
+			}
+
+			// ABOVE, RIGHT TRIANGLES
+			if (i < nVertsWide - 1 && j < nVertsTall - 1)
+			{
+				n += getNormalFromIndices(verts, b + nVertsTall + 1, b, b + 1, b);
+				n += getNormalFromIndices(verts, b + nVertsTall, b, b + nVertsTall + 1, b);
+			}
+
+			verts[b].Normal = glm::normalize(n);
+		}
 	}
 }
 
-void Slatissima::calcCenterBladeEdgeNormals()
+std::vector<GLuint> Slatissima::getStripIndices(GLuint nVertsWide, GLuint nVertsTall)
 {
-	glm::vec3 normal;
-
-	// Left-side verts first
-	for (GLuint i = 1; i < vertices.size(); i += 3)
+	std::vector<GLuint> inds;
+	for (GLuint i = 0; i < nVertsWide - 1; ++i)
 	{
-		normal = glm::vec3(0.f);
+		for (GLuint j = 0; j < nVertsTall - 1; ++j)
+		{
+			GLuint b = i * nVertsTall + j;
 
-		if (i != vertices.size() - 2)
-		{
-			normal += getNormalFromIndices(vertices, i - 1, i, i + 2, i);
-			normal += getNormalFromIndices(vertices, i + 2, i, i + 3, i);
+			inds.push_back(b);
+			inds.push_back(b + nVertsTall);
+			inds.push_back(b + nVertsTall + 1);
+
+			inds.push_back(b);
+			inds.push_back(b + nVertsTall + 1);
+			inds.push_back(b + 1);
 		}
-		else if (i != 1)
-		{
-			normal += getNormalFromIndices(vertices, i - 3, i, i - 1, i);
-		}
-		
-		vertices[i].Normal = glm::normalize(normal);
 	}
 
-	// Right-side verts
-	for (GLuint i = 2; i < vertices.size(); i += 3)
-	{
-		normal = glm::vec3(0.f);
-
-		if (i != vertices.size() - 1)
-		{			
-			normal += getNormalFromIndices(vertices, i + 1, i, i - 2, i);
-			normal += getNormalFromIndices(vertices, i + 3, i, i + 1, i);
-		}
-		else if (i != 2)
-		{
-			normal += getNormalFromIndices(vertices, i - 2, i, i - 3, i);
-		}
-
-		vertices[i].Normal = glm::normalize(normal);
-	}
+	return inds;
 }
 
 glm::vec3 Slatissima::getNormalFromIndices(std::vector<Vertex> &v, GLuint aInd1, GLuint aInd2, GLuint bInd1, GLuint bInd2)
@@ -214,102 +175,24 @@ std::vector<Texture> Slatissima::loadTextures()
 	return textures;
 }
 
-void Slatissima::buildStrip(GLuint widthGranularity)
+GaussianKernel Slatissima::getGaussianKernel(glm::vec2 center, glm::vec2 spread, GLfloat angle, GLfloat amplitude)
 {
-	std::vector<Vertex> verts;
-	std::vector<GLuint> inds;
+	GLfloat a = 0.5f * (pow(cos(angle), 2) / pow(spread.x, 2)) + 0.5f * (pow(sin(angle), 2) / pow(spread.y, 2));
+	GLfloat b = -0.25f * (sin(2 * angle) / pow(spread.x, 2)) + 0.25f * (sin(2 * angle) / pow(spread.y, 2));
+	GLfloat c = 0.5f * (pow(sin(angle), 2) / pow(spread.x, 2)) + 0.5f * (pow(cos(angle), 2) / pow(spread.y, 2));
 
-	GLuint height = nSpineVerts;
-	GLuint width = 2 * widthGranularity + 1;
+	GaussianKernel k = { center, amplitude, a, b, c };
 
-	glm::vec3 v, n, a, b;
-	glm::vec2 t;
-
-	Vertex tempVert;
-
-	// VERTICES
-	for (GLuint i = 0; i < 2 * widthGranularity + 1; ++i)
-	{
-		v.x = (static_cast<GLfloat>(i) / static_cast<GLfloat>(k - 1) - 0.5f) * 3.14159 * width;
-		t.x = static_cast<GLfloat>(i) / static_cast<GLfloat>(k - 1);
-		for (GLuint j = 0; j < k; ++j)
-		{
-			v.y = (static_cast<GLfloat>(j) / static_cast<GLfloat>(2 * widthGranularity)) * 3.14159 * length;
-			t.y = static_cast<GLfloat>(j) / static_cast<GLfloat>(2 * widthGranularity);
-
-			std::complex<GLfloat> inp(v.x, v.y);
-			v.z = (std::sinh(inp).real() / 2.f) * 10.f * thickness;
-
-			tempVert.Position = v;
-			tempVert.Normal = glm::vec3(0.f);
-			tempVert.TexCoords = t;
-			verts.push_back(tempVert);
-		}
-	}
-
-	calculateStripNormals(verts, 2 * widthGranularity + 1, nSpineVerts);
-
-	calculateStripIndices(inds, 2 * widthGranularity + 1, nSpineVerts);
-
-
-	mesh = new Mesh(verts, inds, this->loadTextures());
+	return k;
 }
 
-void Slatissima::calculateStripNormals(std::vector<Vertex> &verts, GLuint width, GLuint height)
+GLfloat Slatissima::gaussian(glm::vec2 pos, GaussianKernel k)
 {
-	for (GLuint i = 0; i < width; ++i)
-	{
-		glm::vec3 n = glm::vec3(0.f);
-		for (GLuint j = 0; j < height; ++j)
-		{
-			GLuint b = i * width + j;
-
-			// BELOW, LEFT TRIANGLES 1 and 2
-			if(i > 0 && j > 0)
-			{
-				n += getNormalFromIndices(verts, b - height - 1, b, b - 1, b);
-				n += getNormalFromIndices(verts, b - height, b, b - height - 1, b);
-			}
-
-			// BELOW, RIGHT TRIANGLE
-			if(i < width - 1 && j > 0)
-			{
-				n += getNormalFromIndices(verts, b - 1, b, b + height, b);
-			}
-
-			// ABOVE, LEFT TRIANGLE
-			if(i > 0 && j < height - 1)
-			{
-				n += getNormalFromIndices(verts, b + 1, b, b - height, b);  // ABOVE, LEFT
-			}
-
-			// ABOVE, RIGHT TRIANGLES
-			if(i < width - 1 && j < height - 1)
-			{
-				n += getNormalFromIndices(verts, b + height + 1, b, b + 1, b);
-				n += getNormalFromIndices(verts, b + height, b, b + height + 1, b);
-			}
-
-			verts[b].Normal = glm::normalize(n);
-		}
-	}
+	glm::vec2 dist = glm::vec2(pos.x - k.center.x, pos.y - k.center.y);
+	return k.amplitude * exp(-((k.a)*pow(dist.x, 2) - 2*(k.b)*(dist.x)*(dist.y) + (k.c)*pow(dist.y, 2)));
 }
 
-void Slatissima::calculateStripIndices(std::vector<GLuint> &inds, GLuint width, GLuint height)
+void Slatissima::Draw(Shader s)
 {
-	for (GLuint i = 0; i < width - 1; ++i)
-	{
-		for (GLuint j = 0; j < height - 1; ++j)
-		{
-			GLuint b = i * width + j;
-
-			inds.push_back(b);
-			inds.push_back(b + height);
-			inds.push_back(b + height + 1);
-			
-			inds.push_back(b);
-			inds.push_back(b + height + 1);
-			inds.push_back(b + 1);
-		}
-	}
+	mesh->Draw(s);
 }

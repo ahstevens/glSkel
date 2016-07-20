@@ -95,7 +95,7 @@ int main(int argc, char * argv[]) {
 
 	// Initialize the lighting system
 	// Directional light
-	ls.addDLight(glm::vec3(-0.2f, -1.0f, -0.3f));
+	ls.addDLight(glm::vec3(-1.f, -1.f, -1.f));
 	// Positions of the point lights
 	ls.addPLight(glm::vec3(-5.f, 5.f, -5.f));
 	ls.addPLight(glm::vec3( 5.f, 5.f, -5.f));
@@ -124,7 +124,7 @@ int main(int argc, char * argv[]) {
 	// for (GLuint i = 0; i < 10; i++)	c.angles.push_back(20.0f * i);
 
 
-	Slatissima s(10.f, 2.5f, 0.25f, 0.01f, 2.5f, 1000);
+	Slatissima s(10.f, 2.5f, 0.25f, 0.01f, 2.5f);
 
 	// Set texture units
 

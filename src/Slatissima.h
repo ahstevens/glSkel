@@ -2,10 +2,16 @@
 #include <glSkel/mesh.h>
 #include <glSkel/shader.h>
 
+struct GaussianKernel {
+	glm::vec2 center;
+	GLfloat amplitude;
+	GLfloat a, b, c;
+};
+
 class Slatissima
 {
 public:
-	Slatissima(GLfloat length, GLfloat width, GLfloat thickness, GLfloat spinePadding, GLfloat wavinessMulti, GLuint nSegments);
+	Slatissima(GLfloat length, GLfloat width, GLfloat thickness, GLfloat spinePadding, GLfloat wavinessMulti);
 	~Slatissima();
 
 	void Draw(Shader s);
@@ -16,17 +22,14 @@ private:
 	std::vector<GLuint> indices;
 
 	GLfloat length, width, thickness, spinePadding, wavinessMulti;
-	GLuint nSpineVerts;
+	GLuint nVertsTall, nVertsWide;
 
-	void buildModel();
-	void buildCenterBladeGeometry();
-	void calcSpineNormals();
-	void calcCenterBladeEdgeNormals();
+	void buildStrip();
+	void calculateStripNormals(std::vector<Vertex> &v, GLuint nVertsWide, GLuint nVertsTall);
+	std::vector<GLuint> getStripIndices(GLuint nVertsWide, GLuint nVertsTall);
 	glm::vec3 getNormalFromIndices(std::vector<Vertex> &v, GLuint aInd1, GLuint aInd2, GLuint bInd1, GLuint bInd2);
 	std::vector<Texture> loadTextures();
-	
-	void buildStrip(GLuint widthGranularity = 1);
-	void calculateStripNormals(std::vector<Vertex> &v, GLuint width, GLuint height);
-	void calculateStripIndices(std::vector<GLuint> &i, GLuint width, GLuint height);
+	GaussianKernel getGaussianKernel(glm::vec2 center, glm::vec2 spread, GLfloat angle, GLfloat amplitude);
+	GLfloat gaussian(glm::vec2 pos, GaussianKernel k);
 };
 
