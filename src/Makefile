@@ -24,7 +24,7 @@ CPPFLAGS    = -Wno-overloaded-virtual -Wno-deprecated-declarations
 MAKEFILE    = Makefile
 
 # -------------- Compiler and Linker flags ---------------
-CPPFLAGS    += -Wall -std=c++11 $(MYCPPFLAGS) -I$(BASE_DIR)include
+CPPFLAGS    += -Wall -std=c++14 $(MYCPPFLAGS) -I$(BASE_DIR)include
 
 #---------- Application info ------------------------------------------
 

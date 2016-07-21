@@ -124,7 +124,7 @@ int main(int argc, char * argv[]) {
 	// for (GLuint i = 0; i < 10; i++)	c.angles.push_back(20.0f * i);
 
 
-	Slatissima s(10.f, 2.5f, 0.25f, 0.01f, 2.5f);
+	Slatissima s(10.f, 2.f, 0.25f, 0.01f, 2.5f);
 
 	// Set texture units
 

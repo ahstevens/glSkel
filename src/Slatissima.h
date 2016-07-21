@@ -31,5 +31,7 @@ private:
 	GaussianKernel getGaussianKernel(glm::vec2 center, glm::vec2 spread, GLfloat angle, GLfloat amplitude);
 	GLfloat gaussian(glm::vec2 pos, GaussianKernel k);
 	std::complex<GLfloat> complexSinusoid(glm::vec2 pos, glm::vec2 spatialCentralFreq, GLfloat theta = 1.f);
+
+	std::vector<Texture> loadTextures();
 };
 
