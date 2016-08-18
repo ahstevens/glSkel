@@ -8,7 +8,12 @@
 class GeometryStrip
 {
 public:
-	GeometryStrip(std::vector<Vertex> v, GLuint nVertsWide, GLuint nVertsTall) : vertices(v), nVertsWide(nVertsWide), nVertsTall(nVertsTall) {}
+	GeometryStrip(std::vector<Vertex> v, GLuint nVertsWide, GLuint nVertsTall) 
+		: vertices(v)
+		, nVertsWide(nVertsWide)
+		, nVertsTall(nVertsTall)
+	{}
+
 	~GeometryStrip() {}
 
 	std::vector<Vertex> getVertices()
@@ -108,14 +113,9 @@ private:
 	
 	glm::vec3 getNormalFromIndices(std::vector<Vertex> &v, GLuint aInd1, GLuint aInd2, GLuint bInd1, GLuint bInd2)
 	{
-		glm::vec3 a, b;
+		glm::vec3 a = v[aInd1].Position - v[aInd2].Position; 
+		glm::vec3 b = v[bInd1].Position - v[bInd2].Position;
 
-		a = v[aInd1].Position - v[aInd2].Position;
-		if (glm::length(a) < 0.0001f) return glm::vec3(0.f);
-
-		b = v[bInd1].Position - v[bInd2].Position;
-		if (glm::length(b) < 0.0001f) return glm::vec3(0.f);
-
-		return glm::cross(glm::normalize(a), glm::normalize(b));
+		return glm::cross(a, b);
 	}
 };
