@@ -138,6 +138,7 @@ exit 0</Command>
     <None Include="..\shaders\normals.vs" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\glSkel\Gabor.h" />
     <ClInclude Include="..\..\include\glSkel\GeometryStrip.h" />
     <ClInclude Include="..\Cube.h" />
     <ClInclude Include="..\Slatissima.h" />

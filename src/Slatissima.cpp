@@ -66,7 +66,9 @@ void Slatissima::buildStrip()
 	glm::vec2 spatialOrientation{ 0.f, 1.f }; // Cartesian coords, not polar
 	GLfloat spatialFrequency{ 1.f };
 
-	GaussianKernel k = getGaussianKernel(center, kernelSpread, glm::radians(kernelOrientation), kernelAmplitude);
+	Gabor gabor;
+	gabor.setGaussianKernel(center, kernelSpread, glm::radians(kernelOrientation), kernelAmplitude);
+	gabor.setComplexSinusoid(spatialOrientation, spatialFrequency);
 	
 	vertices.clear();
 
@@ -81,7 +83,7 @@ void Slatissima::buildStrip()
 			v.y = heightRatio * length;
 			t.y = heightRatio;
 
-			v.z = complexSinusoid(glm::vec2(v), spatialOrientation, spatialFrequency).real() * gaussian(glm::vec2(v), k);
+			v.z = gabor.get(glm::vec2(v));
 
 			tempVert.Position = v;
 			tempVert.TexCoords = t;
@@ -94,62 +96,42 @@ void Slatissima::buildStrip()
 	g.glueLeft(g2);
 
 	// RIGHT STRIP
-	// glm::vec2 center2{ -width / 2.f, length / 2.f };
-	// glm::vec2 kernelSpread2{ 0.5f, 2.f };
-	// GLfloat kernelOrientation2{ 0.f }; // degrees
-	// GLfloat kernelAmplitude2{ 0.5f };
-	// glm::vec2 spatialOrientation2{ 0.f, 1.f }; // Cartesian coords, not polar
-	// GLfloat spatialFrequency2{ 1.f };
+	 //glm::vec2 center2{ width / 2.f, length / 2.f };
+	 //glm::vec2 kernelSpread2{ 0.5f, 2.f };
+	 //GLfloat kernelOrientation2{ 0.f }; // degrees
+	 //GLfloat kernelAmplitude2{ 0.5f };
+	 //glm::vec2 spatialOrientation2{ 0.f, 1.f }; // Cartesian coords, not polar
+	 //GLfloat spatialFrequency2{ 1.f };
 
-	// GaussianKernel k2 = getGaussianKernel(center2, kernelSpread2, glm::radians(kernelOrientation2), kernelAmplitude2);
+	 //gabor.setGaussianKernel(center2, kernelSpread2, glm::radians(kernelOrientation2), kernelAmplitude2);
+	 //gabor.setComplexSinusoid(spatialOrientation2, spatialFrequency2);
 	
-	// vertices.clear();
+	 //vertices.clear();
 
-	// for (GLuint i = 0; i < nVertsWide; ++i)
-	// {
-	// 	GLfloat widthRatio = static_cast<GLfloat>(i) / static_cast<GLfloat>(nVertsWide - 1);
-	// 	t.x = static_cast<GLfloat>(i) / static_cast<GLfloat>(nVertsWide - 1);
-	// 	for (GLuint j = 0; j < nVertsTall; ++j)
-	// 	{
-	// 		GLfloat heightRatio = static_cast<GLfloat>(j) / static_cast<GLfloat>(nVertsTall - 1);
-	// 		v.x = (widthRatio - 0.5f) * width * 0.5f * sin(heightRatio * glm::pi<GLfloat>());
-	// 		v.y = heightRatio * length;
-	// 		t.y = heightRatio;
+	 //for (GLuint i = 0; i < nVertsWide; ++i)
+	 //{
+	 //	GLfloat widthRatio = static_cast<GLfloat>(i) / static_cast<GLfloat>(nVertsWide - 1);
+	 //	t.x = static_cast<GLfloat>(i) / static_cast<GLfloat>(nVertsWide - 1);
+	 //	for (GLuint j = 0; j < nVertsTall; ++j)
+	 //	{
+	 //		GLfloat heightRatio = static_cast<GLfloat>(j) / static_cast<GLfloat>(nVertsTall - 1);
+	 //		v.x = (widthRatio + 0.5f) * width * 0.5f * sin(heightRatio * glm::pi<GLfloat>());
+	 //		v.y = heightRatio * length;
+	 //		t.y = heightRatio;
 
-	// 		v.z = complexSinusoid(glm::vec2(v), spatialOrientation2, spatialFrequency2).real() * gaussian(glm::vec2(v), k2);
+	 //		v.z = gabor.get(glm::vec2(v));
 
-	// 		tempVert.Position = v;
-	// 		tempVert.TexCoords = t;
-	// 		vertices.push_back(tempVert);
-	// 	}
-	// }
+	 //		tempVert.Position = v;
+	 //		tempVert.TexCoords = t;
+	 //		vertices.push_back(tempVert);
+	 //	}
+	 //}
 
-	// GeometryStrip g3(vertices, nVertsWide, nVertsTall);
+	 //GeometryStrip g3(vertices, nVertsWide, nVertsTall);
 
-	// g.glueRight(g3);
+	 //g.glueRight(g3);
 
 	mesh = new Mesh(g.getVertices(), g.getIndices(), this->loadTextures());
-}
-
-GaussianKernel Slatissima::getGaussianKernel(glm::vec2 center, glm::vec2 spread, GLfloat angle, GLfloat amplitude)
-{
-	GLfloat a = 0.5f * (pow(cos(angle), 2) / pow(spread.x, 2)) + 0.5f * (pow(sin(angle), 2) / pow(spread.y, 2));
-	GLfloat b = -0.25f * (sin(2 * angle) / pow(spread.x, 2)) + 0.25f * (sin(2 * angle) / pow(spread.y, 2));
-	GLfloat c = 0.5f * (pow(sin(angle), 2) / pow(spread.x, 2)) + 0.5f * (pow(cos(angle), 2) / pow(spread.y, 2));
-	
-	return GaussianKernel{ center, amplitude, a, b, c };
-}
-
-GLfloat Slatissima::gaussian(glm::vec2 pos, GaussianKernel k)
-{
-	glm::vec2 dist = pos - k.center;
-	return k.amplitude * exp(-((k.a)*pow(dist.x, 2) - 2*(k.b)*(dist.x)*(dist.y) + (k.c)*pow(dist.y, 2)));
-}
-
-std::complex<GLfloat> Slatissima::complexSinusoid(glm::vec2 pos, glm::vec2 spatialFreq, GLfloat theta)
-{
-	using namespace std::complex_literals;
-	return exp(glm::two_pi<GLfloat>() * theta * 1if * glm::dot(spatialFreq, pos));
 }
 
 std::vector<Texture> Slatissima::loadTextures()
