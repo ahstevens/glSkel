@@ -14,6 +14,48 @@
 
 #include <glSkel/shader.h>
 
+struct HE_Vertex {
+	int id;
+	glm::vec3 pos;
+	glm::vec3 n;
+	glm::vec2 tex;
+	HE_Edge *halfedge;
+
+	HE_Vertex()
+		: id(-1)
+		, pos(glm::vec3(0.f))
+		, n(glm::vec3(0.f))
+		, tex(glm::vec2(0.f))
+		, halfedge(NULL)
+	{}
+};
+
+struct HE_Face {
+	int id;
+	glm::vec3 n;
+
+	HE_Face()
+		: id(-1)
+		, n(glm::vec3(0.f))
+	{}
+};
+
+struct HE_Edge {
+	int id;
+	HE_Edge *next;
+	HE_Edge *opposite;
+	HE_Face *face;
+	HE_Vertex *head;
+
+	HE_Edge()
+		: id(-1)
+		, next(NULL)
+		, opposite(NULL)
+		, face(NULL)
+		, head(NULL)
+	{}
+};
+
 
 struct Vertex {
     glm::vec3 Position;
@@ -33,6 +75,10 @@ public:
 	std::vector<GLuint> indices;
 	std::vector<Texture> textures;
     GLuint VAO;
+
+	std::vector<HE_Edge> edges;
+	std::vector<HE_Face> faces;
+	std::vector<HE_Vertex> vertices;
 
 	glm::vec3 position;
 	GLfloat angle;

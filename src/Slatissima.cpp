@@ -141,13 +141,10 @@ std::vector<Texture> Slatissima::loadTextures()
 	glGenTextures(1, &diffuseMap.id);
 	glGenTextures(1, &specularMap.id);
 	int width = 1, height = 1;
-	unsigned char image[3];
+	unsigned char image[3] = { 0x55, 0xFF, 0x11 };
 
 	// Diffuse map
 	diffuseMap.type = "texture_diffuse";
-	image[0] = 0x55;
-	image[1] = 0xFF;
-	image[2] = 0x11;
 	glBindTexture(GL_TEXTURE_2D, diffuseMap.id);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &image);
 	glGenerateMipmap(GL_TEXTURE_2D);
@@ -158,9 +155,6 @@ std::vector<Texture> Slatissima::loadTextures()
 
 	// Specular map
 	specularMap.type = "texture_specular";
-	image[0] = 0x55;
-	image[1] = 0xFF;
-	image[2] = 0x11;
 	glBindTexture(GL_TEXTURE_2D, specularMap.id);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, &image);
 	glGenerateMipmap(GL_TEXTURE_2D);
