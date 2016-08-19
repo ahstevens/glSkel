@@ -14,6 +14,10 @@
 
 #include <glSkel/shader.h>
 
+struct HE_Vertex;
+struct HE_Face;
+struct HE_Edge;
+
 struct HE_Vertex {
 	int id;
 	glm::vec3 pos;
@@ -78,7 +82,7 @@ public:
 
 	std::vector<HE_Edge> edges;
 	std::vector<HE_Face> faces;
-	std::vector<HE_Vertex> vertices;
+	std::vector<HE_Vertex> verts;
 
 	glm::vec3 position;
 	GLfloat angle;
