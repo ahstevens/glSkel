@@ -96,40 +96,40 @@ void Slatissima::buildStrip()
 	g.glueLeft(g2);
 
 	// RIGHT STRIP
-	 //glm::vec2 center2{ width / 2.f, length / 2.f };
-	 //glm::vec2 kernelSpread2{ 0.5f, 2.f };
-	 //GLfloat kernelOrientation2{ 0.f }; // degrees
-	 //GLfloat kernelAmplitude2{ 0.5f };
-	 //glm::vec2 spatialOrientation2{ 0.f, 1.f }; // Cartesian coords, not polar
-	 //GLfloat spatialFrequency2{ 1.f };
+	//glm::vec2 center2{ width / 2.f, length / 2.f };
+	//glm::vec2 kernelSpread2{ 0.5f, 2.f };
+	//GLfloat kernelOrientation2{ 0.f }; // degrees
+	//GLfloat kernelAmplitude2{ 0.5f };
+	//glm::vec2 spatialOrientation2{ 0.f, 1.f }; // Cartesian coords, not polar
+	//GLfloat spatialFrequency2{ 1.f };
 
-	 //gabor.setGaussianKernel(center2, kernelSpread2, glm::radians(kernelOrientation2), kernelAmplitude2);
-	 //gabor.setComplexSinusoid(spatialOrientation2, spatialFrequency2);
+	//gabor.setGaussianKernel(center2, kernelSpread2, glm::radians(kernelOrientation2), kernelAmplitude2);
+	//gabor.setComplexSinusoid(spatialOrientation2, spatialFrequency2);
 	
-	 //vertices.clear();
+	//vertices.clear();
 
-	 //for (GLuint i = 0; i < nVertsWide; ++i)
-	 //{
-	 //	GLfloat widthRatio = static_cast<GLfloat>(i) / static_cast<GLfloat>(nVertsWide - 1);
-	 //	t.x = static_cast<GLfloat>(i) / static_cast<GLfloat>(nVertsWide - 1);
-	 //	for (GLuint j = 0; j < nVertsTall; ++j)
-	 //	{
-	 //		GLfloat heightRatio = static_cast<GLfloat>(j) / static_cast<GLfloat>(nVertsTall - 1);
-	 //		v.x = (widthRatio + 0.5f) * width * 0.5f * sin(heightRatio * glm::pi<GLfloat>());
-	 //		v.y = heightRatio * length;
-	 //		t.y = heightRatio;
+	//for (GLuint i = 0; i < nVertsWide; ++i)
+	//{
+	//	GLfloat widthRatio = static_cast<GLfloat>(i) / static_cast<GLfloat>(nVertsWide - 1);
+	//	t.x = static_cast<GLfloat>(i) / static_cast<GLfloat>(nVertsWide - 1);
+	//	for (GLuint j = 0; j < nVertsTall; ++j)
+	//	{
+	//		GLfloat heightRatio = static_cast<GLfloat>(j) / static_cast<GLfloat>(nVertsTall - 1);
+	//		v.x = (widthRatio + 0.5f) * width * 0.5f * sin(heightRatio * glm::pi<GLfloat>());
+	//		v.y = heightRatio * length;
+	//		t.y = heightRatio;
 
-	 //		v.z = gabor.get(glm::vec2(v));
+	//		v.z = gabor.get(glm::vec2(v));
 
-	 //		tempVert.Position = v;
-	 //		tempVert.TexCoords = t;
-	 //		vertices.push_back(tempVert);
-	 //	}
-	 //}
+	//		tempVert.Position = v;
+	//		tempVert.TexCoords = t;
+	//		vertices.push_back(tempVert);
+	//	}
+	//}
 
-	 //GeometryStrip g3(vertices, nVertsWide, nVertsTall);
+	//GeometryStrip g3(vertices, nVertsWide, nVertsTall);
 
-	 //g.glueRight(g3);
+	//g.glueRight(g3);
 
 	mesh = new Mesh(g.getVertices(), g.getIndices(), this->loadTextures());
 }
