@@ -44,16 +44,36 @@ public:
 		return inds;
 	}
 
-	void glueOnLeftOf(GeometryStrip* s)
+	void glueLeft(GeometryStrip &s)
 	{
-		assert(this->nVertsTall == s->nVertsTall);
+		assert(this->nVertsTall == s.nVertsTall);
 
-		for (GLuint i = 0; i < this->nVertsWide; ++i)
+		for (GLuint i  = 0; i < s.nVertsWide; ++i)
 		{
-			for (GLuint j = 0; j < this->nVertsTall; ++j)
+			for (GLuint j = 0; j < s.nVertsTall; ++j)
 			{
-				GLuint b = i * nVertsTall + j;
-				GLfloat displacement = s->vertices[j].Position.x - this->vertices[(nVertsWide - 1) * nVertsTall + j].Position.x;
+				GLuint b = i * s.nVertsTall + j;
+				GLfloat displacement = this->vertices[j].Position.x - s.vertices[(s.nVertsWide - 1) * s.nVertsTall + j].Position.x;
+				s.vertices[b].Position.x += displacement;
+			}
+		}
+
+		// Stitch the two meshes together
+		this->vertices.insert(std::begin(this->vertices), std::begin(s.vertices), std::end(s.vertices));
+		
+		this->nVertsWide += s.nVertsWide; // update new geometry strip dims
+	}
+
+	void glueRight(const GeometryStrip &s)
+	{
+		assert(this->nVertsTall == s.nVertsTall);
+
+		for (GLuint i = 0; i < s.nVertsWide; ++i)
+		{
+			for (GLuint j = 0; j < s.nVertsTall; ++j)
+			{
+				GLuint b = i * s.nVertsTall + j;
+				GLfloat displacement = this->vertices[(nVertsWide - 1) * nVertsTall + j].Position.x - s.vertices[j].Position.x;
 				this->vertices[b].Position.x += displacement;
 			}
 		}
@@ -61,9 +81,9 @@ public:
 		// Stitch the two meshes together by replacing the last column of this->vertices with the first column of s->vertices
 		std::vector<Vertex>::iterator nth = this->vertices.begin() + (this->nVertsWide - 1) * this->nVertsTall;
 
-		this->vertices.insert(nth, std::begin(s->vertices), std::end(s->vertices));
+		this->vertices.insert(nth, std::begin(s.vertices), std::end(s.vertices));
 		
-		this->nVertsWide += s->nVertsWide - 1; // update new geometry strip dims
+		this->nVertsWide += s.nVertsWide; // update new geometry strip dims
 	}
 
 private:
