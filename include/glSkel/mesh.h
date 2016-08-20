@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <map>
 
 // GL Includes
 #include <GL/glew.h> // Contains all the necessery OpenGL includes
@@ -21,25 +22,23 @@ struct HE_Edge;
 struct HE_Vertex {
 	int id;
 	glm::vec3 pos;
-	glm::vec3 n;
-	glm::vec2 tex;
 	HE_Edge *halfedge;
 
 	HE_Vertex()
 		: id(-1)
 		, pos(glm::vec3(0.f))
-		, n(glm::vec3(0.f))
-		, tex(glm::vec2(0.f))
 		, halfedge(NULL)
 	{}
 };
 
 struct HE_Face {
 	int id;
+    HE_Edge *edge;
 	glm::vec3 n;
 
 	HE_Face()
 		: id(-1)
+        , edge(NULL)
 		, n(glm::vec3(0.f))
 	{}
 };
@@ -94,6 +93,81 @@ public:
         this->vertices = vertices;
         this->indices = indices;
         this->textures = textures;
+
+        for (int i = 0; i < vertices.size(); ++i)
+        {
+            HE_Vertex v;
+            v.id = i;
+            v.pos = vertices[i].Position;
+            verts.push_back(v);
+        }
+
+        std::map< std::pair<int, int>, HE_Edge* > edgeMap;
+
+        int faceCount = 0;
+        int edgeCount = 0;
+        for (int i = 0; i < indices.size(); i += 3)
+        {
+            HE_Face f;
+            f.id = faceCount++;
+
+            HE_Edge e1, e2, e3;
+            e1.id = edgeCount++;
+            e2.id = edgeCount++;
+            e3.id = edgeCount++;
+
+            f.edge = &e1;
+
+            e1.face = &f;
+            e1.next = &e2;
+            e1.head = &verts[indices[i + 1]];
+
+            e2.face = &f;
+            e2.next = &e3;
+            e2.head = &verts[indices[i + 2]];
+
+            e3.face = &f;
+            e3.next = &e1;
+            e3.head = &verts[indices[i]];
+
+            if (!verts[indices[i]].halfedge) verts[indices[i]].halfedge = &e1;
+            if (!verts[indices[i+1]].halfedge) verts[indices[i+1]].halfedge = &e2;
+            if (!verts[indices[i+2]].halfedge) verts[indices[i+2]].halfedge = &e3;
+
+            faces.push_back(f);
+            edges.push_back(e1);
+            edges.push_back(e2);
+            edges.push_back(e3);
+
+            edgeMap[std::pair<int, int>(i, i + 1)] = &e1;
+            edgeMap[std::pair<int, int>(i + 1, i + 2)] = &e2;
+            edgeMap[std::pair<int, int>(i + 2, i)] = &e3;
+        }
+
+        std::map< std::pair<int, int>, HE_Edge* >::iterator it;
+        for (it = edgeMap.begin(); it != edgeMap.end(); it++)
+        {
+            if (it->second->opposite != NULL) continue;
+
+            std::map< std::pair<int, int>, HE_Edge* >::iterator opp;
+            opp = edgeMap.find(std::pair<int, int>(it->first.second, it->first.first));
+            if(opp != edgeMap.end())
+            {
+                it->second->opposite = opp->second;
+                opp->second->opposite = it->second;
+            }
+        }
+
+        for (int i = 0; i < faces.size(); ++i)
+        {
+            glm::vec3 v1 = faces[i].edge->head->pos;
+            glm::vec3 v2 = faces[i].edge->next->head->pos;
+            glm::vec3 v3 = faces[i].edge->next->next->head->pos;
+            glm::vec3 a = v3 - v2; 
+		    glm::vec3 b = v1 - v2;
+
+		    faces[i].n = glm::cross(a, b);
+        }
 
         // Now that we have all the required data, set the vertex buffers and its attribute pointers.
         this->setupMesh();
