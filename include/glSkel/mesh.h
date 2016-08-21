@@ -79,9 +79,10 @@ public:
 	std::vector<Texture> textures;
     GLuint VAO;
 
-	std::vector<HE_Edge> edges;
-	std::vector<HE_Face> faces;
-	std::vector<HE_Vertex> verts;
+	std::vector<HE_Edge*> edges;
+	std::vector<HE_Face*> faces;
+	std::vector<HE_Vertex*> verts;
+	HE_Edge *boundaryEdge;
 
 	glm::vec3 position;
 	GLfloat angle;
@@ -93,81 +94,130 @@ public:
         this->vertices = vertices;
         this->indices = indices;
         this->textures = textures;
+		this->boundaryEdge = NULL;
 
         for (int i = 0; i < vertices.size(); ++i)
         {
-            HE_Vertex v;
-            v.id = i;
-            v.pos = vertices[i].Position;
+            HE_Vertex *v = new HE_Vertex();
+            v->id = i;
+            v->pos = vertices[i].Position;
             verts.push_back(v);
         }
 
-        std::map< std::pair<int, int>, HE_Edge* > edgeMap;
+		typedef std::map< std::pair<int, int>, HE_Edge* > EdgeMapT;
+
+        EdgeMapT edgeMap;
 
         int faceCount = 0;
         int edgeCount = 0;
         for (int i = 0; i < indices.size(); i += 3)
         {
-            HE_Face f;
-            f.id = faceCount++;
+            HE_Face *f = new HE_Face();
+            f->id = faceCount++;
 
-            HE_Edge e1, e2, e3;
-            e1.id = edgeCount++;
-            e2.id = edgeCount++;
-            e3.id = edgeCount++;
+            HE_Edge *e1, *e2, *e3;
+			e1 = new HE_Edge();
+			e2 = new HE_Edge();
+			e3 = new HE_Edge();
 
-            f.edge = &e1;
+            e1->id = edgeCount++;
+            e2->id = edgeCount++;
+            e3->id = edgeCount++;
 
-            e1.face = &f;
-            e1.next = &e2;
-            e1.head = &verts[indices[i + 1]];
+            f->edge = e1;
 
-            e2.face = &f;
-            e2.next = &e3;
-            e2.head = &verts[indices[i + 2]];
+            e1->face = f;
+            e1->next = e2;
+            e1->head = verts[indices[i + 1]];
 
-            e3.face = &f;
-            e3.next = &e1;
-            e3.head = &verts[indices[i]];
+            e2->face = f;
+            e2->next = e3;
+            e2->head = verts[indices[i + 2]];
 
-            if (!verts[indices[i]].halfedge) verts[indices[i]].halfedge = &e1;
-            if (!verts[indices[i+1]].halfedge) verts[indices[i+1]].halfedge = &e2;
-            if (!verts[indices[i+2]].halfedge) verts[indices[i+2]].halfedge = &e3;
+            e3->face = f;
+            e3->next = e1;
+            e3->head = verts[indices[i]];
+
+            if (!verts[indices[i]]->halfedge) verts[indices[i]]->halfedge = e1;
+            if (!verts[indices[i+1]]->halfedge) verts[indices[i+1]]->halfedge = e2;
+            if (!verts[indices[i+2]]->halfedge) verts[indices[i+2]]->halfedge = e3;
 
             faces.push_back(f);
             edges.push_back(e1);
             edges.push_back(e2);
             edges.push_back(e3);
 
-            edgeMap[std::pair<int, int>(i, i + 1)] = &e1;
-            edgeMap[std::pair<int, int>(i + 1, i + 2)] = &e2;
-            edgeMap[std::pair<int, int>(i + 2, i)] = &e3;
+            edgeMap[std::pair<int, int>(indices[i], indices[i + 1])] = e1;
+            edgeMap[std::pair<int, int>(indices[i + 1], indices[i + 2])] = e2;
+            edgeMap[std::pair<int, int>(indices[i + 2], indices[i])] = e3;
         }
 
-        std::map< std::pair<int, int>, HE_Edge* >::iterator it;
+        EdgeMapT::iterator it;
         for (it = edgeMap.begin(); it != edgeMap.end(); it++)
         {
             if (it->second->opposite != NULL) continue;
 
-            std::map< std::pair<int, int>, HE_Edge* >::iterator opp;
-            opp = edgeMap.find(std::pair<int, int>(it->first.second, it->first.first));
+			EdgeMapT::iterator opp = edgeMap.find(std::pair<int, int>(it->first.second, it->first.first));
             if(opp != edgeMap.end())
             {
                 it->second->opposite = opp->second;
                 opp->second->opposite = it->second;
             }
+			else // boundary edge
+			{
+				HE_Edge *newBoundaryEdge = new HE_Edge();
+				newBoundaryEdge->id = edgeCount++;
+				newBoundaryEdge->head = it->second->next->next->head;
+				newBoundaryEdge->face = NULL;
+				
+				// link new edge to next, if it exists
+				if (!newBoundaryEdge->head->halfedge->face)
+					newBoundaryEdge->next = newBoundaryEdge->head->halfedge;
+
+				// link opposite edges
+				newBoundaryEdge->opposite = it->second;
+				it->second->opposite = newBoundaryEdge;
+
+				// change emanating vertex to point to new boundary edge
+				it->second->head->halfedge = newBoundaryEdge;
+
+				edges.push_back(newBoundaryEdge);
+
+				if (!boundaryEdge) boundaryEdge = newBoundaryEdge;
+			}
         }
 
+		for (int i = 0; i < edges.size(); ++i)
+			if (!edges[i]->next)
+				edges[i]->next = edges[i]->head->halfedge;
+
+		float area = 0.f;
         for (int i = 0; i < faces.size(); ++i)
         {
-            glm::vec3 v1 = faces[i].edge->head->pos;
-            glm::vec3 v2 = faces[i].edge->next->head->pos;
-            glm::vec3 v3 = faces[i].edge->next->next->head->pos;
+            glm::vec3 v1 = faces[i]->edge->head->pos;
+            glm::vec3 v2 = faces[i]->edge->next->head->pos;
+            glm::vec3 v3 = faces[i]->edge->next->next->head->pos;
             glm::vec3 a = v3 - v2; 
 		    glm::vec3 b = v1 - v2;
 
-		    faces[i].n = glm::cross(a, b);
+		    faces[i]->n = glm::cross(a, b);
+			area += glm::length(faces[i]->n);
         }
+
+		std::cout << "Surface area: " << area << " cm^2 (" << faces.size() << " faces)" << std::endl;
+
+		float perimeter = 0.f;
+		int beCount = 0;
+		HE_Edge *e = boundaryEdge;
+		do
+		{
+			perimeter += glm::length(e->head->pos - e->opposite->head->pos);
+			e = e->next;
+			beCount++;
+		} while (e != boundaryEdge);
+
+		std::cout << "Surface perimeter: " << perimeter << " cm (" << beCount << " boundary edges)" << std::endl;
+
 
         // Now that we have all the required data, set the vertex buffers and its attribute pointers.
         this->setupMesh();
