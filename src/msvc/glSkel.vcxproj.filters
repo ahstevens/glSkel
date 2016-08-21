@@ -73,5 +73,8 @@
     <ClInclude Include="..\..\include\glSkel\Gabor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\glSkel\mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
