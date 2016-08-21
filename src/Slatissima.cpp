@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
-const GLuint resolution = 100;
+const GLuint resolution = 1000;
 
 Slatissima::Slatissima(GLfloat length, GLfloat width, GLfloat thickness, GLfloat spinePadding, GLfloat wavinessMulti)
 {
@@ -43,6 +43,7 @@ void Slatissima::buildStrip()
 			if(i == 0) displacement = -width / 2;
 			if(i == 2) displacement = width / 2;
 			v.x = sin(heightRatio * glm::pi<GLfloat>()) * displacement * 0.5f;
+			//v.x = displacement * 0.5f;
 			v.y = heightRatio * length;
 
 			t.x = static_cast<GLfloat>(i) / 2.f;
@@ -79,10 +80,12 @@ void Slatissima::buildStrip()
 		{
 			GLfloat heightRatio = static_cast<GLfloat>(j) / static_cast<GLfloat>(nVertsTall - 1);
 			v.x = (widthRatio - 0.5f) * width * 0.5f * sin(heightRatio * glm::pi<GLfloat>());
+			//v.x = (widthRatio - 0.5f) * width * 0.5f;
 			v.y = heightRatio * length;
 			t.y = heightRatio;
 
 			v.z = gabor.get(glm::vec2(v));
+			//v.z = 0.f;
 
 			tempVert = v;
 			vertices.push_back(tempVert);
