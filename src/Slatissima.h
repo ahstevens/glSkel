@@ -14,7 +14,7 @@ public:
 
 private:
 	Mesh* mesh;
-	std::vector<Vertex> vertices;
+	std::vector<glm::vec3> vertices;
 	std::vector<GLuint> indices;
 
 	GLfloat length, width, thickness, spinePadding, wavinessMulti;

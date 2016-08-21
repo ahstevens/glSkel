@@ -30,7 +30,7 @@ void Slatissima::buildStrip()
 	glm::vec3 v;
 	glm::vec2 t;
 
-	Vertex tempVert;
+	glm::vec3 tempVert;
 
 	// CENTRAL BLADE VERTICES
 	for (GLuint i = 0; i < 3; ++i)
@@ -50,8 +50,7 @@ void Slatissima::buildStrip()
 			
 			v.z = 0.f;
 
-			tempVert.Position = v;
-			tempVert.TexCoords = t;
+			tempVert = v;
 			vertices.push_back(tempVert);
 		}
 	}
@@ -85,8 +84,7 @@ void Slatissima::buildStrip()
 
 			v.z = gabor.get(glm::vec2(v));
 
-			tempVert.Position = v;
-			tempVert.TexCoords = t;
+			tempVert = v;
 			vertices.push_back(tempVert);
 		}
 	}

@@ -6,9 +6,9 @@
 
 Cube::Cube()
 {
-	std::vector<Vertex> vertices;
+	std::vector<glm::vec3> vertices;
 	std::vector<GLuint> indices;
-	Vertex tempVert;
+	glm::vec3 tempVert;
 	std::vector<GLuint> tempInds = { 0, 1, 2, 2, 3, 0 };
 
 	glm::vec3 backTopLeft   = glm::vec3(-0.5f,  0.5f, -0.5f);
@@ -21,72 +21,60 @@ Cube::Cube()
 	glm::vec3 frontBotRight = glm::vec3( 0.5f, -0.5f,  0.5f);
 
 	// Face 1
-	tempVert.Normal = glm::vec3(0.0f, 0.0f, -1.0f);
-
-	tempVert.Position = backBotLeft;  tempVert.TexCoords = glm::vec2(0.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = backBotRight; tempVert.TexCoords = glm::vec2(1.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = backTopRight; tempVert.TexCoords = glm::vec2(1.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = backTopLeft;  tempVert.TexCoords = glm::vec2(0.0f, 1.0f); vertices.push_back(tempVert);
+	tempVert = backBotLeft;  vertices.push_back(tempVert);
+	tempVert = backBotRight; vertices.push_back(tempVert);
+	tempVert = backTopRight; vertices.push_back(tempVert);
+	tempVert = backTopLeft;  vertices.push_back(tempVert);
 
 	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
 
 	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(), [](GLuint n) { return n + 4; });
 
 	// Face 2
-	tempVert.Normal = glm::vec3(0.0f, 0.0f, 1.0f);
-
-	tempVert.Position = frontBotLeft;  tempVert.TexCoords = glm::vec2(0.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontBotRight; tempVert.TexCoords = glm::vec2(1.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontTopRight; tempVert.TexCoords = glm::vec2(1.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontTopLeft;  tempVert.TexCoords = glm::vec2(0.0f, 1.0f); vertices.push_back(tempVert);
+	tempVert = frontBotLeft;  vertices.push_back(tempVert);
+	tempVert = frontBotRight; vertices.push_back(tempVert);
+	tempVert = frontTopRight; vertices.push_back(tempVert);
+	tempVert = frontTopLeft;  vertices.push_back(tempVert);
 
 	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
 
 	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(), [](GLuint n) { return n + 4; });
 
 	// Face 3
-	tempVert.Normal = glm::vec3(-1.0f, 0.0f, 0.0f);
-
-	tempVert.Position = frontTopLeft; tempVert.TexCoords = glm::vec2(1.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = backTopLeft;  tempVert.TexCoords = glm::vec2(1.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = backBotLeft;  tempVert.TexCoords = glm::vec2(0.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontBotLeft; tempVert.TexCoords = glm::vec2(0.0f, 0.0f); vertices.push_back(tempVert);
+	tempVert = frontTopLeft; vertices.push_back(tempVert);
+	tempVert = backTopLeft;  vertices.push_back(tempVert);
+	tempVert = backBotLeft;  vertices.push_back(tempVert);
+	tempVert = frontBotLeft; vertices.push_back(tempVert);
 
 	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
 
 	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(), [](GLuint n) { return n + 4; });
 
 	// Face 4
-	tempVert.Normal = glm::vec3(1.0f, 0.0f, 0.0f);
-
-	tempVert.Position = frontTopRight; tempVert.TexCoords = glm::vec2(1.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = backTopRight;  tempVert.TexCoords = glm::vec2(1.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = backBotRight;  tempVert.TexCoords = glm::vec2(0.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontBotRight; tempVert.TexCoords = glm::vec2(0.0f, 0.0f); vertices.push_back(tempVert);
+	tempVert = frontTopRight; vertices.push_back(tempVert);
+	tempVert = backTopRight;  vertices.push_back(tempVert);
+	tempVert = backBotRight;  vertices.push_back(tempVert);
+	tempVert = frontBotRight; vertices.push_back(tempVert);
 
 	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
 
 	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(), [](GLuint n) { return n + 4; });
 
 	// Face 5
-	tempVert.Normal = glm::vec3(0.0f, -1.0f, 0.0f);
-
-	tempVert.Position = backBotLeft;   tempVert.TexCoords = glm::vec2(0.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = backBotRight;  tempVert.TexCoords = glm::vec2(1.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontBotRight; tempVert.TexCoords = glm::vec2(1.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontBotLeft;  tempVert.TexCoords = glm::vec2(0.0f, 0.0f); vertices.push_back(tempVert);
+	tempVert = backBotLeft;   vertices.push_back(tempVert);
+	tempVert = backBotRight;  vertices.push_back(tempVert);
+	tempVert = frontBotRight; vertices.push_back(tempVert);
+	tempVert = frontBotLeft;  vertices.push_back(tempVert);
 
 	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
 
 	std::transform(tempInds.begin(), tempInds.end(), tempInds.begin(), [](GLuint n) { return n + 4; });
 
 	// Face 6
-	tempVert.Normal = glm::vec3(0.0f, 1.0f, 0.0f);
-
-	tempVert.Position = backTopLeft;   tempVert.TexCoords = glm::vec2(0.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = backTopRight;  tempVert.TexCoords = glm::vec2(1.0f, 1.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontTopRight; tempVert.TexCoords = glm::vec2(1.0f, 0.0f); vertices.push_back(tempVert);
-	tempVert.Position = frontTopLeft;  tempVert.TexCoords = glm::vec2(0.0f, 0.0f); vertices.push_back(tempVert);
+	tempVert = backTopLeft;   vertices.push_back(tempVert);
+	tempVert = backTopRight;  vertices.push_back(tempVert);
+	tempVert = frontTopRight; vertices.push_back(tempVert);
+	tempVert = frontTopLeft;  vertices.push_back(tempVert);
 
 	indices.insert(indices.end(), tempInds.begin(), tempInds.end());
 

@@ -34,12 +34,12 @@ struct HE_Vertex {
 struct HE_Face {
 	int id;
     HE_Edge *edge;
-	glm::vec3 n;
+	glm::vec3 normal;
 
 	HE_Face()
 		: id(-1)
         , edge(NULL)
-		, n(glm::vec3(0.f))
+		, normal(glm::vec3(0.f))
 	{}
 };
 
@@ -89,18 +89,17 @@ public:
 
     /*  Functions  */
     // Constructor
-    Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<Texture> textures)
+    Mesh(std::vector<glm::vec3> vec3Vertices, std::vector<GLuint> indices, std::vector<Texture> textures)
     {
-        this->vertices = vertices;
         this->indices = indices;
         this->textures = textures;
 		this->boundaryEdge = NULL;
 
-        for (int i = 0; i < vertices.size(); ++i)
+        for (int i = 0; i < vec3Vertices.size(); ++i)
         {
             HE_Vertex *v = new HE_Vertex();
             v->id = i;
-            v->pos = vertices[i].Position;
+            v->pos = vec3Vertices[i];
             verts.push_back(v);
         }
 
@@ -151,9 +150,8 @@ public:
             edgeMap[std::pair<int, int>(indices[i + 1], indices[i + 2])] = e2;
             edgeMap[std::pair<int, int>(indices[i + 2], indices[i])] = e3;
         }
-
-        EdgeMapT::iterator it;
-        for (it = edgeMap.begin(); it != edgeMap.end(); it++)
+        
+        for (EdgeMapT::iterator it = edgeMap.begin(); it != edgeMap.end(); it++)
         {
             if (it->second->opposite != NULL) continue;
 
@@ -194,14 +192,14 @@ public:
 		float area = 0.f;
         for (int i = 0; i < faces.size(); ++i)
         {
-            glm::vec3 v1 = faces[i]->edge->head->pos;
-            glm::vec3 v2 = faces[i]->edge->next->head->pos;
-            glm::vec3 v3 = faces[i]->edge->next->next->head->pos;
-            glm::vec3 a = v3 - v2; 
-		    glm::vec3 b = v1 - v2;
+            glm::vec3 vert1 = faces[i]->edge->head->pos;
+            glm::vec3 vert2 = faces[i]->edge->next->head->pos;
+            glm::vec3 vert3 = faces[i]->edge->next->next->head->pos;
+            glm::vec3 vecA = vert3 - vert2; 
+		    glm::vec3 vecB = vert1 - vert2;
 
-		    faces[i]->n = glm::cross(a, b);
-			area += glm::length(faces[i]->n);
+		    faces[i]->normal = glm::cross(vecA, vecB); // calc face normal (not normalized)
+			area += glm::length(faces[i]->normal);     // face area is magnitude of face normal
         }
 
 		std::cout << "Surface area: " << area << " cm^2 (" << faces.size() << " faces)" << std::endl;
@@ -217,6 +215,26 @@ public:
 		} while (e != boundaryEdge);
 
 		std::cout << "Surface perimeter: " << perimeter << " cm (" << beCount << " boundary edges)" << std::endl;
+		
+		for (std::vector<HE_Vertex*>::iterator it = verts.begin(); it != verts.end(); it++)
+		{
+			Vertex v;
+			v.Position = (*it)->pos;
+			v.Normal = glm::vec3(0.f);
+			v.TexCoords = glm::vec2(0.5f);
+
+			HE_Edge *beginEdge = (*it)->halfedge;
+			HE_Edge *e = beginEdge;
+			do
+			{
+				if (e->face)
+					v.Normal += e->face->normal;
+				e = e->opposite->next;
+			} while (e != beginEdge);
+			v.Normal = glm::normalize(v.Normal);
+
+			this->vertices.push_back(v);
+		}
 
 
         // Now that we have all the required data, set the vertex buffers and its attribute pointers.
