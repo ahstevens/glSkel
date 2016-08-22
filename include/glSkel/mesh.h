@@ -189,53 +189,13 @@ public:
 			if (!edges[i]->next)
 				edges[i]->next = edges[i]->head->halfedge;
 
-		float area = 0.f;
-        for (int i = 0; i < faces.size(); ++i)
-        {
-            glm::vec3 vert1 = faces[i]->edge->head->pos;
-            glm::vec3 vert2 = faces[i]->edge->next->head->pos;
-            glm::vec3 vert3 = faces[i]->edge->next->next->head->pos;
-            glm::vec3 vecA = vert3 - vert2; 
-		    glm::vec3 vecB = vert1 - vert2;
-
-		    faces[i]->normal = glm::cross(vecA, vecB); // calc face normal (not normalized)
-			area += glm::length(faces[i]->normal);     // face area is magnitude of face normal
-        }
-
-		std::cout << "Surface area: " << area << " cm^2 (" << faces.size() << " faces)" << std::endl;
-
-		float perimeter = 0.f;
-		int beCount = 0;
-		HE_Edge *e = boundaryEdge;
-		do
-		{
-			perimeter += glm::length(e->head->pos - e->opposite->head->pos);
-			e = e->next;
-			beCount++;
-		} while (e != boundaryEdge);
-
-		std::cout << "Surface perimeter: " << perimeter << " cm (" << beCount << " boundary edges)" << std::endl;
+		this->calculateFaceNormals();
 		
-		for (std::vector<HE_Vertex*>::iterator it = verts.begin(); it != verts.end(); it++)
-		{
-			Vertex v;
-			v.Position = (*it)->pos;
-			v.Normal = glm::vec3(0.f);
-			v.TexCoords = glm::vec2(0.5f);
+		std::cout << "Surface area: " << getSurfaceArea() << " cm^2 (" << faces.size() << " faces)" << std::endl;
+		
+		std::cout << "Surface perimeter: " << getPerimeter() << " cm (" << getBoundaryEdgeCount() << " boundary edges)" << std::endl;
 
-			HE_Edge *beginEdge = (*it)->halfedge;
-			HE_Edge *e = beginEdge;
-			do
-			{
-				if (e->face)
-					v.Normal += e->face->normal;
-				e = e->opposite->next;
-			} while (e != beginEdge);
-			v.Normal = glm::normalize(v.Normal);
-
-			this->vertices.push_back(v);
-		}
-
+		this->calculateVertexNormals();
 
         // Now that we have all the required data, set the vertex buffers and its attribute pointers.
         this->setupMesh();
@@ -290,6 +250,55 @@ public:
         }
     }
 
+	unsigned int getVertexCount() { return verts.size(); }
+
+	unsigned int getFaceCount()	{ return faces.size(); }
+
+	unsigned int getHalfEdgeCount() { return edges.size(); }
+
+	unsigned int getBoundaryEdgeCount()
+	{
+		if (!boundaryEdge)
+			return 0u;
+
+		HE_Edge *e = boundaryEdge;
+
+		unsigned int count = 0u;
+		do
+		{
+			count++;
+			e = e->next;
+		} while (e != boundaryEdge);
+
+		return count;
+	}
+
+	float getSurfaceArea()
+	{
+		float area = 0.f;
+
+		for (int i = 0; i < faces.size(); ++i)
+			area += glm::length(faces[i]->normal);     // face area is magnitude of face normal
+
+		return area;
+	}
+
+	float getPerimeter()
+	{
+		if (!boundaryEdge)
+			return 0.f;
+
+		float p = 0.f;
+		HE_Edge *e = boundaryEdge;
+		do
+		{
+			p += glm::length(e->head->pos - e->opposite->head->pos);
+			e = e->next;
+		} while (e != boundaryEdge);
+
+		return p;
+	}
+
 private:
     /*  Render data  */
     GLuint VBO, EBO;
@@ -327,6 +336,43 @@ private:
 
         glBindVertexArray(0);
     }
+
+	void calculateFaceNormals()
+	{
+		for (int i = 0; i < faces.size(); ++i)
+		{
+			glm::vec3 vert1 = faces[i]->edge->head->pos;
+			glm::vec3 vert2 = faces[i]->edge->next->head->pos;
+			glm::vec3 vert3 = faces[i]->edge->next->next->head->pos;
+			glm::vec3 vecA = vert3 - vert2;
+			glm::vec3 vecB = vert1 - vert2;
+
+			faces[i]->normal = glm::cross(vecA, vecB); // calc face normal (not normalized)			
+		}
+	}
+
+	void calculateVertexNormals()
+	{
+		for (std::vector<HE_Vertex*>::iterator it = verts.begin(); it != verts.end(); it++)
+		{
+			Vertex v;
+			v.Position = (*it)->pos;
+			v.Normal = glm::vec3(0.f);
+			v.TexCoords = glm::vec2(0.5f);
+
+			HE_Edge *beginEdge = (*it)->halfedge;
+			HE_Edge *e = beginEdge;
+			do
+			{
+				if (e->face)
+					v.Normal += e->face->normal;
+				e = e->opposite->next;
+			} while (e != beginEdge);
+			v.Normal = glm::normalize(v.Normal);
+
+			this->vertices.push_back(v);
+		}
+	}
 };
 
 
