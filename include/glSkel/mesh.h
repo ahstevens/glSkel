@@ -20,39 +20,33 @@ struct HE_Face;
 struct HE_Edge;
 
 struct HE_Vertex {
-	int id;
 	glm::vec3 pos;
 	HE_Edge *halfedge;
 
 	HE_Vertex()
-		: id(-1)
-		, pos(glm::vec3(0.f))
+		: pos(glm::vec3(0.f))
 		, halfedge(NULL)
 	{}
 };
 
 struct HE_Face {
-	int id;
     HE_Edge *edge;
 	glm::vec3 normal;
 
 	HE_Face()
-		: id(-1)
-        , edge(NULL)
+		: edge(NULL)
 		, normal(glm::vec3(0.f))
 	{}
 };
 
 struct HE_Edge {
-	int id;
 	HE_Edge *next;
 	HE_Edge *opposite;
 	HE_Face *face;
 	HE_Vertex *head;
 
 	HE_Edge()
-		: id(-1)
-		, next(NULL)
+		: next(NULL)
 		, opposite(NULL)
 		, face(NULL)
 		, head(NULL)
@@ -88,42 +82,33 @@ public:
 	GLfloat angle;
 
     /*  Functions  */
-    // Constructor
+    // Constructor to make a DCEL mesh from a triangle soup
     Mesh(std::vector<glm::vec3> vec3Vertices, std::vector<GLuint> indices, std::vector<Texture> textures)
     {
         this->indices = indices;
         this->textures = textures;
 		this->boundaryEdge = NULL;
 
+
         for (int i = 0; i < vec3Vertices.size(); ++i)
         {
             HE_Vertex *v = new HE_Vertex();
-            v->id = i;
             v->pos = vec3Vertices[i];
             verts.push_back(v);
         }
 
 		typedef std::map< std::pair<int, int>, HE_Edge* > EdgeMapT;
-
         EdgeMapT edgeMap;
 
-        int faceCount = 0;
-        int edgeCount = 0;
         for (int i = 0; i < indices.size(); i += 3)
         {
             HE_Face *f = new HE_Face();
-            f->id = faceCount++;
 
+			// Create the three halfedges of the face in CCW order
             HE_Edge *e1, *e2, *e3;
 			e1 = new HE_Edge();
 			e2 = new HE_Edge();
 			e3 = new HE_Edge();
-
-            e1->id = edgeCount++;
-            e2->id = edgeCount++;
-            e3->id = edgeCount++;
-
-            f->edge = e1;
 
             e1->face = f;
             e1->next = e2;
@@ -140,7 +125,8 @@ public:
             if (!verts[indices[i]]->halfedge) verts[indices[i]]->halfedge = e1;
             if (!verts[indices[i+1]]->halfedge) verts[indices[i+1]]->halfedge = e2;
             if (!verts[indices[i+2]]->halfedge) verts[indices[i+2]]->halfedge = e3;
-
+			
+			f->edge = e1;
             faces.push_back(f);
             edges.push_back(e1);
             edges.push_back(e2);
@@ -164,7 +150,6 @@ public:
 			else // boundary edge
 			{
 				HE_Edge *newBoundaryEdge = new HE_Edge();
-				newBoundaryEdge->id = edgeCount++;
 				newBoundaryEdge->head = it->second->next->next->head;
 				newBoundaryEdge->face = NULL;
 				
@@ -198,56 +183,7 @@ public:
 		this->calculateVertexNormals();
 
         // Now that we have all the required data, set the vertex buffers and its attribute pointers.
-        this->setupMesh();
-    }
-
-    // Render the mesh
-    void Draw(Shader shader) 
-    {
-        // Bind appropriate textures
-        GLuint diffuseNr = 1;
-        GLuint specularNr = 1;
-        GLuint normalNr = 1;
-        GLuint heightNr = 1;
-        for(GLuint i = 0; i < this->textures.size(); i++)
-        {
-            glActiveTexture(GL_TEXTURE0 + i); // Active proper texture unit before binding
-            // Retrieve texture number (the N in diffuse_textureN)
-			std::stringstream ss;
-			std::string number;
-			std::string name = this->textures[i].type;
-            if(name == "texture_diffuse")
-                ss << diffuseNr++;
-            else if(name == "texture_specular")
-                ss << specularNr++;
-            else if(name == "texture_normal")
-                ss << normalNr++;
-             else if(name == "texture_height")
-                ss << heightNr++;
-            number = ss.str(); 
-            // Now set the sampler to the correct texture unit
-            glUniform1i(glGetUniformLocation(shader.Program, (name + number).c_str()), i);
-            // And finally bind the texture
-            glBindTexture(GL_TEXTURE_2D, this->textures[i].id);
-        }
-
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, position);
-		model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.5f));
-
-		glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        
-        // Draw mesh
-        glBindVertexArray(this->VAO);
-        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>( this->indices.size() ), GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
-
-        // Always good practice to set everything back to defaults once configured.
-        for (GLuint i = 0; i < this->textures.size(); i++)
-        {
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, 0);
-        }
+        this->setupGL();
     }
 
 	unsigned int getVertexCount() { return verts.size(); }
@@ -299,13 +235,62 @@ public:
 		return p;
 	}
 
+	// Render the mesh
+	void Draw(Shader shader)
+	{
+		// Bind appropriate textures
+		GLuint diffuseNr = 1;
+		GLuint specularNr = 1;
+		GLuint normalNr = 1;
+		GLuint heightNr = 1;
+		for (GLuint i = 0; i < this->textures.size(); i++)
+		{
+			glActiveTexture(GL_TEXTURE0 + i); // Active proper texture unit before binding
+											  // Retrieve texture number (the N in diffuse_textureN)
+			std::stringstream ss;
+			std::string number;
+			std::string name = this->textures[i].type;
+			if (name == "texture_diffuse")
+				ss << diffuseNr++;
+			else if (name == "texture_specular")
+				ss << specularNr++;
+			else if (name == "texture_normal")
+				ss << normalNr++;
+			else if (name == "texture_height")
+				ss << heightNr++;
+			number = ss.str();
+			// Now set the sampler to the correct texture unit
+			glUniform1i(glGetUniformLocation(shader.Program, (name + number).c_str()), i);
+			// And finally bind the texture
+			glBindTexture(GL_TEXTURE_2D, this->textures[i].id);
+		}
+
+		glm::mat4 model = glm::mat4();
+		model = glm::translate(model, position);
+		model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.5f));
+
+		glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+		// Draw mesh
+		glBindVertexArray(this->VAO);
+		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->indices.size()), GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+
+		// Always good practice to set everything back to defaults once configured.
+		for (GLuint i = 0; i < this->textures.size(); i++)
+		{
+			glActiveTexture(GL_TEXTURE0 + i);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+	}
+
 private:
     /*  Render data  */
     GLuint VBO, EBO;
 
     /*  Functions    */
     // Initializes all the buffer objects/arrays
-    void setupMesh()
+    void setupGL()
     {
         // Create buffers/arrays
         glGenVertexArrays(1, &this->VAO);
