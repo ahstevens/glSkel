@@ -8,35 +8,52 @@
 class GeometryStrip
 {
 public:
-	GeometryStrip(std::vector<glm::vec3> v, GLuint nVertsWide, GLuint nVertsTall) 
+	GeometryStrip(std::vector<std::vector<glm::vec3>> v)
 		: vertices(v)
-		, nVertsWide(nVertsWide)
-		, nVertsTall(nVertsTall)
 	{}
 
 	~GeometryStrip() {}
 
 	std::vector<glm::vec3> getVertices()
 	{
-		return this->vertices;
+		std::vector<glm::vec3> v;
+
+		size_t nrows = this->vertices.size();
+
+		for (GLuint row = 0; row < nrows; ++row)
+		{
+			size_t ncols = this->vertices[row].size();
+
+			for (GLuint col = 0; col < ncols; ++col)
+			{
+				v.push_back(this->vertices[row][col]);
+			}
+		}
+
+		return v;
 	}
 
 	std::vector<GLuint> getIndices()
 	{
 		std::vector<GLuint> inds;
-		for (GLuint i = 0; i < nVertsWide - 1; ++i)
+
+		size_t nrows = this->vertices.size();
+
+		for (GLuint row = 0; row < nrows - 1; ++row)
 		{
-			for (GLuint j = 0; j < nVertsTall - 1; ++j)
+			size_t ncols = this->vertices[row].size();
+
+			for (GLuint col = 0; col < ncols - 1; ++col)
 			{
-				GLuint b = i * nVertsTall + j;
+				GLuint b = row * ncols + col;
 
 				inds.push_back(b);
-				inds.push_back(b + nVertsTall);
-				inds.push_back(b + nVertsTall + 1);
+				inds.push_back(b + ncols + 1);
+				inds.push_back(b + ncols);
 
 				inds.push_back(b);
-				inds.push_back(b + nVertsTall + 1);
 				inds.push_back(b + 1);
+				inds.push_back(b + ncols + 1);
 			}
 		}
 
@@ -45,48 +62,52 @@ public:
 
 	void glueLeft(GeometryStrip &s)
 	{
-		assert(this->nVertsTall == s.nVertsTall);
+		assert(this->vertices.size() == s.vertices.size()); // make sure the strips are the same length
 
-		for (GLuint i  = 0; i < s.nVertsWide; ++i)
+		size_t nrows = s.vertices.size();
+
+		for (GLuint row = 0; row < nrows; ++row)
 		{
-			for (GLuint j = 0; j < s.nVertsTall; ++j)
-			{
-				GLuint b = i * s.nVertsTall + j;
-				GLfloat displacement = this->vertices[j].x - s.vertices[(s.nVertsWide - 1) * s.nVertsTall + j].x;
-				s.vertices[b].x += displacement;
-			}
-		}
+			size_t ncols = s.vertices[row].size();
 
-		// Stitch the two meshes together
-		this->vertices.insert(std::begin(this->vertices), std::begin(s.vertices), std::end(s.vertices));
-		
-		this->nVertsWide += s.nVertsWide; // update new geometry strip dims
+			for (GLuint col = 0; col < ncols; ++col)
+			{
+				GLfloat displacement = this->vertices[row].front().x - s.vertices[row].back().x;
+				s.vertices[row][col].x += displacement;
+			}
+
+			// smooth out glue line
+			this->vertices[row].front().z = (this->vertices[row].front().z + s.vertices[row].back().z) / 2.f;
+
+			// Stitch the two mesh rows together
+			this->vertices[row].insert(std::begin(this->vertices[row]), std::begin(s.vertices[row]), std::end(s.vertices[row]) - 1);			
+		}
 	}
 
-	void glueRight(const GeometryStrip &s)
+	void glueRight(GeometryStrip &s)
 	{
-		assert(this->nVertsTall == s.nVertsTall);
+		assert(this->vertices.size() == s.vertices.size());
 
-		for (GLuint i = 0; i < s.nVertsWide; ++i)
+		size_t nrows = s.vertices.size();
+
+		for (GLuint row = 0; row < nrows; ++row)
 		{
-			for (GLuint j = 0; j < s.nVertsTall; ++j)
+			size_t ncols = s.vertices[row].size();
+
+			for (GLuint col = 0; col < ncols; ++col)
 			{
-				GLuint b = i * s.nVertsTall + j;
-				GLfloat displacement = this->vertices[(nVertsWide - 1) * nVertsTall + j].x - s.vertices[j].x;
-				this->vertices[b].x += displacement;
+				GLfloat displacement = this->vertices[row].back().x - s.vertices[row].front().x;
+				s.vertices[row][col].x += displacement;
 			}
+
+			// smooth out glue line
+			this->vertices[row].back().z = (this->vertices[row].back().z + s.vertices[row].front().z) / 2.f;
+
+			// Stitch the two mesh rows together
+			this->vertices[row].insert(std::end(this->vertices[row]), std::begin(s.vertices[row]) + 1, std::end(s.vertices[row]));
 		}
-
-		// Stitch the two meshes together by replacing the last column of this->vertices with the first column of s->vertices
-		std::vector<glm::vec3>::iterator nth = this->vertices.begin() + (this->nVertsWide - 1) * this->nVertsTall;
-
-		this->vertices.insert(nth, std::begin(s.vertices), std::end(s.vertices));
-		
-		this->nVertsWide += s.nVertsWide; // update new geometry strip dims
 	}
 
 private:
-	std::vector<glm::vec3> vertices;
-	GLuint nVertsWide;
-	GLuint nVertsTall;
+	std::vector<std::vector<glm::vec3>> vertices; // row major grid of vertices
 };

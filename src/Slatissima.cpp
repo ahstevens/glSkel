@@ -7,12 +7,12 @@
 
 const GLuint resolution = 1000;
 
-Slatissima::Slatissima(GLfloat length, GLfloat width, GLfloat thickness, GLfloat spinePadding, GLfloat wavinessMulti)
+Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, GLfloat spinePadding_cm, GLfloat wavinessMulti)
 {
-	this->length = length;
-	this->width = width;
-	this->thickness = thickness;
-	this->spinePadding = spinePadding;
+	this->length = length_cm;
+	this->width = width_cm; 
+	this->thickness = thickness_cm;
+	this->spinePadding = spinePadding_cm;
 	this->wavinessMulti = wavinessMulti;
 	this->nVertsTall = this->nVertsWide = (resolution % 2 == 0) ? resolution + 1 : resolution;
 	this->buildStrip();
@@ -27,36 +27,34 @@ Slatissima::~Slatissima()
 
 void Slatissima::buildStrip()
 {
-	glm::vec3 v;
-	glm::vec2 t;
-
+	std::vector<std::vector<glm::vec3>> vertices; // row major
 	glm::vec3 tempVert;
 
 	// CENTRAL BLADE VERTICES
-	for (GLuint i = 0; i < 3; ++i)
+	for (GLuint row = 0; row < nVertsTall; ++row)
 	{
-		for (GLuint j = 0; j < nVertsTall; ++j)
-		{
-			GLfloat heightRatio = static_cast<GLfloat>(j) / static_cast<GLfloat>(nVertsTall - 1);
-			
+		GLfloat heightRatio = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
+
+		std::vector<glm::vec3> vecRow;
+
+		for (GLuint col = 0; col < 3; ++col)
+		{			
 			GLfloat displacement = 0.f;
-			if(i == 0) displacement = -width / 2;
-			if(i == 2) displacement = width / 2;
-			v.x = sin(heightRatio * glm::pi<GLfloat>()) * displacement * 0.5f;
-			//v.x = displacement * 0.5f;
-			v.y = heightRatio * length;
+			if(col == 0) displacement = -width / 2;
+			if(col == 2) displacement = width / 2;
+			tempVert.x = sin(heightRatio * glm::pi<GLfloat>()) * displacement * 0.5f;
+			//tempVert.x = displacement * 0.5f;
+			tempVert.y = heightRatio * length;
+						
+			tempVert.z = 0.f;
 
-			t.x = static_cast<GLfloat>(i) / 2.f;
-			t.y = heightRatio;
-			
-			v.z = 0.f;
-
-			tempVert = v;
-			vertices.push_back(tempVert);
+			vecRow.push_back(tempVert);
 		}
+
+		vertices.push_back(vecRow);
 	}
 
-	GeometryStrip g(vertices, 3, nVertsTall);
+	GeometryStrip g(vertices);
 
 	// LEFT STRIP
 	glm::vec2 center{ -width / 2.f, length / 2.f };
@@ -71,66 +69,67 @@ void Slatissima::buildStrip()
 	gabor.setComplexSinusoid(spatialOrientation, spatialFrequency);
 	
 	vertices.clear();
-
-	for (GLuint i = 0; i < nVertsWide; ++i)
+	for (GLuint row = 0; row < nVertsTall; ++row)
 	{
-		GLfloat widthRatio = static_cast<GLfloat>(i) / static_cast<GLfloat>(nVertsWide - 1);
-		t.x = static_cast<GLfloat>(i) / static_cast<GLfloat>(nVertsWide - 1);
-		for (GLuint j = 0; j < nVertsTall; ++j)
-		{
-			GLfloat heightRatio = static_cast<GLfloat>(j) / static_cast<GLfloat>(nVertsTall - 1);
-			v.x = (widthRatio - 0.5f) * width * 0.5f * sin(heightRatio * glm::pi<GLfloat>());
-			//v.x = (widthRatio - 0.5f) * width * 0.5f;
-			v.y = heightRatio * length;
-			t.y = heightRatio;
+		std::vector<glm::vec3> vecRow;
+		GLfloat heightRatio = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
 
-			v.z = gabor.get(glm::vec2(v));
+		for (GLuint col = 0; col < 3; ++col)
+		{
+			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(3 - 1);
+
+			tempVert.x = (widthRatio - 0.5f) * width * 0.5f * sin(heightRatio * glm::pi<GLfloat>());
+			//tempVert.x = (widthRatio - 0.5f) * width * 0.5f;
+			tempVert.y = heightRatio * length;
+
+			tempVert.z = gabor.get(glm::vec2(tempVert));
 			//v.z = 0.f;
 
-			tempVert = v;
-			vertices.push_back(tempVert);
+			vecRow.push_back(tempVert);
 		}
+
+		vertices.push_back(vecRow);
 	}
 
-	GeometryStrip g2(vertices, nVertsWide, nVertsTall);
+	GeometryStrip g2(vertices);
 
 	g.glueLeft(g2);
 
 	// RIGHT STRIP
-	//glm::vec2 center2{ width / 2.f, length / 2.f };
-	//glm::vec2 kernelSpread2{ 0.5f, 2.f };
-	//GLfloat kernelOrientation2{ 0.f }; // degrees
-	//GLfloat kernelAmplitude2{ 0.5f };
-	//glm::vec2 spatialOrientation2{ 0.f, 1.f }; // Cartesian coords, not polar
-	//GLfloat spatialFrequency2{ 1.f };
+	glm::vec2 center2{ width / 2.f, length / 2.f };
+	glm::vec2 kernelSpread2{ 0.5f, 2.f };
+	GLfloat kernelOrientation2{ 0.f }; // degrees
+	GLfloat kernelAmplitude2{ 0.5f };
+	glm::vec2 spatialOrientation2{ 0.f, 1.f }; // Cartesian coords, not polar
+	GLfloat spatialFrequency2{ 1.f };
 
-	//gabor.setGaussianKernel(center2, kernelSpread2, glm::radians(kernelOrientation2), kernelAmplitude2);
-	//gabor.setComplexSinusoid(spatialOrientation2, spatialFrequency2);
+	gabor.setGaussianKernel(center2, kernelSpread2, glm::radians(kernelOrientation2), kernelAmplitude2);
+	gabor.setComplexSinusoid(spatialOrientation2, spatialFrequency2);
 	
-	//vertices.clear();
+	vertices.clear();
 
-	//for (GLuint i = 0; i < nVertsWide; ++i)
-	//{
-	//	GLfloat widthRatio = static_cast<GLfloat>(i) / static_cast<GLfloat>(nVertsWide - 1);
-	//	t.x = static_cast<GLfloat>(i) / static_cast<GLfloat>(nVertsWide - 1);
-	//	for (GLuint j = 0; j < nVertsTall; ++j)
-	//	{
-	//		GLfloat heightRatio = static_cast<GLfloat>(j) / static_cast<GLfloat>(nVertsTall - 1);
-	//		v.x = (widthRatio + 0.5f) * width * 0.5f * sin(heightRatio * glm::pi<GLfloat>());
-	//		v.y = heightRatio * length;
-	//		t.y = heightRatio;
+	for (GLuint row = 0; row < nVertsTall; ++row)
+	{
+		std::vector<glm::vec3> vecRow;
+		GLfloat heightRatio = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
 
-	//		v.z = gabor.get(glm::vec2(v));
+		for (GLuint col = 0; col < 3; ++col)
+		{
+			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(3 - 1);
+			tempVert.x = (widthRatio + 0.5f) * width * 0.5f * sin(heightRatio * glm::pi<GLfloat>());
+			tempVert.y = heightRatio * length;
 
-	//		tempVert.Position = v;
-	//		tempVert.TexCoords = t;
-	//		vertices.push_back(tempVert);
-	//	}
-	//}
+			tempVert.z = gabor.get(glm::vec2(tempVert));
 
-	//GeometryStrip g3(vertices, nVertsWide, nVertsTall);
+			vecRow.push_back(tempVert);
+		}
 
-	//g.glueRight(g3);
+		vertices.push_back(vecRow);
+	}
+
+	GeometryStrip g3(vertices);
+
+	g.glueRight(g3);
 
 	mesh = new Mesh(g.getVertices(), g.getIndices(), this->loadTextures());
 }
