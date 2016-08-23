@@ -335,6 +335,12 @@ private:
 			updateVertexIDs();
 	}
 
+	void updateVertexIDs()
+	{
+		for (size_t i = 0; i < m_vpVertices.size(); ++i)		
+			m_vpVertices[i]->id = i;
+	}
+
 	void makeBufferVertices(std::vector<Vertex> & vVertices, std::vector<GLuint> & vIndices)
 	{
 		vVertices.resize(m_vpVertices.size()); // reserve memory for vertices
