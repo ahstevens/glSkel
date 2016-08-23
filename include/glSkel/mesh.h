@@ -23,8 +23,6 @@ struct Texture {
 class Mesh {
 public:
     /*  Mesh Data  */
-	std::vector<GLuint> indices;
-    GLuint VAO;
 
 	glm::vec3 position;
 	GLfloat angle;
@@ -33,7 +31,6 @@ public:
     // Constructor to make a DCEL mesh from a triangle soup
     Mesh(std::vector<glm::vec3> vvec3Vertices, std::vector<GLuint> vuiIndices, std::vector<Texture> vTextures)
     {
-        this->indices = vuiIndices;
         this->m_vTextures = vTextures;
 		this->m_pBoundaryEdge = NULL;
 
@@ -136,9 +133,12 @@ public:
 
 		glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
+		// triangle mesh has 3 indices per face
+		GLsizei nIndices = static_cast<GLsizei>(this->m_vpFaces.size() * 3);
+
 		// Draw mesh
-		glBindVertexArray(this->VAO);
-		glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->indices.size()), GL_UNSIGNED_INT, 0);
+		glBindVertexArray(this->m_glVAO);
+		glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 
 		// Always good practice to set everything back to defaults once configured.
@@ -150,17 +150,17 @@ public:
 	}
 
 private:
-
-	struct HE_Vertex;
-	struct HE_Face;
+	/************** HALF-EDGE (HE) DATA STRUCTS *******************/
 	struct HE_Edge;
 
 	struct HE_Vertex {
+		int id;
 		glm::vec3 pos;
 		HE_Edge *halfedge;
 
 		HE_Vertex()
-			: pos(glm::vec3(0.f))
+			: id(-1)
+			, pos(glm::vec3(0.f))
 			, halfedge(NULL)
 		{}
 	};
@@ -189,6 +189,7 @@ private:
 		{}
 	};
 
+	/***** GL BUFFER DATA STRUCTS *****/
 	struct Vertex {
 		glm::vec3 pos;
 		glm::vec3 norm;
@@ -196,7 +197,7 @@ private:
 	};
 
     /*  Render data  */
-    GLuint VBO, EBO;
+    GLuint m_glVAO, m_glVBO, m_glEBO;
 
 	std::vector<HE_Edge*> m_vpEdges;
 	std::vector<HE_Face*> m_vpFaces;
@@ -210,6 +211,7 @@ private:
 		for (int i = 0; i < vertices.size(); ++i)
 		{
 			HE_Vertex *v = new HE_Vertex();
+			v->id = i;
 			v->pos = vertices[i];
 			this->m_vpVertices.push_back(v);
 		}
@@ -223,7 +225,7 @@ private:
 		typedef std::map< EdgeMapIndexT, HE_Edge* > EdgeMapT;
 		EdgeMapT edgeMap;
 
-		for (int i = 0; i < indices.size(); i += 3)
+		for (int i = 0; i < vuiIndices.size(); i += 3)
 		{
 			HE_Face *f = new HE_Face();
 
@@ -235,19 +237,19 @@ private:
 
 			e1->face = f;
 			e1->next = e2;
-			e1->head = m_vpVertices[indices[i + 1]];
+			e1->head = m_vpVertices[vuiIndices[i + 1]];
 
 			e2->face = f;
 			e2->next = e3;
-			e2->head = m_vpVertices[indices[i + 2]];
+			e2->head = m_vpVertices[vuiIndices[i + 2]];
 
 			e3->face = f;
 			e3->next = e1;
-			e3->head = m_vpVertices[indices[i]];
+			e3->head = m_vpVertices[vuiIndices[i]];
 
-			if (!m_vpVertices[indices[i]]->halfedge) m_vpVertices[indices[i]]->halfedge = e1;
-			if (!m_vpVertices[indices[i + 1]]->halfedge) m_vpVertices[indices[i + 1]]->halfedge = e2;
-			if (!m_vpVertices[indices[i + 2]]->halfedge) m_vpVertices[indices[i + 2]]->halfedge = e3;
+			if (!m_vpVertices[vuiIndices[i]]->halfedge) m_vpVertices[vuiIndices[i]]->halfedge = e1;
+			if (!m_vpVertices[vuiIndices[i + 1]]->halfedge) m_vpVertices[vuiIndices[i + 1]]->halfedge = e2;
+			if (!m_vpVertices[vuiIndices[i + 2]]->halfedge) m_vpVertices[vuiIndices[i + 2]]->halfedge = e3;
 
 			f->edge = e1; // doesn't matter which edge it points to
 			f->normal = glm::cross(e1->head->pos - e3->head->pos, e2->head->pos - e3->head->pos);
@@ -257,9 +259,9 @@ private:
 			m_vpEdges.push_back(e3);
 
 			// enter these 
-			edgeMap[EdgeMapIndexT(indices[i], indices[i + 1])] = e1;
-			edgeMap[EdgeMapIndexT(indices[i + 1], indices[i + 2])] = e2;
-			edgeMap[EdgeMapIndexT(indices[i + 2], indices[i])] = e3;
+			edgeMap[EdgeMapIndexT(vuiIndices[i], vuiIndices[i + 1])] = e1;
+			edgeMap[EdgeMapIndexT(vuiIndices[i + 1], vuiIndices[i + 2])] = e2;
+			edgeMap[EdgeMapIndexT(vuiIndices[i + 2], vuiIndices[i])] = e3;
 		}
 
 		// link up paired half edges
@@ -328,9 +330,10 @@ private:
 		}
 	}
 
-	std::vector<Vertex> makeBufferVertices()
+	void makeBufferVertices(std::vector<Vertex> & vVertices, std::vector<GLuint> & vIndices)
 	{
-		std::vector<Vertex> ret;
+		vVertices.resize(m_vpVertices.size()); // reserve memory for vertices
+
 		for (std::vector<HE_Vertex*>::iterator it = m_vpVertices.begin(); it != m_vpVertices.end(); it++)
 		{
 			Vertex v;
@@ -350,32 +353,45 @@ private:
 
 			v.norm = glm::normalize(v.norm);
 
-			ret.push_back(v);
+			vVertices.at((*it)->id) = v;
 		}
 
-		return ret;
+		for (std::vector<HE_Face*>::iterator it = m_vpFaces.begin(); it != m_vpFaces.end(); it++)
+		{
+			HE_Edge *begin = (*it)->edge;
+			HE_Edge *e = begin;
+
+			do
+			{
+				vIndices.push_back(e->head->id);
+				e = e->next;
+			} while (e != begin);
+		}
 	}
 
 	// Initializes all the buffer objects/arrays
 	void setupGL()
 	{
-		std::vector<Vertex> bufferVertices = makeBufferVertices();
+		std::vector<Vertex> bufferVertices;
+		std::vector<GLuint> bufferIndices;
+		
+		makeBufferVertices(bufferVertices, bufferIndices);
 
 		// Create buffers/arrays
-		glGenVertexArrays(1, &this->VAO);
-		glGenBuffers(1, &this->VBO);
-		glGenBuffers(1, &this->EBO);
+		glGenVertexArrays(1, &this->m_glVAO);
+		glGenBuffers(1, &this->m_glVBO);
+		glGenBuffers(1, &this->m_glEBO);
 
-		glBindVertexArray(this->VAO);
+		glBindVertexArray(this->m_glVAO);
 		// Load data into vertex buffers
-		glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
+		glBindBuffer(GL_ARRAY_BUFFER, this->m_glVBO);
 		// A great thing about structs is that their memory layout is sequential for all its items.
 		// The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
 		// again translates to 3/2 floats which translates to a byte array.
 		glBufferData(GL_ARRAY_BUFFER, bufferVertices.size() * sizeof(Vertex), &bufferVertices[0], GL_STATIC_DRAW);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(GLuint), &this->indices[0], GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->m_glEBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, bufferIndices.size() * sizeof(GLuint), &bufferIndices[0], GL_STATIC_DRAW);
 
 		// Set the vertex attribute pointers
 		// Vertex Positions
