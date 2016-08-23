@@ -41,6 +41,8 @@ public:
 
 		this->processFacesAndEdges(vuiIndices);
 
+		this->consolidateDuplicateVertices();
+
 		std::cout << "Surface area: " << getSurfaceArea() << " cm^2 (" << m_vpFaces.size() << " faces)" << std::endl;
 
 		std::cout << "Surface perimeter: " << getPerimeter() << " cm (" << getBoundaryEdgeCount() << " boundary edges)" << std::endl;
@@ -302,6 +304,28 @@ private:
 		for (int i = 0; i < m_vpEdges.size(); ++i)
 			if (!m_vpEdges[i]->next)
 				m_vpEdges[i]->next = m_vpEdges[i]->head->halfedge;
+	}
+
+	void consolidateDuplicateVertices(float threshold = 0.0000001) // 1 nm
+	{
+		float threshold_sq = threshold * threshold;
+
+		for (std::vector<HE_Vertex*>::iterator it = m_vpVertices.begin(); it != m_vpVertices.end(); it++)
+		{
+			HE_Edge *begin = (*it)->halfedge;
+			HE_Edge *e = begin;
+			do
+			{
+				HE_Vertex *v = e->head;
+
+				if (1)
+				{
+					//consolidate verts
+				}
+
+				e = e->opposite->next;
+			} while (e != begin);
+		}
 	}
 
 	std::vector<Vertex> makeBufferVertices()
