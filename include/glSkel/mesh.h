@@ -312,6 +312,8 @@ private:
 	{
 		float threshold_sq = threshold * threshold;
 
+		bool vertexRemoved = false;
+
 		for (std::vector<HE_Vertex*>::iterator it = m_vpVertices.begin(); it != m_vpVertices.end(); it++)
 		{
 			HE_Edge *begin = (*it)->halfedge;
@@ -328,6 +330,9 @@ private:
 				e = e->opposite->next;
 			} while (e != begin);
 		}
+
+		if (vertexRemoved)
+			updateVertexIDs();
 	}
 
 	void makeBufferVertices(std::vector<Vertex> & vVertices, std::vector<GLuint> & vIndices)
