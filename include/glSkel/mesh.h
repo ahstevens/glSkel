@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 // GL Includes
 #include <GL/glew.h> // Contains all the necessery OpenGL includes
@@ -75,10 +76,12 @@ public:
 	{
 		float area = 0.f;
 
+		// Each face area is half the magnitude of the face normal,
+		// therefore the surface area is half of the sum of the face normal magnitudes
 		for (int i = 0; i < m_vpFaces.size(); ++i)
-			area += glm::length(m_vpFaces[i]->normal);     // face area is magnitude of face normal
+			area += glm::length(m_vpFaces[i]->normal);     
 
-		return area;
+		return area / 2.f;
 	}
 
 	float getPerimeter()
@@ -173,6 +176,11 @@ private:
 			: edge(NULL)
 			, normal(glm::vec3(0.f))
 		{}
+
+		bool operator<(const HE_Face &rhs) const
+		{
+			return glm::length(this->normal) < glm::length(rhs.normal);
+		}
 	};
 
 	struct HE_Edge {
@@ -320,14 +328,119 @@ private:
 			HE_Edge *e = begin;
 			do
 			{
-				HE_Vertex *v = e->head;
-
-				if (1)
+				glm::vec3 vecToNeighborVert = e->head->pos - (*it)->pos;
+				float len_sq = vecToNeighborVert.x * vecToNeighborVert.x + vecToNeighborVert.y * vecToNeighborVert.y + vecToNeighborVert.z * vecToNeighborVert.z;
+				if (len_sq < threshold_sq)
 				{
-					//consolidate verts
-				}
+					HE_Edge *nextEdge = e->opposite->next->opposite;
+					HE_Vertex *doomedVert = e->head;
+					
+					// if current vert's half-edge points to doomed vert, make it point to doomed vert's half-edge
+					// also reset the begin half-edge pointer to be doomed vert's half-edge
+					if ((*it)->halfedge->head == doomedVert)
+					{
+						(*it)->halfedge->head = doomedVert->halfedge->head;
+						begin = doomedVert->halfedge;
+					}
 
-				e = e->opposite->next;
+					// connect doomed vert's incoming half-edges to current vert
+					HE_Edge *doomedBegin = doomedVert->halfedge;
+					HE_Edge *doomedEdge = doomedBegin;
+					do
+					{
+						if (e->opposite != doomedVert->halfedge)
+							doomedEdge->opposite->head = (*it);
+						doomedEdge = doomedEdge->opposite->next;
+					} while (doomedEdge != doomedBegin);
+
+					/*
+					discard any faces incident to current half-edge pair since their contribution is negligible
+					-if the half edge has a face associated with it, remove the face:
+					--first set proceding and preceding half-edges' opposite half-edges to point to one another
+					--then discard the face					
+					--discard the preceding and proceding half-edges, as well as the current half-edge pair
+					----if the half-edge to be discarded is what the boundary edge pointer points to, advance it to the next boundary half-edge
+					*/
+					if (e->face)
+					{
+						e->next->opposite->opposite = e->next->next->opposite;
+						e->next->next->opposite = e->next->opposite;
+
+						m_vpFaces.erase(std::remove(m_vpFaces.begin(), m_vpFaces.end(), e->face), m_vpFaces.end());
+						delete e->face;
+						e->face = NULL;
+
+						// if the preceding half-edge is its emanating vertex's half-edge,
+						// set it to opposite's opposite (which was just updated, so now points where it should)
+						if (e->next->next == e->next->head->halfedge)
+							e->next->head->halfedge = e->next->next->opposite->opposite;
+
+						if (m_pBoundaryEdge == e->next->next)
+							m_pBoundaryEdge = m_pBoundaryEdge->next;
+						
+						m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e->next->next), m_vpEdges.end());
+						delete e->next->next;
+						e->next->next = NULL;
+
+						if (m_pBoundaryEdge == e->next)
+							m_pBoundaryEdge = m_pBoundaryEdge->next;
+
+						m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e->next), m_vpEdges.end());
+						delete e->next;
+						e->next = NULL;
+					}
+
+					if (e->opposite->face)
+					{
+						e->opposite->next->opposite->opposite = e->opposite->next->next->opposite;
+						e->opposite->next->next->opposite = e->opposite->next->opposite;
+						
+						m_vpFaces.erase(std::remove(m_vpFaces.begin(), m_vpFaces.end(), e->opposite->face), m_vpFaces.end());
+						delete e->opposite->face;
+						e->opposite->face = NULL;
+
+						// if the proceding half-edge the current vertex's halfedge,
+						// set it to opposite's opposite (which was just updated, so now points where it should)
+						// and reset the begin pointer
+						if (e->opposite->next == (*it)->halfedge)
+						{
+							e->opposite->next->head->halfedge = e->opposite->next->next->opposite->opposite;
+							begin = (*it)->halfedge->head->halfedge;
+						}
+
+						if (m_pBoundaryEdge == e->opposite->next->next)
+							m_pBoundaryEdge = m_pBoundaryEdge->next;
+						
+						m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e->opposite->next->next), m_vpEdges.end());
+						delete e->opposite->next->next;
+						e->opposite->next->next = NULL;
+
+						if (m_pBoundaryEdge == e->opposite->next)
+							m_pBoundaryEdge = m_pBoundaryEdge->next;
+
+						m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e->opposite->next), m_vpEdges.end());
+						delete e->opposite->next;
+						e->opposite->next = NULL;
+					}
+
+					m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e->opposite), m_vpEdges.end());
+					delete e->opposite;
+					e->opposite = NULL;
+
+					m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e), m_vpEdges.end());
+					delete e;
+					e = nextEdge;
+
+					// discard the doomed vertex
+					m_vpVertices.erase(std::remove(m_vpVertices.begin(), m_vpVertices.end(), doomedVert), m_vpVertices.end());
+					delete doomedVert;
+
+					vertexRemoved = true;
+				}
+				else
+				{
+					e = e->opposite->next;
+				}
 			} while (e != begin);
 		}
 

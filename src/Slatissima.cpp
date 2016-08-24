@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
-const GLuint resolution = 1000;
+const GLuint resolution = 5u;
 
 Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, GLfloat spinePadding_cm, GLfloat wavinessMulti)
 {
