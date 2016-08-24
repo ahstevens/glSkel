@@ -332,26 +332,33 @@ private:
 				float len_sq = vecToNeighborVert.x * vecToNeighborVert.x + vecToNeighborVert.y * vecToNeighborVert.y + vecToNeighborVert.z * vecToNeighborVert.z;
 				if (len_sq < threshold_sq)
 				{
-					HE_Edge *nextEdge = e->opposite->next->opposite;
+					HE_Edge *nextEdge = e->face ? e->next->next->opposite : e->next;
 					HE_Vertex *doomedVert = e->head;
 					
-					// if current vert's half-edge points to doomed vert, make it point to doomed vert's half-edge
+					// if current vert's half-edge points to doomed vert, set it to be the doomed vert's half-edge
 					// also reset the begin half-edge pointer to be doomed vert's half-edge
 					if ((*it)->halfedge->head == doomedVert)
 					{
-						(*it)->halfedge->head = doomedVert->halfedge->head;
+						(*it)->halfedge = doomedVert->halfedge;
 						begin = doomedVert->halfedge;
 					}
 
 					// connect doomed vert's incoming half-edges to current vert
-					HE_Edge *doomedBegin = doomedVert->halfedge;
-					HE_Edge *doomedEdge = doomedBegin;
+					HE_Edge *doomedVertBeginEdge = doomedVert->halfedge;
+					HE_Edge *doomedVertEdge = doomedVertBeginEdge;
 					do
 					{
-						if (e->opposite != doomedVert->halfedge)
-							doomedEdge->opposite->head = (*it);
-						doomedEdge = doomedEdge->opposite->next;
-					} while (doomedEdge != doomedBegin);
+						if (doomedVertEdge->head != (*it))
+						{
+							HE_Edge *next = doomedVertEdge->opposite->next;
+							doomedVertEdge->opposite->head = (*it);
+							if (!doomedVertEdge->opposite->face)
+								doomedVertEdge->opposite->next = doomedVertEdge->opposite->next->next;
+							doomedVertEdge = next;
+						}
+						else
+							doomedVertEdge = doomedVertEdge->opposite->next;
+					} while (doomedVertEdge != doomedVertBeginEdge);
 
 					/*
 					discard any faces incident to current half-edge pair since their contribution is negligible
@@ -364,7 +371,7 @@ private:
 					if (e->face)
 					{
 						e->next->opposite->opposite = e->next->next->opposite;
-						e->next->next->opposite = e->next->opposite;
+						e->next->next->opposite->opposite = e->next->opposite;
 
 						m_vpFaces.erase(std::remove(m_vpFaces.begin(), m_vpFaces.end(), e->face), m_vpFaces.end());
 						delete e->face;
@@ -389,11 +396,15 @@ private:
 						delete e->next;
 						e->next = NULL;
 					}
+					else // e is a boundary half-edge
+					{
+						(*it)->halfedge = e->next;
+					}
 
 					if (e->opposite->face)
 					{
 						e->opposite->next->opposite->opposite = e->opposite->next->next->opposite;
-						e->opposite->next->next->opposite = e->opposite->next->opposite;
+						e->opposite->next->next->opposite->opposite = e->opposite->next->opposite;
 						
 						m_vpFaces.erase(std::remove(m_vpFaces.begin(), m_vpFaces.end(), e->opposite->face), m_vpFaces.end());
 						delete e->opposite->face;
@@ -422,6 +433,16 @@ private:
 						delete e->opposite->next;
 						e->opposite->next = NULL;
 					}
+					else // e->opposite is a boundary half-edge
+					{
+						; // nothing to do?
+					}
+
+					if (m_pBoundaryEdge == e || m_pBoundaryEdge == e->opposite)
+						m_pBoundaryEdge = m_pBoundaryEdge->next;
+
+					if (m_pBoundaryEdge->next == e)
+						m_pBoundaryEdge->next = m_pBoundaryEdge->next->next;
 
 					m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e->opposite), m_vpEdges.end());
 					delete e->opposite;
