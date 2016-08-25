@@ -40,7 +40,7 @@ public:
 
 		this->processFacesAndEdges(vuiIndices);
 
-		this->consolidateDuplicateVertices();
+		this->consolidateDuplicateVertices(0.01f);
 
 		std::cout << "Surface area: " << getSurfaceArea() << " cm^2 (" << m_vpFaces.size() << " faces)" << std::endl;
 
@@ -317,7 +317,7 @@ private:
 				m_vpEdges[i]->next = m_vpEdges[i]->head->halfedge;
 	}
 
-	void consolidateDuplicateVertices(float threshold = 0.0000001) // 1 nm
+	void consolidateDuplicateVertices(float threshold = 0.0000001f) // 1 nm
 	{
 		float threshold_sq = threshold * threshold;
 
@@ -327,21 +327,24 @@ private:
 		{
 			HE_Edge *begin = (*it)->halfedge;
 			HE_Edge *e = begin;
+			bool beginEdgeChanged;
 			do
 			{
+				beginEdgeChanged = false;
 				glm::vec3 vecToNeighborVert = e->head->pos - (*it)->pos;
 				float len_sq = vecToNeighborVert.x * vecToNeighborVert.x + vecToNeighborVert.y * vecToNeighborVert.y + vecToNeighborVert.z * vecToNeighborVert.z;
 				if (len_sq < threshold_sq)
 				{
 					HE_Edge *nextEdge = e->face ? e->next->next->opposite : e->next;
 					HE_Vertex *doomedVert = e->head;
-					
+					std::cout << "Removing vertex " << doomedVert->id << " because it is " << sqrtf(len_sq) << "cm away from vertex " << (*it)->id << std::endl;
 					// if current vert's half-edge points to doomed vert, set it to be the doomed vert's half-edge
 					// also reset the begin half-edge pointer to be doomed vert's half-edge
 					if ((*it)->halfedge->head == doomedVert)
 					{
 						(*it)->halfedge = doomedVert->halfedge;
 						begin = doomedVert->halfedge;
+						beginEdgeChanged = true;
 					}
 
 					// connect doomed vert's incoming half-edges to current vert
@@ -403,6 +406,8 @@ private:
 						HE_Edge *tempBE = m_pBoundaryEdge;
 						while (tempBE->next != e) tempBE = tempBE->next;
 						tempBE->next = tempBE->next->next;
+
+						nextEdge = e->next;
 					}
 
 					if (e->opposite->face)
@@ -421,6 +426,7 @@ private:
 						{
 							e->opposite->next->head->halfedge = e->opposite->next->next->opposite->opposite;
 							begin = (*it)->halfedge->head->halfedge;
+							beginEdgeChanged = true;
 						}
 
 						if (m_pBoundaryEdge == e->opposite->next->next)
@@ -466,7 +472,7 @@ private:
 				{
 					e = e->opposite->next;
 				}
-			} while (e != begin);
+			} while (e != begin || beginEdgeChanged);
 		}
 
 		if (vertexRemoved)
