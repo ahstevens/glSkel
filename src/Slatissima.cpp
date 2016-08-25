@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
-const GLuint resolution = 5u;
+const float gridSpacing = 0.1f; // cm, approx
 
 Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, GLfloat spinePadding_cm, GLfloat wavinessMulti)
 {
@@ -14,7 +14,8 @@ Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm
 	this->thickness = thickness_cm;
 	this->spinePadding = spinePadding_cm;
 	this->wavinessMulti = wavinessMulti;
-	this->nVertsTall = this->nVertsWide = (resolution % 2 == 0) ? resolution + 1 : resolution;
+	this->nVertsTall = static_cast<GLuint>(length_cm / gridSpacing);
+	this->nVertsWide = static_cast<GLuint>(width_cm / gridSpacing);
 	this->buildStrip();
 }
 
@@ -74,9 +75,9 @@ void Slatissima::buildStrip()
 		std::vector<glm::vec3> vecRow;
 		GLfloat heightRatio = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
 
-		for (GLuint col = 0; col < 3; ++col)
+		for (GLuint col = 0; col < nVertsWide; ++col)
 		{
-			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(3 - 1);
+			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(nVertsWide - 1);
 
 			tempVert.x = (widthRatio - 0.5f) * width * 0.5f * sin(heightRatio * glm::pi<GLfloat>());
 			//tempVert.x = (widthRatio - 0.5f) * width * 0.5f;
@@ -113,9 +114,9 @@ void Slatissima::buildStrip()
 		std::vector<glm::vec3> vecRow;
 		GLfloat heightRatio = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
 
-		for (GLuint col = 0; col < 3; ++col)
+		for (GLuint col = 0; col < nVertsWide; ++col)
 		{
-			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(3 - 1);
+			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(nVertsWide - 1);
 			tempVert.x = (widthRatio + 0.5f) * width * 0.5f * sin(heightRatio * glm::pi<GLfloat>());
 			tempVert.y = heightRatio * length;
 

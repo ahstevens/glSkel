@@ -40,7 +40,7 @@ public:
 
 		this->processFacesAndEdges(vuiIndices);
 
-		this->consolidateDuplicateVertices(0.01f);
+		this->consolidateDuplicateVertices(0.001f);
 
 		std::cout << "Surface area: " << getSurfaceArea() << " cm^2 (" << m_vpFaces.size() << " faces)" << std::endl;
 
