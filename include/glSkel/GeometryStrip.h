@@ -108,6 +108,10 @@ public:
 		}
 	}
 
+	unsigned int getWidthVertexCount() { return vertices[0].size();	}
+
+	unsigned int getHeightVertexCount() { return vertices.size(); }
+
 private:
 	std::vector<std::vector<glm::vec3>> vertices; // row major grid of vertices
 };

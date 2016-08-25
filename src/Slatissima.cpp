@@ -132,6 +132,7 @@ void Slatissima::buildStrip()
 
 	g.glueRight(g3);
 
+	std::cout << "Creating DCEL mesh from geometry strip that is " << g.getWidthVertexCount() << " verts wide and " << g.getHeightVertexCount() << " verts long" << std::endl;
 	mesh = new Mesh(g.getVertices(), g.getIndices(), this->loadTextures());
 }
 
