@@ -400,6 +400,9 @@ private:
 					else // e is a boundary half-edge
 					{
 						(*it)->halfedge = e->next;
+						HE_Edge *tempBE = m_pBoundaryEdge;
+						while (tempBE->next != e) tempBE = tempBE->next;
+						tempBE->next = tempBE->next->next;
 					}
 
 					if (e->opposite->face)
@@ -451,7 +454,7 @@ private:
 
 					m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e), m_vpEdges.end());
 					delete e;
-					e = nextEdge;
+                                                                               					e = nextEdge;
 
 					// discard the doomed vertex
 					m_vpVertices.erase(std::remove(m_vpVertices.begin(), m_vpVertices.end(), doomedVert), m_vpVertices.end());
