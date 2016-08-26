@@ -196,6 +196,17 @@ private:
 			, face(NULL)
 			, head(NULL)
 		{}
+
+		HE_Edge* getPrev() const
+		{
+			HE_Vertex *v = this->opposite->head;
+			HE_Edge * e = v->halfedge;
+
+			while (e->opposite->next != e)
+				e = e->opposite->next;
+
+			return e->opposite;
+		}
 	};
 
 	/***** GL BUFFER DATA STRUCTS *****/
@@ -325,25 +336,27 @@ private:
 
 		for (std::vector<HE_Vertex*>::iterator it = m_vpVertices.begin(); it != m_vpVertices.end(); it++)
 		{
-			HE_Edge *begin = (*it)->halfedge;
-			HE_Edge *e = begin;
+			HE_Edge *beginEdge = (*it)->halfedge;
+			HE_Edge *currentEdge = beginEdge;
 			bool beginEdgeChanged;
 			do
 			{
 				beginEdgeChanged = false;
-				glm::vec3 vecToNeighborVert = e->head->pos - (*it)->pos;
+				glm::vec3 vecToNeighborVert = currentEdge->head->pos - (*it)->pos;
 				float len_sq = vecToNeighborVert.x * vecToNeighborVert.x + vecToNeighborVert.y * vecToNeighborVert.y + vecToNeighborVert.z * vecToNeighborVert.z;
+
+				// If the neighboring vector is too close, merge it with current vertex
 				if (len_sq < threshold_sq)
 				{
-					HE_Edge *nextEdge = e->face ? e->next->next->opposite : e->next;
-					HE_Vertex *doomedVert = e->head;
+					HE_Edge *nextEdge = currentEdge->face ? currentEdge->next->next->opposite : currentEdge->next;
+					HE_Vertex *doomedVert = currentEdge->head;
 					std::cout << "Removing vertex " << doomedVert->id << " because it is " << sqrtf(len_sq) << "cm away from vertex " << (*it)->id << std::endl;
 					// if current vert's half-edge points to doomed vert, set it to be the doomed vert's half-edge
 					// also reset the begin half-edge pointer to be doomed vert's half-edge
 					if ((*it)->halfedge->head == doomedVert)
 					{
 						(*it)->halfedge = doomedVert->halfedge;
-						begin = doomedVert->halfedge;
+						beginEdge = doomedVert->halfedge;
 						beginEdgeChanged = true;
 					}
 
@@ -372,95 +385,95 @@ private:
 					--discard the preceding and proceding half-edges, as well as the current half-edge pair
 					----if the half-edge to be discarded is what the boundary edge pointer points to, advance it to the next boundary half-edge
 					*/
-					if (e->face)
+					if (currentEdge->face)
 					{
-						e->next->opposite->opposite = e->next->next->opposite;
-						e->next->next->opposite->opposite = e->next->opposite;
+						currentEdge->next->opposite->opposite = currentEdge->next->next->opposite;
+						currentEdge->next->next->opposite->opposite = currentEdge->next->opposite;
 
-						m_vpFaces.erase(std::remove(m_vpFaces.begin(), m_vpFaces.end(), e->face), m_vpFaces.end());
-						delete e->face;
-						e->face = NULL;
+						m_vpFaces.erase(std::remove(m_vpFaces.begin(), m_vpFaces.end(), currentEdge->face), m_vpFaces.end());
+						delete currentEdge->face;
+						currentEdge->face = NULL;
 
 						// if the preceding half-edge is its emanating vertex's half-edge,
 						// set it to opposite's opposite (which was just updated, so now points where it should)
-						if (e->next->next == e->next->head->halfedge)
-							e->next->head->halfedge = e->next->next->opposite->opposite;
+						if (currentEdge->next->next == currentEdge->next->head->halfedge)
+							currentEdge->next->head->halfedge = currentEdge->next->next->opposite->opposite;
 
-						if (m_pBoundaryEdge == e->next->next)
+						if (m_pBoundaryEdge == currentEdge->next->next)
 							m_pBoundaryEdge = m_pBoundaryEdge->next;
 						
-						m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e->next->next), m_vpEdges.end());
-						delete e->next->next;
-						e->next->next = NULL;
+						m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), currentEdge->next->next), m_vpEdges.end());
+						delete currentEdge->next->next;
+						currentEdge->next->next = NULL;
 
-						if (m_pBoundaryEdge == e->next)
+						if (m_pBoundaryEdge == currentEdge->next)
 							m_pBoundaryEdge = m_pBoundaryEdge->next;
 
-						m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e->next), m_vpEdges.end());
-						delete e->next;
-						e->next = NULL;
+						m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), currentEdge->next), m_vpEdges.end());
+						delete currentEdge->next;
+						currentEdge->next = NULL;
 					}
 					else // e is a boundary half-edge
 					{
-						(*it)->halfedge = e->next;
+						(*it)->halfedge = currentEdge->next;
 						HE_Edge *tempBE = m_pBoundaryEdge;
-						while (tempBE->next != e) tempBE = tempBE->next;
+						while (tempBE->next != currentEdge) tempBE = tempBE->next;
 						tempBE->next = tempBE->next->next;
 
-						nextEdge = e->next;
+						nextEdge = currentEdge->next;
 					}
 
-					if (e->opposite->face)
+					if (currentEdge->opposite->face)
 					{
-						e->opposite->next->opposite->opposite = e->opposite->next->next->opposite;
-						e->opposite->next->next->opposite->opposite = e->opposite->next->opposite;
+						currentEdge->opposite->next->opposite->opposite = currentEdge->opposite->next->next->opposite;
+						currentEdge->opposite->next->next->opposite->opposite = currentEdge->opposite->next->opposite;
 						
-						m_vpFaces.erase(std::remove(m_vpFaces.begin(), m_vpFaces.end(), e->opposite->face), m_vpFaces.end());
-						delete e->opposite->face;
-						e->opposite->face = NULL;
+						m_vpFaces.erase(std::remove(m_vpFaces.begin(), m_vpFaces.end(), currentEdge->opposite->face), m_vpFaces.end());
+						delete currentEdge->opposite->face;
+						currentEdge->opposite->face = NULL;
 
 						// if the proceding half-edge the current vertex's halfedge,
 						// set it to opposite's opposite (which was just updated, so now points where it should)
 						// and reset the begin pointer
-						if (e->opposite->next == (*it)->halfedge)
+						if (currentEdge->opposite->next == (*it)->halfedge)
 						{
-							e->opposite->next->head->halfedge = e->opposite->next->next->opposite->opposite;
-							begin = (*it)->halfedge->head->halfedge;
+							currentEdge->opposite->next->head->halfedge = currentEdge->opposite->next->next->opposite->opposite;
+							beginEdge = (*it)->halfedge->head->halfedge;
 							beginEdgeChanged = true;
 						}
 
-						if (m_pBoundaryEdge == e->opposite->next->next)
+						if (m_pBoundaryEdge == currentEdge->opposite->next->next)
 							m_pBoundaryEdge = m_pBoundaryEdge->next;
 						
-						m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e->opposite->next->next), m_vpEdges.end());
-						delete e->opposite->next->next;
-						e->opposite->next->next = NULL;
+						m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), currentEdge->opposite->next->next), m_vpEdges.end());
+						delete currentEdge->opposite->next->next;
+						currentEdge->opposite->next->next = NULL;
 
-						if (m_pBoundaryEdge == e->opposite->next)
+						if (m_pBoundaryEdge == currentEdge->opposite->next)
 							m_pBoundaryEdge = m_pBoundaryEdge->next;
 
-						m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e->opposite->next), m_vpEdges.end());
-						delete e->opposite->next;
-						e->opposite->next = NULL;
+						m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), currentEdge->opposite->next), m_vpEdges.end());
+						delete currentEdge->opposite->next;
+						currentEdge->opposite->next = NULL;
 					}
 					else // e->opposite is a boundary half-edge
 					{
 						; // nothing to do?
 					}
 
-					if (m_pBoundaryEdge == e || m_pBoundaryEdge == e->opposite)
+					if (m_pBoundaryEdge == currentEdge || m_pBoundaryEdge == currentEdge->opposite)
 						m_pBoundaryEdge = m_pBoundaryEdge->next;
 
-					if (m_pBoundaryEdge->next == e)
+					if (m_pBoundaryEdge->next == currentEdge)
 						m_pBoundaryEdge->next = m_pBoundaryEdge->next->next;
 
-					m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e->opposite), m_vpEdges.end());
-					delete e->opposite;
-					e->opposite = NULL;
+					m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), currentEdge->opposite), m_vpEdges.end());
+					delete currentEdge->opposite;
+					currentEdge->opposite = NULL;
 
-					m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e), m_vpEdges.end());
-					delete e;
-                                                                               					e = nextEdge;
+					m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), currentEdge), m_vpEdges.end());
+					delete currentEdge;
+					currentEdge = nextEdge;
 
 					// discard the doomed vertex
 					m_vpVertices.erase(std::remove(m_vpVertices.begin(), m_vpVertices.end(), doomedVert), m_vpVertices.end());
@@ -470,9 +483,9 @@ private:
 				}
 				else
 				{
-					e = e->opposite->next;
+					currentEdge = currentEdge->opposite->next;
 				}
-			} while (e != begin || beginEdgeChanged);
+			} while ((currentEdge != beginEdge || beginEdgeChanged) && currentEdge->head != (*it));
 		}
 
 		if (vertexRemoved)
