@@ -366,6 +366,10 @@ private:
 						// set the head pointer to point to current vertex
 						doomedVertIncomingEdge->head = (*it);
 
+						// if the incoming edge is a boundary edge, we need to update its next pointer as well
+						if (doomedVertIncomingEdge->isBoundaryEdge())
+							doomedVertIncomingEdge->next = doomedVertIncomingEdge->next->next;
+
 						// go to the next incoming edge
 						doomedVertIncomingEdge = doomedVertIncomingEdge->next->opposite;
 					}
@@ -380,9 +384,15 @@ private:
 					*/
 					if (currentEdge->opposite->isBoundaryEdge())
 					{
-						HE_Edge *oppPrevEdge = currentEdge->opposite->getPrev();
+						// previous boundary edge was already re-linked during vertex incoming edge reassignment loop above
 
-						oppPrevEdge->next = currentEdge->opposite->next;
+						HE_Vertex* v = removeFaceAndEdges(currentEdge->opposite);
+
+						// check to see if the edge collapse returned a degenerate vertex w/ only 1 half-edge pair
+						if (v != NULL)
+						{
+
+						}
 					}
 					else
 					{
