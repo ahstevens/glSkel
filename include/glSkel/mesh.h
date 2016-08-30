@@ -353,7 +353,12 @@ private:
 				glm::vec3 vecToNeighborVert = currentEdge->head->pos - (*it)->pos;
 				float len_sq = vecToNeighborVert.x * vecToNeighborVert.x + vecToNeighborVert.y * vecToNeighborVert.y + vecToNeighborVert.z * vecToNeighborVert.z;
 
-				// If the neighboring vector is too close, merge it with current vertex
+				bool notPointingToABoundaryVertex = true;
+				if (!currentEdge->isBoundaryEdge() && !currentEdge->opposite->isBoundaryEdge() &&
+					currentEdge->next->opposite->isBoundaryEdge() && currentEdge->opposite->next->next->opposite->isBoundaryEdge())
+					notPointingToABoundaryVertex = false;
+
+				// If the neighboring vertex is too close, merge it with current vertex
 				if (len_sq < threshold_sq)
 				{
 					HE_Edge *nextEdge;
@@ -366,7 +371,7 @@ private:
 					HE_Edge *currEdgePrev = currentEdge->getPrev();
 					HE_Vertex *doomedVert = currentEdge->head;
 
-					std::cout << "Removing vertex " << doomedVert->id << " because it is " << sqrtf(len_sq) << "cm away from vertex " << (*it)->id << std::endl;
+					//std::cout << "Removing vertex " << doomedVert->id << " because it is " << sqrtf(len_sq) << "cm away from vertex " << (*it)->id << std::endl;
 
 					// connect doomed vert's incoming half-edge heads to current vert
 					HE_Edge *doomedVertIncomingEdge = currentEdge->next->opposite;
@@ -380,7 +385,8 @@ private:
 						// if the incoming edge is a boundary edge, we need to update its next pointer as well
 						if (doomedVertIncomingEdge->isBoundaryEdge())
 						{
-							doomedVertIncomingEdge->next = doomedVertIncomingEdge->next->next;
+							if(currentEdge->opposite->isBoundaryEdge())
+								doomedVertIncomingEdge->next = doomedVertIncomingEdge->next->next;
 						}
 						// go to the next incoming edge
 						doomedVertIncomingEdge = nextIncomingEdge;
