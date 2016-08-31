@@ -69,10 +69,15 @@ public:
 		for (GLuint row = 0; row < nrows; ++row)
 		{
 			size_t ncols = s.vertices[row].size();
-			GLfloat displacement = this->vertices[row].front().x - s.vertices[row].back().x;
+
+			GLfloat xDisplacement = this->vertices[row].front().x - s.vertices[row].back().x;
+			GLfloat yDisplacement = this->vertices[row].front().y - s.vertices[row].back().y;
 
 			for (GLuint col = 0; col < ncols; ++col)
-				s.vertices[row][col].x += displacement;
+			{
+				s.vertices[row][col].x += xDisplacement;
+				s.vertices[row][col].y += yDisplacement;
+			}
 
 			// smooth out glue line
 			this->vertices[row].front().z = (this->vertices[row].front().z + s.vertices[row].back().z) / 2.f;
@@ -92,10 +97,14 @@ public:
 		{
 			size_t ncols = s.vertices[row].size();
 
-			GLfloat displacement = this->vertices[row].back().x - s.vertices[row].front().x;
+			GLfloat xDisplacement = this->vertices[row].back().x - s.vertices[row].front().x;
+			GLfloat yDisplacement = this->vertices[row].back().y - s.vertices[row].front().y;
 
-			for (GLuint col = 0; col < ncols; ++col)				
-				s.vertices[row][col].x += displacement;			
+			for (GLuint col = 0; col < ncols; ++col)
+			{
+				s.vertices[row][col].x += xDisplacement;
+				s.vertices[row][col].y += yDisplacement;
+			}
 
 			// smooth out glue line
 			this->vertices[row].back().z = (this->vertices[row].back().z + s.vertices[row].front().z) / 2.f;
