@@ -40,11 +40,11 @@ public:
 
 		this->processFacesAndEdges(vuiIndices);
 
-		checkVertices();
-		checkFaces();
-		checkEdges();
+		//checkVertices();
+		//checkFaces();
+		//checkEdges();
 
-		this->consolidateDuplicateVertices(0.01f);
+		this->consolidateDuplicateVertices(0.01f); // 1 mm
 
 		this->updateBoundaryEdgePointer();
 
@@ -335,9 +335,9 @@ private:
 				m_vpEdges[i]->next = m_vpEdges[i]->head->halfedge;
 	}
 
-	void consolidateDuplicateVertices(float threshold = 0.0000001f) // 1 nm
+	void consolidateDuplicateVertices(float searchRadius = 0.0000001f) // 1 nm
 	{
-		float threshold_sq = threshold * threshold;
+		float searchRadius_sq = searchRadius * searchRadius;
 
 		bool vertexRemoved = false;
 
@@ -359,7 +359,7 @@ private:
 					notPointingToABoundaryVertex = false;
 
 				// If the neighboring vertex is too close, merge it with current vertex
-				if (len_sq < threshold_sq)
+				if (len_sq < searchRadius_sq)
 				{
 					HE_Edge *nextEdge;
 

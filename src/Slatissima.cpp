@@ -38,12 +38,13 @@ void Slatissima::buildStrip()
 
 		std::vector<glm::vec3> vecRow;
 
-		for (GLuint col = 0; col < 3; ++col)
-		{			
-			GLfloat displacement = 0.f;
-			if(col == 0) displacement = -width / 2;
-			if(col == 2) displacement = width / 2;
-			tempVert.x = sin(heightRatio * glm::pi<GLfloat>()) * displacement * 0.5f;
+		for (GLuint col = 0; col < nVertsWide; ++col)
+		{
+			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(nVertsWide - 1);
+
+			GLfloat displacement = -(width / 2.f) + widthRatio * width;
+			GLfloat sineOffset = sin(heightRatio * glm::pi<GLfloat>());
+			tempVert.x = sineOffset * displacement;
 			//tempVert.x = displacement * 0.5f;
 			tempVert.y = heightRatio * length;
 						
@@ -98,11 +99,11 @@ void Slatissima::buildStrip()
 
 	// RIGHT STRIP
 	glm::vec2 center2{ width / 2.f, length / 2.f };
-	glm::vec2 kernelSpread2{ 0.5f, 2.f };
+	glm::vec2 kernelSpread2{ 0.5f, 0.5f };
 	GLfloat kernelOrientation2{ 0.f }; // degrees
 	GLfloat kernelAmplitude2{ 0.5f };
 	glm::vec2 spatialOrientation2{ 0.f, 1.f }; // Cartesian coords, not polar
-	GLfloat spatialFrequency2{ 1.f };
+	GLfloat spatialFrequency2{ 0.1f };
 
 	gabor.setGaussianKernel(center2, kernelSpread2, glm::radians(kernelOrientation2), kernelAmplitude2);
 	gabor.setComplexSinusoid(spatialOrientation2, spatialFrequency2);
