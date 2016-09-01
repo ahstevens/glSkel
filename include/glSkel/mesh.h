@@ -17,6 +17,8 @@
 
 #include <glSkel/shader.h>
 
+const float consolidationSearchRadius = 2.f; // cm
+
 struct Texture {
     GLuint id;
     std::string type;
@@ -35,22 +37,30 @@ public:
     {
         this->m_vTextures = vTextures;
 		this->m_pBoundaryEdge = NULL;
-
+		
+		std::cout << "\t*Initializing " << vvec3Vertices.size() << " vertices... ";
 		this->initializeVertices(vvec3Vertices);
+		std::cout << "done!" << std::endl;
 
+		std::cout << "\t*Processing " << vuiIndices.size() / 3 << " faces... ";
 		this->processFacesAndEdges(vuiIndices);
+		std::cout << "done! (" << m_vpFaces.size() << " faces and " << m_vpEdges.size() << " half-edges created)" << std::endl;
 
 		//checkVertices();
 		//checkFaces();
 		//checkEdges();
 
-		this->consolidateDuplicateVertices(0.01f); // 1 mm
+		std::cout << "\t*Consolidating vertices within " << consolidationSearchRadius * 100.f << "mm of each other... ";
+		unsigned int nVertsConsolidated = this->consolidateDuplicateVertices(consolidationSearchRadius); // 1 mm
+		std::cout << "done! (" << nVertsConsolidated << " vertices removed)" << std::endl;
 
+		std::cout << "\t*Updating boundary edge pointer... ";
 		this->updateBoundaryEdgePointer();
+		std::cout << "done! (" << getBoundaryEdgeCount() << " boundary edges in mesh)" << std::endl;
 
-		std::cout << "Surface area: " << getSurfaceArea() << " cm^2 (" << m_vpFaces.size() << " faces)" << std::endl;
+		std::cout << "\t*Surface area: " << getSurfaceArea() << " cm^2" << std::endl;
 
-		std::cout << "Surface perimeter: " << getPerimeter() << " cm (" << getBoundaryEdgeCount() << " boundary edges)" << std::endl;
+		std::cout << "\t*Surface perimeter: " << getPerimeter() << " cm" << std::endl;
 
         // Now that we have all the required data, set the vertex buffers and its attribute pointers.
         this->setupGL();
@@ -335,11 +345,13 @@ private:
 				m_vpEdges[i]->next = m_vpEdges[i]->head->halfedge;
 	}
 
-	void consolidateDuplicateVertices(float searchRadius = 0.0000001f) // 1 nm
+	unsigned int consolidateDuplicateVertices(float searchRadius = 0.0000001f) // 1 nm
 	{
 		float searchRadius_sq = searchRadius * searchRadius;
 
 		bool vertexRemoved = false;
+
+		size_t nVertsBeforeConsolidation = m_vpVertices.size();
 
 		for (std::vector<HE_Vertex*>::iterator it = m_vpVertices.begin(); it != m_vpVertices.end(); it++)
 		{
@@ -352,11 +364,6 @@ private:
 				beginEdgeChanged = false;
 				glm::vec3 vecToNeighborVert = currentEdge->head->pos - (*it)->pos;
 				float len_sq = vecToNeighborVert.x * vecToNeighborVert.x + vecToNeighborVert.y * vecToNeighborVert.y + vecToNeighborVert.z * vecToNeighborVert.z;
-
-				bool notPointingToABoundaryVertex = true;
-				if (!currentEdge->isBoundaryEdge() && !currentEdge->opposite->isBoundaryEdge() &&
-					currentEdge->next->opposite->isBoundaryEdge() && currentEdge->opposite->next->next->opposite->isBoundaryEdge())
-					notPointingToABoundaryVertex = false;
 
 				// If the neighboring vertex is too close, merge it with current vertex
 				if (len_sq < searchRadius_sq)
@@ -434,6 +441,8 @@ private:
 
 		if (vertexRemoved)
 			updateVertexIDs();
+
+		return static_cast<unsigned int>(nVertsBeforeConsolidation - m_vpVertices.size());
 	}
 
 	void removeFaceAndEdges(HE_Edge *e)

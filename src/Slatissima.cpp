@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
-const float gridSpacing = 0.05f; // cm, approx
+const float gridSpacing = 1.f; // cm, approx
 
 Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, GLfloat spinePadding_cm, GLfloat wavinessMulti)
 {
@@ -99,12 +99,12 @@ void Slatissima::buildStrip()
 
 	// RIGHT STRIP
 	glm::vec2 center2{ 0.f, 0.f };
-	glm::vec2 kernelSpread2{ 1.f, 1.f };
+	glm::vec2 kernelSpread2{ 1.f, sqrtf(length)};
 	GLfloat kernelOrientation2{ 0.f }; // degrees
 	GLfloat kernelAmplitude2{ 10.f };
-	glm::vec2 spatialOrientation2{ 0.f, 0.f }; // Cartesian coords, not polar
-	GLfloat spatialFrequency2{ 1.f };
-
+	glm::vec2 spatialOrientation2{ 0.f, 0.3f }; // Cartesian coords, not polar
+	GLfloat spatialFrequency2{ 2.f };
+	
 	gabor.setGaussianKernel(center2, kernelSpread2, glm::radians(kernelOrientation2), kernelAmplitude2);
 	gabor.setComplexSinusoid(spatialOrientation2, spatialFrequency2);
 	
@@ -135,7 +135,7 @@ void Slatissima::buildStrip()
 
 	//g.glueRight(g3);
 
-	std::cout << "Creating DCEL mesh from geometry strip that is " << g.getWidthVertexCount() << " verts wide and " << g.getHeightVertexCount() << " verts long" << std::endl;
+	std::cout << "Creating DCEL mesh from geometry strip that is " << g3.getWidthVertexCount() << " verts wide and " << g3.getHeightVertexCount() << " verts long" << std::endl;
 	mesh = new Mesh(g3.getVertices(), g3.getIndices(), this->loadTextures());
 }
 
