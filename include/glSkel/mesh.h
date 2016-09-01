@@ -356,18 +356,20 @@ private:
 		for (std::vector<HE_Vertex*>::iterator it = m_vpVertices.begin(); it != m_vpVertices.end(); it++)
 		{
 			HE_Edge *beginEdge = (*it)->halfedge;
-			bool beginEdgeChanged;
+			bool skipBeginEdgeCheck;
 			HE_Edge *currentEdge = beginEdge;
 
 			do
 			{
-				beginEdgeChanged = false;
+				skipBeginEdgeCheck = false;
 				glm::vec3 vecToNeighborVert = currentEdge->head->pos - (*it)->pos;
 				float len_sq = vecToNeighborVert.x * vecToNeighborVert.x + vecToNeighborVert.y * vecToNeighborVert.y + vecToNeighborVert.z * vecToNeighborVert.z;
 
 				// If the neighboring vertex is too close, merge it with current vertex
 				if (len_sq < searchRadius_sq)
 				{
+					std::cout << "Removing vertex " << currentEdge->head->id << " because it is " << sqrtf(len_sq) << "cm away from vertex " << (*it)->id << std::endl;
+
 					HE_Edge *nextEdge;
 
 					if (currentEdge->isBoundaryEdge())
@@ -378,7 +380,8 @@ private:
 					HE_Edge *currEdgePrev = currentEdge->getPrev();
 					HE_Vertex *doomedVert = currentEdge->head;
 
-					//std::cout << "Removing vertex " << doomedVert->id << " because it is " << sqrtf(len_sq) << "cm away from vertex " << (*it)->id << std::endl;
+					if (currEdgePrev->opposite == beginEdge)
+						skipBeginEdgeCheck = true;
 
 					// connect doomed vert's incoming half-edge heads to current vert
 					HE_Edge *doomedVertIncomingEdge = currentEdge->next->opposite;
@@ -394,6 +397,8 @@ private:
 						{
 							if(currentEdge->opposite->isBoundaryEdge())
 								doomedVertIncomingEdge->next = doomedVertIncomingEdge->next->next;
+							else if(currentEdge->opposite->next->opposite->isBoundaryEdge() && currentEdge->opposite->next->next->opposite->isBoundaryEdge())
+								doomedVertIncomingEdge->next = doomedVertIncomingEdge->next->next->next;
 						}
 						// go to the next incoming edge
 						doomedVertIncomingEdge = nextIncomingEdge;
@@ -415,7 +420,7 @@ private:
 
 						(*it)->halfedge = currentEdge->next;
 						beginEdge = (*it)->halfedge;
-						beginEdgeChanged = true;
+						skipBeginEdgeCheck = true;
 
 						removeFaceAndEdges(currentEdge);
 					}
@@ -436,7 +441,7 @@ private:
 				{
 					currentEdge = currentEdge->opposite->next;
 				}
-			} while (currentEdge != beginEdge || beginEdgeChanged);
+			} while (currentEdge != beginEdge || skipBeginEdgeCheck);
 		}
 
 		if (vertexRemoved)
