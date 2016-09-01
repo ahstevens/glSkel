@@ -366,7 +366,7 @@ private:
 				float len_sq = vecToNeighborVert.x * vecToNeighborVert.x + vecToNeighborVert.y * vecToNeighborVert.y + vecToNeighborVert.z * vecToNeighborVert.z;
 
 				// If the neighboring vertex is too close, merge it with current vertex
-				if (len_sq < searchRadius_sq)
+				if (len_sq < searchRadius_sq && !currentEdge->head->halfedge->isBoundaryEdge())
 				{
 					std::cout << "Removing vertex " << currentEdge->head->id << " because it is " << sqrtf(len_sq) << "cm away from vertex " << (*it)->id << std::endl;
 
