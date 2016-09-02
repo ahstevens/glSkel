@@ -26,15 +26,12 @@ struct Texture {
 
 class Mesh {
 public:
-    /*  Mesh Data  */
-
-	glm::vec3 position;
-	GLfloat angle;
-
     /*  Functions  */
     // Constructor to make a DCEL mesh from a triangle soup
     Mesh(std::vector<glm::vec3> vvec3Vertices, std::vector<GLuint> vuiIndices, std::vector<Texture> vTextures)
     {
+		this->position = glm::vec3(0.f, 0.f, 0.f);
+		this->orientation = glm::quat();
         this->m_vTextures = vTextures;
 		this->m_pBoundaryEdge = NULL;
 		
@@ -117,6 +114,16 @@ public:
 		return p;
 	}
 
+	void addRotation(glm::quat &q)
+	{
+		this->orientation *= q;
+	}
+
+	void setRotation(glm::quat &q)
+	{
+		this->orientation = q;
+	}
+
 	// Render the mesh
 	void Draw(Shader shader)
 	{
@@ -149,7 +156,7 @@ public:
 
 		glm::mat4 model = glm::mat4();
 		model = glm::translate(model, position);
-		model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.5f));
+		model *= glm::mat4_cast(orientation);
 
 		glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
@@ -232,6 +239,11 @@ private:
 		glm::vec3 norm;
 		glm::vec2 tex;
 	};
+
+	/*  Mesh Data  */
+
+	glm::vec3 position;
+	glm::quat orientation;
 
     /*  Render data  */
     GLuint m_glVAO, m_glVBO, m_glEBO;
@@ -368,7 +380,7 @@ private:
 				// If the neighboring vertex is too close, merge it with current vertex
 				if (len_sq < searchRadius_sq)// && (!currentEdge->head->halfedge->isBoundaryEdge() || currentEdge->isBoundaryEdge() || currentEdge->opposite->isBoundaryEdge()))
 				{
-					std::cout << "Removing vertex " << currentEdge->head->id << " because it is " << sqrtf(len_sq) << "cm away from vertex " << (*it)->id << std::endl;
+					//std::cout << "Removing vertex " << currentEdge->head->id << " because it is " << sqrtf(len_sq) << "cm away from vertex " << (*it)->id << std::endl;
 
 					HE_Edge *nextEdge;
 
@@ -388,7 +400,7 @@ private:
 
 					while (doomedVertIncomingEdge != currentEdge)
 					{ 
-						std::cout << "\tVertex " << (*it)->id << ": Reassigning " << (doomedVertIncomingEdge->isBoundaryEdge() ? "boundary half-edge" : "half-edge") << " pointing to vertex " << doomedVert->id << " from vertex " << doomedVertIncomingEdge->opposite->head->id << std::endl;
+						//std::cout << "\tVertex " << (*it)->id << ": Reassigning " << (doomedVertIncomingEdge->isBoundaryEdge() ? "boundary half-edge" : "half-edge") << " pointing to vertex " << doomedVert->id << " from vertex " << doomedVertIncomingEdge->opposite->head->id << std::endl;
 						// set the head pointer to point to current vertex
 						doomedVertIncomingEdge->head = (*it);
 
@@ -455,7 +467,7 @@ private:
 	{
 		if (e->isBoundaryEdge())
 		{
-			std::cout << "\t\tRemoving boundary edge pointing at vertex " << e->head->id << std::endl;
+			//std::cout << "\t\tRemoving boundary edge pointing at vertex " << e->head->id << std::endl;
 			m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e), m_vpEdges.end());
 			delete e;
 			return;                                                                        
@@ -496,7 +508,7 @@ private:
 		// if the half-edge collapse creates a degenerate vertex/half-edge pair, prune it
 		if (v != NULL)
 		{
-			std::cout << "\t\tRemoving degenerate vertex " << v->id << std::endl;
+			//std::cout << "\t\tRemoving degenerate vertex " << v->id << std::endl;
 			m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), v->halfedge->opposite), m_vpEdges.end());
 			delete v->halfedge->opposite;
 

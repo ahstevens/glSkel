@@ -32,7 +32,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void do_movement();
 
 // Camera
-Camera  camera(glm::vec3(0.0f, 5.0f, 15.0f));
+Camera  camera(glm::vec3(0.0f, 0.0f, 15.0f));
 LightingSystem ls;
 GLfloat lastX = mWidth / 2.0;
 GLfloat lastY = mHeight / 2.0;
@@ -46,6 +46,8 @@ bool firstMouse = true;
 bool showLights = true;
 bool showNormals = false;
 bool explode = false;
+
+Slatissima *s = NULL;
 
 int main(int argc, char * argv[]) {
 
@@ -97,10 +99,10 @@ int main(int argc, char * argv[]) {
 	// Directional light
 	ls.addDLight(glm::vec3(-1.f, -1.f, -1.f));
 	// Positions of the point lights
-	ls.addPLight(glm::vec3(-5.f, 5.f, -5.f));
-	ls.addPLight(glm::vec3( 5.f, 5.f, -5.f));
-	ls.addPLight(glm::vec3( 5.f, 5.f,  5.f));
-	ls.addPLight(glm::vec3(-5.f, 5.f,  5.f));
+	ls.addPLight(glm::vec3(-5.f, 0.f, -5.f));
+	ls.addPLight(glm::vec3( 5.f, 0.f, -5.f));
+	ls.addPLight(glm::vec3( 5.f, 0.f,  5.f));
+	ls.addPLight(glm::vec3(-5.f, 0.f,  5.f));
 	// Spotlight
 	ls.addSLight(camera.Position, camera.Front);
 
@@ -123,12 +125,8 @@ int main(int argc, char * argv[]) {
 	// // Angles of cubes
 	// for (GLuint i = 0; i < 10; i++)	c.angles.push_back(20.0f * i);
 
-
-	Slatissima s(10.f, 2.f, 0.25f, 0.01f, 2.5f);
-
-	// Set texture units
-
-
+	s = new Slatissima(10.f, 2.f, 0.25f, 0.01f, 2.5f);
+	
     // Main Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
 		// Calculate deltatime of current frame
@@ -168,14 +166,14 @@ int main(int argc, char * argv[]) {
 
 		//c.Draw(lightingShader);
 
-		s.Draw(lightingShader);
+		s->Draw(lightingShader);
 
 		if (showNormals)
 		{
 			normalsShader.Use();
 			glUniformMatrix4fv(glGetUniformLocation(normalsShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 			glUniformMatrix4fv(glGetUniformLocation(normalsShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-			s.Draw(normalsShader);
+			s->Draw(normalsShader);
 		}
 
 		if (explode)
@@ -183,7 +181,7 @@ int main(int argc, char * argv[]) {
 			explodeShader.Use();
 			glUniformMatrix4fv(glGetUniformLocation(explodeShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 			glUniformMatrix4fv(glGetUniformLocation(explodeShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-			s.Draw(explodeShader);
+			s->Draw(explodeShader);
 		}
 
 		if (showLights)
@@ -200,6 +198,8 @@ int main(int argc, char * argv[]) {
         glfwSwapBuffers(mWindow);
         glfwPollEvents();
     }   
+
+	if (s) delete s;
 	
 	glfwTerminate();
 
@@ -249,6 +249,21 @@ void do_movement()
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (keys[GLFW_KEY_D])
 		camera.ProcessKeyboard(RIGHT, deltaTime);
+
+	if (keys[GLFW_KEY_KP_4])
+		s->rotateY(-1.f);
+	if (keys[GLFW_KEY_KP_6])
+		s->rotateY(1.f);
+	if (keys[GLFW_KEY_KP_8])
+		s->rotateX(-1.f);
+	if (keys[GLFW_KEY_KP_2])
+		s->rotateX(1.f);
+	if (keys[GLFW_KEY_KP_7])
+		s->rotateZ(-1.f);
+	if (keys[GLFW_KEY_KP_9])
+		s->rotateZ(1.f);
+	if (keys[GLFW_KEY_KP_5])
+		s->resetOrientation();
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)

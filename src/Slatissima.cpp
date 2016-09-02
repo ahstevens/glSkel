@@ -26,6 +26,28 @@ Slatissima::~Slatissima()
 		delete(mesh);
 }
 
+void Slatissima::rotateX(float degrees)
+{
+	this->mesh->addRotation(glm::quat(glm::vec3(glm::radians(degrees), 0.f, 0.f)));
+}
+
+void Slatissima::rotateY(float degrees)
+{
+	this->mesh->addRotation(glm::quat(glm::vec3(0.f, glm::radians(degrees), 0.f)));
+}
+
+void Slatissima::rotateZ(float degrees)
+{
+	this->mesh->addRotation(glm::quat(glm::vec3(0.f, 0.f, glm::radians(degrees))));
+}
+
+void Slatissima::resetOrientation() { this->mesh->setRotation(glm::quat()); }
+
+void Slatissima::Draw(Shader s)
+{
+	mesh->Draw(s);
+}
+
 void Slatissima::buildStrip()
 {
 	std::vector<std::vector<glm::vec3>> vertices; // row major
@@ -60,11 +82,11 @@ void Slatissima::buildStrip()
 
 	// LEFT STRIP
 	glm::vec2 center{ 0.f, 0.f };
-	glm::vec2 kernelSpread{ 1.f, sqrtf(length) };
+	glm::vec2 kernelSpread{ width / 2.f, length / 2.f };
 	GLfloat kernelOrientation{ 0.f }; // degrees
 	GLfloat kernelAmplitude{ 1.f };
-	glm::vec2 spatialOrientation{ 0.f, 1.f }; // Cartesian coords, not polar
-	GLfloat spatialFrequency{ 5.f };
+	glm::vec2 spatialOrientation{ 0.f, 0.5f }; // Cartesian coords, not polar
+	GLfloat spatialFrequency{ 1.f };
 
 	Gabor gabor;
 	gabor.setGaussianKernel(center, kernelSpread, glm::radians(kernelOrientation), kernelAmplitude);
@@ -98,12 +120,12 @@ void Slatissima::buildStrip()
 	g.glueLeft(g2);
 
 	// RIGHT STRIP
-	glm::vec2 center2{ 0.f, 0.f };
+	glm::vec2 center2{ -length / 2.f, 0.f };
 	glm::vec2 kernelSpread2{ 1.f, sqrtf(length)};
 	GLfloat kernelOrientation2{ 0.f }; // degrees
 	GLfloat kernelAmplitude2{ 0.5f };
-	glm::vec2 spatialOrientation2{ 1.f, 0.3f }; // Cartesian coords, not polar
-	GLfloat spatialFrequency2{ 2.f };
+	glm::vec2 spatialOrientation2{ 1.f, 0.f }; // Cartesian coords, not polar
+	GLfloat spatialFrequency2{ 0.1f };
 	
 	Gabor gabor2;
 	gabor2.setGaussianKernel(center2, kernelSpread2, glm::radians(kernelOrientation2), kernelAmplitude2);
@@ -124,7 +146,7 @@ void Slatissima::buildStrip()
 			tempVert.x = -(length / 2.f) + widthRatio * length;
 			tempVert.y = -(length / 2.f) + heightRatio * length;
 
-			tempVert.z = gabor.get(glm::vec2(tempVert)) + gabor2.get(glm::vec2(tempVert));
+			tempVert.z = gabor.get(glm::vec2(tempVert));// +gabor2.get(glm::vec2(tempVert));
 
 			vecRow.push_back(tempVert);
 		}
@@ -173,9 +195,4 @@ std::vector<Texture> Slatissima::loadTextures()
 	std::vector<Texture> textures = { diffuseMap, specularMap };
 
 	return textures;
-}
-
-void Slatissima::Draw(Shader s)
-{
-	mesh->Draw(s);
 }

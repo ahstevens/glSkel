@@ -130,8 +130,8 @@ void Cube::Draw(Shader s)
 {
 	for (int i = 0; i < positions.size(); ++i)
 	{
-		mesh->position = positions[i];
-		mesh->angle = angles[i];
+		//mesh->position = positions[i];
+		//mesh->angle = angles[i];
 		mesh->Draw(s);
 	}
 }

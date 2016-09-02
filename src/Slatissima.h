@@ -10,6 +10,11 @@ public:
 	Slatissima(GLfloat length, GLfloat width, GLfloat thickness, GLfloat spinePadding, GLfloat wavinessMulti);
 	~Slatissima();
 
+	void rotateX(float degrees);
+	void rotateY(float degrees);
+	void rotateZ(float degrees);
+	void resetOrientation();
+
 	void Draw(Shader s);
 
 private:
