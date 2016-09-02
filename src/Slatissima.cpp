@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
-const float gridSpacing = 0.005f; // cm, approx
+const float gridSpacing = 0.05f; // cm, approx
 
 Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, GLfloat spinePadding_cm, GLfloat wavinessMulti)
 {
@@ -59,12 +59,12 @@ void Slatissima::buildStrip()
 	GeometryStrip g(vertices);
 
 	// LEFT STRIP
-	glm::vec2 center{ -width / 2.f, length / 2.f };
-	glm::vec2 kernelSpread{ 0.5f, 2.f };
+	glm::vec2 center{ 0.f, 0.f };
+	glm::vec2 kernelSpread{ 1.f, sqrtf(length) };
 	GLfloat kernelOrientation{ 0.f }; // degrees
-	GLfloat kernelAmplitude{ 0.5f };
+	GLfloat kernelAmplitude{ 1.f };
 	glm::vec2 spatialOrientation{ 0.f, 1.f }; // Cartesian coords, not polar
-	GLfloat spatialFrequency{ 1.f };
+	GLfloat spatialFrequency{ 5.f };
 
 	Gabor gabor;
 	gabor.setGaussianKernel(center, kernelSpread, glm::radians(kernelOrientation), kernelAmplitude);
@@ -101,12 +101,13 @@ void Slatissima::buildStrip()
 	glm::vec2 center2{ 0.f, 0.f };
 	glm::vec2 kernelSpread2{ 1.f, sqrtf(length)};
 	GLfloat kernelOrientation2{ 0.f }; // degrees
-	GLfloat kernelAmplitude2{ 10.f };
-	glm::vec2 spatialOrientation2{ 0.f, 0.3f }; // Cartesian coords, not polar
+	GLfloat kernelAmplitude2{ 0.5f };
+	glm::vec2 spatialOrientation2{ 1.f, 0.3f }; // Cartesian coords, not polar
 	GLfloat spatialFrequency2{ 2.f };
 	
-	gabor.setGaussianKernel(center2, kernelSpread2, glm::radians(kernelOrientation2), kernelAmplitude2);
-	gabor.setComplexSinusoid(spatialOrientation2, spatialFrequency2);
+	Gabor gabor2;
+	gabor2.setGaussianKernel(center2, kernelSpread2, glm::radians(kernelOrientation2), kernelAmplitude2);
+	gabor2.setComplexSinusoid(spatialOrientation2, spatialFrequency2);
 	
 	vertices.clear();
 
@@ -123,7 +124,7 @@ void Slatissima::buildStrip()
 			tempVert.x = -(length / 2.f) + widthRatio * length;
 			tempVert.y = -(length / 2.f) + heightRatio * length;
 
-			tempVert.z = gabor.get(glm::vec2(tempVert));
+			tempVert.z = gabor.get(glm::vec2(tempVert)) + gabor2.get(glm::vec2(tempVert));
 
 			vecRow.push_back(tempVert);
 		}
