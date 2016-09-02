@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
-const float gridSpacing = 1.f; // cm, approx
+const float gridSpacing = 0.005f; // cm, approx
 
 Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, GLfloat spinePadding_cm, GLfloat wavinessMulti)
 {

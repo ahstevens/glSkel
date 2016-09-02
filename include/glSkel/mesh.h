@@ -17,7 +17,7 @@
 
 #include <glSkel/shader.h>
 
-const float consolidationSearchRadius = 2.f; // cm
+const float consolidationSearchRadius = 0.001f; // cm
 
 struct Texture {
     GLuint id;
@@ -366,7 +366,7 @@ private:
 				float len_sq = vecToNeighborVert.x * vecToNeighborVert.x + vecToNeighborVert.y * vecToNeighborVert.y + vecToNeighborVert.z * vecToNeighborVert.z;
 
 				// If the neighboring vertex is too close, merge it with current vertex
-				if (len_sq < searchRadius_sq && !currentEdge->head->halfedge->isBoundaryEdge())
+				if (len_sq < searchRadius_sq)// && (!currentEdge->head->halfedge->isBoundaryEdge() || currentEdge->isBoundaryEdge() || currentEdge->opposite->isBoundaryEdge()))
 				{
 					std::cout << "Removing vertex " << currentEdge->head->id << " because it is " << sqrtf(len_sq) << "cm away from vertex " << (*it)->id << std::endl;
 
@@ -387,7 +387,8 @@ private:
 					HE_Edge *doomedVertIncomingEdge = currentEdge->next->opposite;
 
 					while (doomedVertIncomingEdge != currentEdge)
-					{
+					{ 
+						std::cout << "\tVertex " << (*it)->id << ": Reassigning " << (doomedVertIncomingEdge->isBoundaryEdge() ? "boundary half-edge" : "half-edge") << " pointing to vertex " << doomedVert->id << " from vertex " << doomedVertIncomingEdge->opposite->head->id << std::endl;
 						// set the head pointer to point to current vertex
 						doomedVertIncomingEdge->head = (*it);
 
@@ -454,6 +455,7 @@ private:
 	{
 		if (e->isBoundaryEdge())
 		{
+			std::cout << "\t\tRemoving boundary edge pointing at vertex " << e->head->id << std::endl;
 			m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), e), m_vpEdges.end());
 			delete e;
 			return;                                                                        
@@ -494,6 +496,7 @@ private:
 		// if the half-edge collapse creates a degenerate vertex/half-edge pair, prune it
 		if (v != NULL)
 		{
+			std::cout << "\t\tRemoving degenerate vertex " << v->id << std::endl;
 			m_vpEdges.erase(std::remove(m_vpEdges.begin(), m_vpEdges.end(), v->halfedge->opposite), m_vpEdges.end());
 			delete v->halfedge->opposite;
 
