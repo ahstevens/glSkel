@@ -7,13 +7,14 @@
 class Slatissima
 {
 public:
-	Slatissima(GLfloat length, GLfloat width, GLfloat thickness, GLfloat spinePadding, GLfloat wavinessMulti);
+	Slatissima(GLfloat length, GLfloat width, GLfloat thickness, Gabor &g);
 	~Slatissima();
 
 	void rotateX(float degrees);
 	void rotateY(float degrees);
 	void rotateZ(float degrees);
-	void resetOrientation();
+	void setOrientation(glm::quat orientation = glm::quat());
+	glm::quat getOrientation();
 
 	void Draw(Shader s);
 
@@ -21,8 +22,10 @@ private:
 	Mesh* mesh;
 	std::vector<GLuint> indices;
 
-	GLfloat length, width, thickness, spinePadding, wavinessMulti;
+	GLfloat length, width, thickness;
 	GLuint nVertsTall, nVertsWide;
+
+	Gabor gabor;
 
 	void buildStrip();
 

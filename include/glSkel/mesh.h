@@ -124,6 +124,11 @@ public:
 		this->orientation = q;
 	}
 
+	glm::quat getRotation()
+	{
+		return this->orientation;
+	}
+
 	// Render the mesh
 	void Draw(Shader shader)
 	{
