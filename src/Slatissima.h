@@ -7,7 +7,7 @@
 class Slatissima
 {
 public:
-	Slatissima(GLfloat length, GLfloat width, GLfloat thickness, Gabor &g);
+	Slatissima(GLfloat length, GLfloat width, GLfloat thickness, std::vector<Gabor*> g);
 	~Slatissima();
 
 	void rotateX(float degrees);
@@ -25,7 +25,7 @@ private:
 	GLfloat length, width, thickness;
 	GLuint nVertsTall, nVertsWide;
 
-	Gabor gabor;
+	std::vector<Gabor*> gabors;
 
 	void buildStrip();
 

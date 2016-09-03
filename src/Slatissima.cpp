@@ -7,12 +7,12 @@
 
 const float gridSpacing = 0.05f; // cm, approx
 
-Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, Gabor &g)
+Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, std::vector<Gabor*> g)
 {
 	this->length = length_cm;
 	this->width = width_cm; 
 	this->thickness = thickness_cm;
-	this->gabor = g;
+	this->gabors = g;
 	this->nVertsTall = static_cast<GLuint>(length_cm / gridSpacing);
 	this->nVertsWide = static_cast<GLuint>(width_cm / gridSpacing);
 	this->buildStrip();
@@ -126,7 +126,8 @@ void Slatissima::buildStrip()
 			tempVert.x = -(length / 2.f) + widthRatio * length;
 			tempVert.y = -(length / 2.f) + heightRatio * length;
 
-			tempVert.z = this->gabor.get(glm::vec2(tempVert));// +gabor2.get(glm::vec2(tempVert));
+			for(auto g : gabors)
+				tempVert.z = g->get(glm::vec2(tempVert));// +gabor2.get(glm::vec2(tempVert));
 
 			vecRow.push_back(tempVert);
 		}

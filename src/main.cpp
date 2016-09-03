@@ -48,15 +48,10 @@ bool showNormals = false;
 bool explode = false;
 
 Slatissima *s = NULL;
-Gabor g;
+std::vector<Gabor*> gabs;
+Gabor* currentEditGabor = NULL;
 
 // LEFT STRIP
-glm::vec2 m_vec2gCenter{ 0.f, 0.f };
-glm::vec2 m_vec2gKernelSpread{ 1.f, 1.f };
-GLfloat m_fgKernelOrientation{ 0.f }; // degrees
-GLfloat m_fgKernelAmplitude{ 1.f };
-GLfloat m_fcsDistance{ 0.f };
-GLfloat m_fcsAngle{ 0.f };
 
 int main(int argc, char * argv[]) {
 
@@ -134,10 +129,10 @@ int main(int argc, char * argv[]) {
 	// // Angles of cubes
 	// for (GLuint i = 0; i < 10; i++)	c.angles.push_back(20.0f * i);
 
-	g.setGaussianKernel(m_vec2gCenter, m_vec2gKernelSpread, m_fgKernelOrientation, m_fgKernelAmplitude);
-	g.setComplexSinusoid(m_fcsDistance, glm::radians(m_fcsAngle));
-
-	s = new Slatissima(10.f, 2.f, 0.25f, g);
+	Gabor g;
+	currentEditGabor = &g;
+	gabs.push_back(currentEditGabor);
+	s = new Slatissima(10.f, 2.f, 0.25f, gabs);
 	
     // Main Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
@@ -280,108 +275,108 @@ void do_movement()
 	if (keys[GLFW_KEY_KP_8])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		glm::vec2 kernelSpread = g.getGaussianKernelSpread();
+		glm::vec2 kernelSpread = currentEditGabor->getGaussianKernelSpread();
 		kernelSpread.y += 0.05f;
-		g.setGaussianKernelSpread(kernelSpread);
+		currentEditGabor->setGaussianKernelSpread(kernelSpread);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, g);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_KP_2])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		glm::vec2 kernelSpread = g.getGaussianKernelSpread();
+		glm::vec2 kernelSpread = currentEditGabor->getGaussianKernelSpread();
 		kernelSpread.y -= 0.05f;
-		g.setGaussianKernelSpread(kernelSpread);
+		currentEditGabor->setGaussianKernelSpread(kernelSpread);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, g);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_KP_4])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		glm::vec2 kernelSpread = g.getGaussianKernelSpread();
+		glm::vec2 kernelSpread = currentEditGabor->getGaussianKernelSpread();
 		kernelSpread.x -= 0.05f;
-		g.setGaussianKernelSpread(kernelSpread);
+		currentEditGabor->setGaussianKernelSpread(kernelSpread);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, g);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_KP_6])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		glm::vec2 kernelSpread = g.getGaussianKernelSpread();
+		glm::vec2 kernelSpread = currentEditGabor->getGaussianKernelSpread();
 		kernelSpread.x += 0.05f;
-		g.setGaussianKernelSpread(kernelSpread);
+		currentEditGabor->setGaussianKernelSpread(kernelSpread);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, g);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
 		s->setOrientation(oldOrientation);
 	}
 
 	if (keys[GLFW_KEY_KP_7])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		g.setGaussianKernelAngle(g.getGaussianKernelAngle() - glm::radians(5.f));
+		currentEditGabor->setGaussianKernelAngle(currentEditGabor->getGaussianKernelAngle() - glm::radians(5.f));
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, g);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_KP_9])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		g.setGaussianKernelAngle(g.getGaussianKernelAngle() + glm::radians(5.f));
+		currentEditGabor->setGaussianKernelAngle(currentEditGabor->getGaussianKernelAngle() + glm::radians(5.f));
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, g);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
 		s->setOrientation(oldOrientation);
 	}
 
 	if (keys[GLFW_KEY_KP_SUBTRACT])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		g.setGaussianKernelAmplitude(g.getGaussianKernelAmplitude() - 0.1f);
+		currentEditGabor->setGaussianKernelAmplitude(currentEditGabor->getGaussianKernelAmplitude() - 0.1f);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, g);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_KP_ADD])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		g.setGaussianKernelAmplitude(g.getGaussianKernelAmplitude() + 0.1f);
+		currentEditGabor->setGaussianKernelAmplitude(currentEditGabor->getGaussianKernelAmplitude() + 0.1f);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, g);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
 		s->setOrientation(oldOrientation);
 	}
 
 	if (keys[GLFW_KEY_UP])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		g.setComplexSinusoidDistance(g.getComplexSinusoidDistance() + 0.1f);
+		currentEditGabor->setComplexSinusoidDistance(currentEditGabor->getComplexSinusoidDistance() + 0.1f);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, g);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_DOWN])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		g.setComplexSinusoidDistance(g.getComplexSinusoidDistance() - 0.1f);
+		currentEditGabor->setComplexSinusoidDistance(currentEditGabor->getComplexSinusoidDistance() - 0.1f);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, g);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_RIGHT])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		g.setComplexSinusoidAngle(g.getComplexSinusoidAngle() + glm::radians(5.f));
+		currentEditGabor->setComplexSinusoidAngle(currentEditGabor->getComplexSinusoidAngle() + glm::radians(5.f));
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, g);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_LEFT])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		g.setComplexSinusoidAngle(g.getComplexSinusoidAngle() - glm::radians(5.f));
+		currentEditGabor->setComplexSinusoidAngle(currentEditGabor->getComplexSinusoidAngle() - glm::radians(5.f));
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, g);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
 		s->setOrientation(oldOrientation);
 	}
 }
