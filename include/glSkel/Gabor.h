@@ -21,21 +21,26 @@ public:
 		return s.get(pos).real() * k.get(pos);
 	}
 
-	void setGaussianKernel(glm::vec2 center, glm::vec2 spread, float angle, float amplitude)
+	void setGaussianKernel(glm::vec2 center, glm::vec2 spread, float angle_rad, float amplitude)
 	{
 		float sXsq = spread.x * spread.x;
 		float sYsq = spread.y * spread.y;
 
-		float a =  0.5f  * (pow(cos(angle), 2) / sXsq) + 0.5f  * (pow(sin(angle), 2) / sYsq);
-		float b = -0.25f * (sin(2 * angle)     / sXsq) + 0.25f * (sin(2 * angle)     / sYsq);
-		float c =  0.5f  * (pow(sin(angle), 2) / sXsq) + 0.5f  * (pow(cos(angle), 2) / sYsq);
+		float a =  0.5f  * (pow(cos(angle_rad), 2) / sXsq) + 0.5f  * (pow(sin(angle_rad), 2) / sYsq);
+		float b = -0.25f * (sin(2 * angle_rad)     / sXsq) + 0.25f * (sin(2 * angle_rad)     / sYsq);
+		float c =  0.5f  * (pow(sin(angle_rad), 2) / sXsq) + 0.5f  * (pow(cos(angle_rad), 2) / sYsq);
 
 		k = GaussianKernel{ center, amplitude, a, b, c };
 	}
 
-	void setComplexSinusoid(glm::vec2 spatialOrientation, float spatialFrequency = 1.f)
+	void setComplexSinusoid(glm::vec2 spatialCentralFrequency)
 	{
-		s = ComplexSinusoid{ spatialOrientation, spatialFrequency };
+		s = ComplexSinusoid{ spatialCentralFrequency };
+	}
+
+	void setComplexSinusoid(float distance, float angleRad)
+	{
+		s = ComplexSinusoid{ glm::vec2(distance * sin(angleRad), distance * cos(angleRad)) };
 	}
 
 private:
@@ -52,15 +57,13 @@ private:
 	} k;
 
 	struct ComplexSinusoid {
-		glm::vec2 spatialOrientation;
-		float spatialFrequency;
+		glm::vec2 spatialCentralFrequency;
 
 		std::complex<float> get(glm::vec2 pos)
 		{
 			return exp(glm::two_pi<float>()           // 2pi
-				* spatialFrequency
 				* std::complex<float>(0.f, 1.f)       // 0 + 1i
-				* glm::dot(spatialOrientation, pos));
+				* glm::dot(spatialCentralFrequency, pos));
 		}
 	} s;
 };
