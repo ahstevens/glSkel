@@ -280,8 +280,9 @@ void do_movement()
 	if (keys[GLFW_KEY_KP_8])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		m_vec2gKernelSpread.y += 0.05f;
-		g.setGaussianKernel(m_vec2gCenter, m_vec2gKernelSpread, glm::radians(m_fgKernelOrientation), m_fgKernelAmplitude);
+		glm::vec2 kernelSpread = g.getGaussianKernelSpread();
+		kernelSpread.y += 0.05f;
+		g.setGaussianKernelSpread(kernelSpread);
 		if (s) delete s;
 		s = new Slatissima(10.f, 2.f, 0.25f, g);
 		s->setOrientation(oldOrientation);
@@ -289,8 +290,9 @@ void do_movement()
 	if (keys[GLFW_KEY_KP_2])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		m_vec2gKernelSpread.y -= 0.05f;
-		g.setGaussianKernel(m_vec2gCenter, m_vec2gKernelSpread, glm::radians(m_fgKernelOrientation), m_fgKernelAmplitude);
+		glm::vec2 kernelSpread = g.getGaussianKernelSpread();
+		kernelSpread.y -= 0.05f;
+		g.setGaussianKernelSpread(kernelSpread);
 		if (s) delete s;
 		s = new Slatissima(10.f, 2.f, 0.25f, g);
 		s->setOrientation(oldOrientation);
@@ -298,8 +300,9 @@ void do_movement()
 	if (keys[GLFW_KEY_KP_4])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		m_vec2gKernelSpread.x -= 0.05f;
-		g.setGaussianKernel(m_vec2gCenter, m_vec2gKernelSpread, glm::radians(m_fgKernelOrientation), m_fgKernelAmplitude);
+		glm::vec2 kernelSpread = g.getGaussianKernelSpread();
+		kernelSpread.x -= 0.05f;
+		g.setGaussianKernelSpread(kernelSpread);
 		if (s) delete s;
 		s = new Slatissima(10.f, 2.f, 0.25f, g);
 		s->setOrientation(oldOrientation);
@@ -307,8 +310,9 @@ void do_movement()
 	if (keys[GLFW_KEY_KP_6])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		m_vec2gKernelSpread.x += 0.05f;
-		g.setGaussianKernel(m_vec2gCenter, m_vec2gKernelSpread, glm::radians(m_fgKernelOrientation), m_fgKernelAmplitude);
+		glm::vec2 kernelSpread = g.getGaussianKernelSpread();
+		kernelSpread.x += 0.05f;
+		g.setGaussianKernelSpread(kernelSpread);
 		if (s) delete s;
 		s = new Slatissima(10.f, 2.f, 0.25f, g);
 		s->setOrientation(oldOrientation);
@@ -317,8 +321,7 @@ void do_movement()
 	if (keys[GLFW_KEY_KP_7])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		m_fgKernelOrientation -= 5.f;
-		g.setGaussianKernel(m_vec2gCenter, m_vec2gKernelSpread, glm::radians(m_fgKernelOrientation), m_fgKernelAmplitude);
+		g.setGaussianKernelAngle(g.getGaussianKernelAngle() - glm::radians(5.f));
 		if (s) delete s;
 		s = new Slatissima(10.f, 2.f, 0.25f, g);
 		s->setOrientation(oldOrientation);
@@ -326,8 +329,7 @@ void do_movement()
 	if (keys[GLFW_KEY_KP_9])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		m_fgKernelOrientation += 5.f;
-		g.setGaussianKernel(m_vec2gCenter, m_vec2gKernelSpread, glm::radians(m_fgKernelOrientation), m_fgKernelAmplitude);
+		g.setGaussianKernelAngle(g.getGaussianKernelAngle() + glm::radians(5.f));
 		if (s) delete s;
 		s = new Slatissima(10.f, 2.f, 0.25f, g);
 		s->setOrientation(oldOrientation);
@@ -336,8 +338,7 @@ void do_movement()
 	if (keys[GLFW_KEY_KP_SUBTRACT])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		m_fgKernelAmplitude -= 0.1f;
-		g.setGaussianKernel(m_vec2gCenter, m_vec2gKernelSpread, glm::radians(m_fgKernelOrientation), m_fgKernelAmplitude);
+		g.setGaussianKernelAmplitude(g.getGaussianKernelAmplitude() - 0.1f);
 		if (s) delete s;
 		s = new Slatissima(10.f, 2.f, 0.25f, g);
 		s->setOrientation(oldOrientation);
@@ -345,8 +346,7 @@ void do_movement()
 	if (keys[GLFW_KEY_KP_ADD])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		m_fgKernelAmplitude += 0.1f;
-		g.setGaussianKernel(m_vec2gCenter, m_vec2gKernelSpread, glm::radians(m_fgKernelOrientation), m_fgKernelAmplitude);
+		g.setGaussianKernelAmplitude(g.getGaussianKernelAmplitude() + 0.1f);
 		if (s) delete s;
 		s = new Slatissima(10.f, 2.f, 0.25f, g);
 		s->setOrientation(oldOrientation);
@@ -355,8 +355,7 @@ void do_movement()
 	if (keys[GLFW_KEY_UP])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		m_fcsDistance += 0.1f;
-		g.setComplexSinusoid(m_fcsDistance, glm::radians(m_fcsAngle));
+		g.setComplexSinusoidDistance(g.getComplexSinusoidDistance() + 0.1f);
 		if (s) delete s;
 		s = new Slatissima(10.f, 2.f, 0.25f, g);
 		s->setOrientation(oldOrientation);
@@ -364,8 +363,7 @@ void do_movement()
 	if (keys[GLFW_KEY_DOWN])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		m_fcsDistance -= 0.1f;
-		g.setComplexSinusoid(m_fcsDistance, glm::radians(m_fcsAngle));
+		g.setComplexSinusoidDistance(g.getComplexSinusoidDistance() - 0.1f);
 		if (s) delete s;
 		s = new Slatissima(10.f, 2.f, 0.25f, g);
 		s->setOrientation(oldOrientation);
@@ -373,8 +371,7 @@ void do_movement()
 	if (keys[GLFW_KEY_RIGHT])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		m_fcsAngle += 5.f;
-		g.setComplexSinusoid(m_fcsDistance, glm::radians(m_fcsAngle));
+		g.setComplexSinusoidAngle(g.getComplexSinusoidAngle() + glm::radians(5.f));
 		if (s) delete s;
 		s = new Slatissima(10.f, 2.f, 0.25f, g);
 		s->setOrientation(oldOrientation);
@@ -382,8 +379,7 @@ void do_movement()
 	if (keys[GLFW_KEY_LEFT])
 	{
 		glm::quat oldOrientation = s->getOrientation();
-		m_fcsAngle -= 5.f;
-		g.setComplexSinusoid(m_fcsDistance, glm::radians(m_fcsAngle));
+		g.setComplexSinusoidAngle(g.getComplexSinusoidAngle() - glm::radians(5.f));
 		if (s) delete s;
 		s = new Slatissima(10.f, 2.f, 0.25f, g);
 		s->setOrientation(oldOrientation);
