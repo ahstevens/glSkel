@@ -125,9 +125,10 @@ void Slatissima::buildStrip()
 			//tempVert.x = (widthRatio + 0.5f) * width * 0.5f * sin(heightRatio * glm::pi<GLfloat>());
 			tempVert.x = -(length / 2.f) + widthRatio * length;
 			tempVert.y = -(length / 2.f) + heightRatio * length;
+			tempVert.z = 0.f;
 
-			for(auto g : gabors)
-				tempVert.z = g->get(glm::vec2(tempVert));// +gabor2.get(glm::vec2(tempVert));
+			for(std::vector<Gabor*>::iterator it = gabors.begin(); it != gabors.end(); it++)
+				tempVert.z += (*it)->get(glm::vec2(tempVert));// +gabor2.get(glm::vec2(tempVert));
 
 			vecRow.push_back(tempVert);
 		}

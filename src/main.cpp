@@ -129,8 +129,8 @@ int main(int argc, char * argv[]) {
 	// // Angles of cubes
 	// for (GLuint i = 0; i < 10; i++)	c.angles.push_back(20.0f * i);
 
-	Gabor g;
-	currentEditGabor = &g;
+	Gabor* g = new Gabor();
+	currentEditGabor = g;
 	gabs.push_back(currentEditGabor);
 	s = new Slatissima(10.f, 2.f, 0.25f, gabs);
 	
@@ -236,6 +236,45 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		showNormals = !showNormals;
 	if (key == GLFW_KEY_B && action == GLFW_PRESS)
 		explode = !explode;
+	
+	if (key == GLFW_KEY_MINUS && action == GLFW_PRESS && gabs.size() > 1)
+	{
+		gabs.erase(std::remove(gabs.begin(), gabs.end(), currentEditGabor), gabs.end());
+		delete currentEditGabor;
+		currentEditGabor = gabs.back();
+
+		glm::quat oldOrientation = s->getOrientation();
+		if (s) delete s;
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s->setOrientation(oldOrientation);
+	}
+	if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS)
+	{
+		Gabor* g = new Gabor();
+		currentEditGabor = g;
+		gabs.push_back(g);
+
+		glm::quat oldOrientation = s->getOrientation();
+		if (s) delete s;
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s->setOrientation(oldOrientation);
+	}
+
+	if (key == GLFW_KEY_COMMA && action == GLFW_PRESS)
+	{
+		if (currentEditGabor == gabs.front())
+			currentEditGabor = gabs.back();
+		else
+			currentEditGabor = *(std::find(gabs.begin(), gabs.end(), currentEditGabor) - 1u);
+	}
+	if (key == GLFW_KEY_PERIOD && action == GLFW_PRESS)
+	{
+		if (currentEditGabor == gabs.back())
+			currentEditGabor = gabs.front();
+		else
+			currentEditGabor = *(std::find(gabs.begin(), gabs.end(), currentEditGabor) + 1u);
+	}
+
 	if (key >= 0 && key < 1024)
 	{
 		if (action == GLFW_PRESS)
