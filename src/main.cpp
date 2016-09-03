@@ -243,6 +243,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		delete currentEditGabor;
 		currentEditGabor = gabs.back();
 
+		std::cout << "Gabor function removed (" << gabs.size() << " total)" << std::endl;
+
 		glm::quat oldOrientation = s->getOrientation();
 		if (s) delete s;
 		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
@@ -254,6 +256,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		currentEditGabor = g;
 		gabs.push_back(g);
 
+		std::cout << "Gabor function added (" << gabs.size() << " total)" << std::endl;
+
 		glm::quat oldOrientation = s->getOrientation();
 		if (s) delete s;
 		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
@@ -263,16 +267,30 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_COMMA && action == GLFW_PRESS)
 	{
 		if (currentEditGabor == gabs.front())
+		{
 			currentEditGabor = gabs.back();
+			std::cout << "Gabor " << gabs.size() - 1 << " is now active for editing" << std::endl;
+		}
 		else
-			currentEditGabor = *(std::find(gabs.begin(), gabs.end(), currentEditGabor) - 1u);
+		{
+			std::vector<Gabor*>::iterator it = std::find(gabs.begin(), gabs.end(), currentEditGabor) - 1u;
+			currentEditGabor = *it;
+			std::cout << "Gabor " << it - gabs.begin() << " is now active for editing" << std::endl;
+		}
 	}
 	if (key == GLFW_KEY_PERIOD && action == GLFW_PRESS)
 	{
 		if (currentEditGabor == gabs.back())
+		{
 			currentEditGabor = gabs.front();
+			std::cout << "Gabor 0 is now active for editing" << std::endl;
+		}
 		else
-			currentEditGabor = *(std::find(gabs.begin(), gabs.end(), currentEditGabor) + 1u);
+		{
+			std::vector<Gabor*>::iterator it = std::find(gabs.begin(), gabs.end(), currentEditGabor) + 1u;
+			currentEditGabor = *it;
+			std::cout << "Gabor " << it - gabs.begin() << " is now active for editing" << std::endl;
+		}
 	}
 
 	if (key >= 0 && key < 1024)
