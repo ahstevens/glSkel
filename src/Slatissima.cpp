@@ -27,17 +27,20 @@ Slatissima::~Slatissima()
 
 void Slatissima::rotateX(float degrees)
 {
-	this->mesh->addRotation(glm::quat(glm::vec3(glm::radians(degrees), 0.f, 0.f)));
+	glm::quat q = glm::quat(glm::vec3(glm::radians(degrees), 0.f, 0.f));
+	this->mesh->addRotation(q);
 }
 
 void Slatissima::rotateY(float degrees)
 {
-	this->mesh->addRotation(glm::quat(glm::vec3(0.f, glm::radians(degrees), 0.f)));
+	glm::quat q = glm::quat(glm::vec3(0.f, glm::radians(degrees), 0.f));
+	this->mesh->addRotation(q);
 }
 
 void Slatissima::rotateZ(float degrees)
 {
-	this->mesh->addRotation(glm::quat(glm::vec3(0.f, 0.f, glm::radians(degrees))));
+	glm::quat q = glm::quat(glm::vec3(0.f, 0.f, glm::radians(degrees)));
+	this->mesh->addRotation(q);
 }
 
 void Slatissima::setOrientation(glm::quat orientation) { this->mesh->setRotation(orientation); }
