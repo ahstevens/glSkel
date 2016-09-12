@@ -132,7 +132,7 @@ int main(int argc, char * argv[]) {
 	Gabor* g = new Gabor();
 	currentEditGabor = g;
 	gabs.push_back(currentEditGabor);
-	s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+	s = new Slatissima(20.f, 5.f, 0.25f, gabs);
 	
     // Main Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {

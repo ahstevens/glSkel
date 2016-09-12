@@ -60,78 +60,90 @@ void Slatissima::buildStrip()
 	std::vector<std::vector<glm::vec3>> vertices; // row major
 	glm::vec3 tempVert;
 
-	//// CENTRAL BLADE VERTICES
-	//for (GLuint row = 0; row < nVertsTall; ++row)
-	//{
-	//	GLfloat heightRatio = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
+	Gabor gabor;
+	gabor.setGaussianKernelCenter(glm::vec2(-width / 2.f, length / 2.f));
+	gabor.setGaussianKernelSpread(glm::vec2(width / 4.f, length / 6.f));
+	gabor.setGaussianKernelAngle(0.f);
+	gabor.setGaussianKernelAmplitude(0.8f);
+	gabor.setComplexSinusoidDistance(0.8f);
+	gabor.setComplexSinusoidAngle(0.f);
 
-	//	std::vector<glm::vec3> vecRow;
+	// CENTRAL BLADE VERTICES
+	float centerBladeWidthPercent = 0.33f;
+	float centerBladeWidth = width * centerBladeWidthPercent;
+	for (GLuint row = 0; row < nVertsTall; ++row)
+	{
+		GLfloat heightRatio = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
 
-	//	for (GLuint col = 0; col < nVertsWide; ++col)
-	//	{
-	//		GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(nVertsWide - 1);
+		std::vector<glm::vec3> vecRow;
 
-	//		GLfloat displacement = -(width / 2.f) + widthRatio * width;
-	//		GLfloat sineOffset = sin(heightRatio * glm::pi<GLfloat>());
-	//		tempVert.x = sineOffset * displacement;
-	//		//tempVert.x = displacement * 0.5f;
-	//		tempVert.y = heightRatio * length;
-	//					
-	//		tempVert.z = 0.f;
+		for (GLuint col = 0; col < nVertsWide * centerBladeWidthPercent; ++col)
+		{
+			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(nVertsWide * centerBladeWidthPercent - 1);
 
-	//		vecRow.push_back(tempVert);
-	//	}
+			GLfloat displacement = -(centerBladeWidth / 2.f) + widthRatio * centerBladeWidth;
+			GLfloat sineOffset = sin(heightRatio * glm::pi<GLfloat>());
+			tempVert.x = sineOffset * displacement;
+			//tempVert.x = displacement * 0.5f;
+			tempVert.y = heightRatio * length;
+						
+			tempVert.z = 0.f;
 
-	//	vertices.push_back(vecRow);
-	//}
+			vecRow.push_back(tempVert);
+		}
 
-	//GeometryStrip g(vertices);
-	//
-	//vertices.clear();
-	//for (GLuint row = 0; row < nVertsTall; ++row)
-	//{
-	//	std::vector<glm::vec3> vecRow;
-	//	GLfloat heightRatio = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
+		vertices.push_back(vecRow);
+	}
 
-	//	for (GLuint col = 0; col < nVertsWide; ++col)
-	//	{
-	//		GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(nVertsWide - 1);
+	GeometryStrip g(vertices);
+	
+	vertices.clear();
 
-	//		tempVert.x = (widthRatio - 0.5f) * width * 0.5f * sin(heightRatio * glm::pi<GLfloat>());
-	//		//tempVert.x = (widthRatio - 0.5f) * width * 0.5f;
-	//		tempVert.y = heightRatio * length;
-
-	//		tempVert.z = this->gabor.get(glm::vec2(tempVert));
-	//		//v.z = 0.f;
-
-	//		vecRow.push_back(tempVert);
-	//	}
-
-	//	vertices.push_back(vecRow);
-	//}
-
-	//GeometryStrip g2(vertices);
-
-	//g.glueLeft(g2);
-	//
-	//vertices.clear();
-
+	float edgeWidthPercent = 0.5f;
+	float edgeWidth = width * edgeWidthPercent;
 	for (GLuint row = 0; row < nVertsTall; ++row)
 	{
 		std::vector<glm::vec3> vecRow;
 		GLfloat heightRatio = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
 
-		for (GLuint col = 0; col < nVertsTall; ++col)
+		for (GLuint col = 0; col < nVertsWide * edgeWidthPercent; ++col)
 		{
-			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(nVertsTall - 1);
+			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(nVertsWide * edgeWidthPercent - 1);
 
-			//tempVert.x = (widthRatio + 0.5f) * width * 0.5f * sin(heightRatio * glm::pi<GLfloat>());
-			tempVert.x = -(length / 2.f) + widthRatio * length;
-			tempVert.y = -(length / 2.f) + heightRatio * length;
-			tempVert.z = 0.f;
+			tempVert.x = (widthRatio - 0.5f) * edgeWidth * sin(heightRatio * glm::pi<GLfloat>());
+			//tempVert.x = (widthRatio - 0.5f) * width * 0.5f;
+			tempVert.y = heightRatio * length;
 
-			for(std::vector<Gabor*>::iterator it = gabors.begin(); it != gabors.end(); it++)
-				tempVert.z += (*it)->get(glm::vec2(tempVert));// +gabor2.get(glm::vec2(tempVert));
+			tempVert.z = gabor.get(glm::vec2(tempVert));
+			//v.z = 0.f;
+
+			vecRow.push_back(tempVert);
+		}
+
+		vertices.push_back(vecRow);
+	}
+
+	GeometryStrip g2(vertices);
+
+	g.glueLeft(g2);
+
+	gabor.setGaussianKernelCenter(glm::vec2(width / 2.f, length / 2.f));
+	vertices.clear();
+	for (GLuint row = 0; row < nVertsTall; ++row)
+	{
+		std::vector<glm::vec3> vecRow;
+		GLfloat heightRatio = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
+
+		for (GLuint col = 0; col < nVertsWide * edgeWidthPercent; ++col)
+		{
+			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(nVertsWide * edgeWidthPercent - 1);
+
+			tempVert.x = (widthRatio - 0.5f) * edgeWidth * sin(heightRatio * glm::pi<GLfloat>());
+			//tempVert.x = (widthRatio - 0.5f) * width * 0.5f;
+			tempVert.y = heightRatio * length;
+
+			tempVert.z = gabor.get(glm::vec2(tempVert));
+			//v.z = 0.f;
 
 			vecRow.push_back(tempVert);
 		}
@@ -141,10 +153,10 @@ void Slatissima::buildStrip()
 
 	GeometryStrip g3(vertices);
 
-	//g.glueRight(g3);
+	g.glueRight(g3);
 
-	std::cout << "Creating DCEL mesh from geometry strip that is " << g3.getWidthVertexCount() << " verts wide and " << g3.getHeightVertexCount() << " verts long" << std::endl;
-	mesh = new Mesh(g3.getVertices(), g3.getIndices(), this->loadTextures());
+	std::cout << "Creating DCEL mesh from geometry strip that is " << g.getWidthVertexCount() << " verts wide and " << g.getHeightVertexCount() << " verts long" << std::endl;
+	mesh = new Mesh(g.getVertices(), g.getIndices(), this->loadTextures());
 }
 
 std::vector<Texture> Slatissima::loadTextures()
