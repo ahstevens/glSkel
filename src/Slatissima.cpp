@@ -7,7 +7,7 @@
 
 const float gridSpacing = 0.05f; // cm, approx
 
-Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, std::vector<Gabor*> g)
+Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, std::vector<Gabor*> g, btDiscreteDynamicsWorld* dynamicsWorld)
 {
 	this->length = length_cm;
 	this->width = width_cm; 
@@ -16,6 +16,34 @@ Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm
 	this->nVertsTall = static_cast<GLuint>(length_cm / gridSpacing);
 	this->nVertsWide = static_cast<GLuint>(width_cm / gridSpacing);
 	this->buildStrip();
+	this->m_pDynamicsWorld = dynamicsWorld;
+
+	//create a dynamic rigidbody
+
+	//btCollisionShape* colShape = new btBoxShape(btVector3(1,1,1));
+	btCollisionShape* colShape = new btSphereShape(btScalar(0.));
+
+	/// Create Dynamic Objects
+	btTransform startTransform;
+	startTransform.setIdentity();
+
+	btScalar	mass(10.f);
+
+	//rigidbody is dynamic if and only if mass is non zero, otherwise static
+	bool isDynamic = (mass != 0.f);
+
+	btVector3 localInertia(0, 0, 0);
+	if (isDynamic)
+		colShape->calculateLocalInertia(mass, localInertia);
+
+	startTransform.setOrigin(btVector3(0, 10, 0));
+
+	//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+	btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, colShape, localInertia);
+	m_pRigidBody = new btRigidBody(rbInfo);
+
+	this->m_pDynamicsWorld->addRigidBody(m_pRigidBody);
 }
 
 
@@ -23,6 +51,10 @@ Slatissima::~Slatissima()
 {
 	if (mesh)
 		delete(mesh);
+
+	delete m_pRigidBody->getMotionState();
+	m_pDynamicsWorld->removeCollisionObject(m_pRigidBody);
+	delete m_pRigidBody;
 }
 
 void Slatissima::rotateX(float degrees)
@@ -58,6 +90,23 @@ void Slatissima::setPosition(glm::vec3 pos)
 glm::vec3 Slatissima::getPosition()
 {
 	return mesh->getPosition();
+}
+
+void Slatissima::drop(btVector3 pos)
+{
+	btMotionState* motionState = m_pRigidBody->getMotionState();
+	btTransform trans;
+	motionState->getWorldTransform(trans);
+	trans.setOrigin(btVector3(0.f, 10.f, 0.f));
+	motionState->setWorldTransform(trans);
+	m_pRigidBody->setMotionState(motionState);
+	m_pRigidBody->activate();
+}
+
+void Slatissima::bump(btVector3 dir)
+{
+	m_pRigidBody->activate();
+	m_pRigidBody->applyCentralImpulse(dir);
 }
 
 void Slatissima::Draw(Shader s)

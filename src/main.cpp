@@ -58,7 +58,6 @@ std::vector<Gabor*> gabs;
 Gabor* currentEditGabor = NULL;
 
 btDiscreteDynamicsWorld* dynamicsWorld = NULL;
-btRigidBody* testBody = NULL;
 
 int main(int argc, char * argv[]) {
 
@@ -163,7 +162,7 @@ int main(int argc, char * argv[]) {
 	Gabor* g = new Gabor();
 	currentEditGabor = g;
 	gabs.push_back(currentEditGabor);
-	s = new Slatissima(20.f, 5.f, 0.25f, gabs);
+	s = new Slatissima(20.f, 5.f, 0.25f, gabs, dynamicsWorld);
 	
     // Main Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
@@ -280,7 +279,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 		glm::quat oldOrientation = s->getOrientation();
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
 		s->setOrientation(oldOrientation);
 	}
 	if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS)
@@ -293,7 +292,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 		glm::quat oldOrientation = s->getOrientation();
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
 		s->setOrientation(oldOrientation);
 	}
 
@@ -364,25 +363,17 @@ void do_movement()
 
 	if (keys[GLFW_KEY_O])
 	{
-		btMotionState* motionState = testBody->getMotionState();
-		btTransform trans;
-		motionState->getWorldTransform(trans);
-		trans.setOrigin(btVector3(0.f, 10.f, 0.f));
-		motionState->setWorldTransform(trans);
-		testBody->setMotionState(motionState);
-		testBody->activate();
+		s->drop(btVector3(0.f, 10.f, 0.f));
 	}
 
 	if (keys[GLFW_KEY_U])
 	{
-		testBody->activate();
-		testBody->applyCentralImpulse(btVector3(0.f, 10.f, 0.f));
+		s->bump(btVector3(0.f, 10.f, 0.f));
 	}
 
 	if (keys[GLFW_KEY_I])
 	{
-		testBody->activate();
-		testBody->applyCentralImpulse(btVector3(0.f, 0.f, -1.f));
+		s->bump(btVector3(0.f, 0.f, -1.f));
 	}
 
 	if (keys[GLFW_KEY_KP_8])
@@ -392,7 +383,7 @@ void do_movement()
 		kernelSpread.y += 0.05f;
 		currentEditGabor->setGaussianKernelSpread(kernelSpread);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_KP_2])
@@ -402,7 +393,7 @@ void do_movement()
 		kernelSpread.y -= 0.05f;
 		currentEditGabor->setGaussianKernelSpread(kernelSpread);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_KP_4])
@@ -412,7 +403,7 @@ void do_movement()
 		kernelSpread.x -= 0.05f;
 		currentEditGabor->setGaussianKernelSpread(kernelSpread);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_KP_6])
@@ -422,7 +413,7 @@ void do_movement()
 		kernelSpread.x += 0.05f;
 		currentEditGabor->setGaussianKernelSpread(kernelSpread);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
 		s->setOrientation(oldOrientation);
 	}
 
@@ -431,7 +422,7 @@ void do_movement()
 		glm::quat oldOrientation = s->getOrientation();
 		currentEditGabor->setGaussianKernelAngle(currentEditGabor->getGaussianKernelAngle() - glm::radians(5.f));
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_KP_9])
@@ -439,7 +430,7 @@ void do_movement()
 		glm::quat oldOrientation = s->getOrientation();
 		currentEditGabor->setGaussianKernelAngle(currentEditGabor->getGaussianKernelAngle() + glm::radians(5.f));
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
 		s->setOrientation(oldOrientation);
 	}
 
@@ -448,7 +439,7 @@ void do_movement()
 		glm::quat oldOrientation = s->getOrientation();
 		currentEditGabor->setGaussianKernelAmplitude(currentEditGabor->getGaussianKernelAmplitude() - 0.1f);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_KP_ADD])
@@ -456,7 +447,7 @@ void do_movement()
 		glm::quat oldOrientation = s->getOrientation();
 		currentEditGabor->setGaussianKernelAmplitude(currentEditGabor->getGaussianKernelAmplitude() + 0.1f);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
 		s->setOrientation(oldOrientation);
 	}
 
@@ -465,7 +456,7 @@ void do_movement()
 		glm::quat oldOrientation = s->getOrientation();
 		currentEditGabor->setComplexSinusoidDistance(currentEditGabor->getComplexSinusoidDistance() + 0.1f);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_DOWN])
@@ -473,7 +464,7 @@ void do_movement()
 		glm::quat oldOrientation = s->getOrientation();
 		currentEditGabor->setComplexSinusoidDistance(currentEditGabor->getComplexSinusoidDistance() - 0.1f);
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_RIGHT])
@@ -481,7 +472,7 @@ void do_movement()
 		glm::quat oldOrientation = s->getOrientation();
 		currentEditGabor->setComplexSinusoidAngle(currentEditGabor->getComplexSinusoidAngle() + glm::radians(5.f));
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
 		s->setOrientation(oldOrientation);
 	}
 	if (keys[GLFW_KEY_LEFT])
@@ -489,7 +480,7 @@ void do_movement()
 		glm::quat oldOrientation = s->getOrientation();
 		currentEditGabor->setComplexSinusoidAngle(currentEditGabor->getComplexSinusoidAngle() - glm::radians(5.f));
 		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs);
+		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
 		s->setOrientation(oldOrientation);
 	}
 }
@@ -544,6 +535,7 @@ void init_physics()
 
 	collisionShapes.push_back(groundShape);
 
+	// GORUND PLANE
 	{
 		btScalar mass(0.f);
 		btVector3 localInertia(0.f, 0.f, 0.f);
@@ -555,37 +547,6 @@ void init_physics()
 
 		//add the body to the dynamics world
 		dynamicsWorld->addRigidBody(body);
-	}
-
-
-	{
-		//create a dynamic rigidbody
-
-		//btCollisionShape* colShape = new btBoxShape(btVector3(1,1,1));
-		btCollisionShape* colShape = new btSphereShape(btScalar(0.));
-		collisionShapes.push_back(colShape);
-
-		/// Create Dynamic Objects
-		btTransform startTransform;
-		startTransform.setIdentity();
-
-		btScalar	mass(10.f);
-
-		//rigidbody is dynamic if and only if mass is non zero, otherwise static
-		bool isDynamic = (mass != 0.f);
-
-		btVector3 localInertia(0, 0, 0);
-		if (isDynamic)
-			colShape->calculateLocalInertia(mass, localInertia);
-
-		startTransform.setOrigin(btVector3(0, 10, 0));
-
-		//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-		btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, colShape, localInertia);
-		testBody = new btRigidBody(rbInfo);
-
-		dynamicsWorld->addRigidBody(testBody);
 	}
 }
 
