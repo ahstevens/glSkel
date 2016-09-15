@@ -129,6 +129,16 @@ public:
 		return this->orientation;
 	}
 
+	void setPosition(glm::vec3& pos)
+	{
+		this->position = pos;
+	}
+
+	glm::vec3 getPosition()
+	{
+		return this->position;
+	}
+
 	// Render the mesh
 	void Draw(Shader shader)
 	{

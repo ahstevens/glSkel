@@ -50,6 +50,16 @@ glm::quat Slatissima::getOrientation()
 	return mesh->getRotation();;
 }
 
+void Slatissima::setPosition(glm::vec3 pos)
+{
+	mesh->setPosition(pos);
+}
+
+glm::vec3 Slatissima::getPosition()
+{
+	return mesh->getPosition();
+}
+
 void Slatissima::Draw(Shader s)
 {
 	mesh->Draw(s);
@@ -60,13 +70,15 @@ void Slatissima::buildStrip()
 	std::vector<std::vector<glm::vec3>> vertices; // row major
 	glm::vec3 tempVert;
 
-	Gabor gabor;
-	gabor.setGaussianKernelCenter(glm::vec2(-width / 2.f, length / 2.f));
-	gabor.setGaussianKernelSpread(glm::vec2(width / 4.f, length / 6.f));
-	gabor.setGaussianKernelAngle(0.f);
-	gabor.setGaussianKernelAmplitude(0.8f);
-	gabor.setComplexSinusoidDistance(0.8f);
-	gabor.setComplexSinusoidAngle(0.f);
+	Gabor* gabor = new Gabor();
+	gabor->setGaussianKernelCenter(glm::vec2(-width / 2.f, length / 2.f));
+	gabor->setGaussianKernelSpread(glm::vec2(width / 4.f, length / 6.f));
+	gabor->setGaussianKernelAngle(0.f);
+	gabor->setGaussianKernelAmplitude(0.8f);
+	gabor->setComplexSinusoidDistance(0.8f);
+	gabor->setComplexSinusoidAngle(0.f);
+
+	gabors.push_back(gabor);
 
 	// CENTRAL BLADE VERTICES
 	float centerBladeWidthPercent = 0.33f;
@@ -114,8 +126,9 @@ void Slatissima::buildStrip()
 			//tempVert.x = (widthRatio - 0.5f) * width * 0.5f;
 			tempVert.y = heightRatio * length;
 
-			tempVert.z = gabor.get(glm::vec2(tempVert));
-			//v.z = 0.f;
+			tempVert.z = 0.f;
+			for(auto g : gabors)
+				tempVert.z += g->get(glm::vec2(tempVert));
 
 			vecRow.push_back(tempVert);
 		}
@@ -127,7 +140,8 @@ void Slatissima::buildStrip()
 
 	g.glueLeft(g2);
 
-	gabor.setGaussianKernelCenter(glm::vec2(width / 2.f, length / 2.f));
+	gabor->setGaussianKernelCenter(glm::vec2(width / 2.f, length / 2.f));
+
 	vertices.clear();
 	for (GLuint row = 0; row < nVertsTall; ++row)
 	{
@@ -142,8 +156,9 @@ void Slatissima::buildStrip()
 			//tempVert.x = (widthRatio - 0.5f) * width * 0.5f;
 			tempVert.y = heightRatio * length;
 
-			tempVert.z = gabor.get(glm::vec2(tempVert));
-			//v.z = 0.f;
+			tempVert.z = 0.f;
+			for (auto g : gabors)
+				tempVert.z += g->get(glm::vec2(tempVert));
 
 			vecRow.push_back(tempVert);
 		}

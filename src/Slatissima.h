@@ -15,6 +15,8 @@ public:
 	void rotateZ(float degrees);
 	void setOrientation(glm::quat orientation = glm::quat());
 	glm::quat getOrientation();
+	void setPosition(glm::vec3 pos);
+	glm::vec3 getPosition();
 
 	void Draw(Shader s);
 

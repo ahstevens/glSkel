@@ -34,6 +34,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void do_movement();
+void init_physics();
+void step_physics();
 
 // Camera
 Camera  camera(glm::vec3(0.0f, 0.0f, 15.0f));
@@ -55,7 +57,8 @@ Slatissima *s = NULL;
 std::vector<Gabor*> gabs;
 Gabor* currentEditGabor = NULL;
 
-// LEFT STRIP
+btDiscreteDynamicsWorld* dynamicsWorld = NULL;
+btRigidBody* testBody = NULL;
 
 int main(int argc, char * argv[]) {
 
@@ -95,109 +98,27 @@ int main(int argc, char * argv[]) {
 	// OpenGL options
 	glEnable(GL_DEPTH_TEST);
 
-
-	//collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
-	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
-
-	//use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
-	btCollisionDispatcher* dispatcher = new	btCollisionDispatcher(collisionConfiguration);
-
-	//btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
-	btBroadphaseInterface* overlappingPairCache = new btDbvtBroadphase();
-
-	//the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
-	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
-
-	btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
-
-	dynamicsWorld->setGravity(btVector3(0, -10, 0));
-	//-----initialization_end-----
-	//create a few basic rigid bodies
-	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
-
-	//keep track of the shapes, we release memory at exit.
-	//make sure to re-use collision shapes among rigid bodies whenever possible!
-	btAlignedObjectArray<btCollisionShape*> collisionShapes;
-
-	collisionShapes.push_back(groundShape);
-
-	btTransform groundTransform;
-	groundTransform.setIdentity();
-	groundTransform.setOrigin(btVector3(0, -56, 0));
-
-	{
-		btScalar mass(0.);
-
-		//rigidbody is dynamic if and only if mass is non zero, otherwise static
-		bool isDynamic = (mass != 0.f);
-
-		btVector3 localInertia(0, 0, 0);
-		if (isDynamic)
-			groundShape->calculateLocalInertia(mass, localInertia);
-
-		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
-		btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
-		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
-		btRigidBody* body = new btRigidBody(rbInfo);
-
-		//add the body to the dynamics world
-		dynamicsWorld->addRigidBody(body);
-	}
-
-
-	{
-		//create a dynamic rigidbody
-
-		//btCollisionShape* colShape = new btBoxShape(btVector3(1,1,1));
-		btCollisionShape* colShape = new btSphereShape(btScalar(1.));
-		collisionShapes.push_back(colShape);
-
-		/// Create Dynamic Objects
-		btTransform startTransform;
-		startTransform.setIdentity();
-
-		btScalar	mass(1.f);
-
-		//rigidbody is dynamic if and only if mass is non zero, otherwise static
-		bool isDynamic = (mass != 0.f);
-
-		btVector3 localInertia(0, 0, 0);
-		if (isDynamic)
-			colShape->calculateLocalInertia(mass, localInertia);
-
-		startTransform.setOrigin(btVector3(2, 10, 0));
-
-		//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-		btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, colShape, localInertia);
-		btRigidBody* body = new btRigidBody(rbInfo);
-
-		dynamicsWorld->addRigidBody(body);
-	}
+	init_physics();
 
 	//-----stepsimulation_start-----
-	for (int i = 0; i<100; i++)
-	{
-		dynamicsWorld->stepSimulation(1.f / 60.f, 10);
+	//for (int i = 0; i<100; i++)
+	//{
+	//	dynamicsWorld->stepSimulation(1.f / 60.f, 10);
 
-		//print positions of all objects
-		for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
-		{
-			btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
-			btRigidBody* body = btRigidBody::upcast(obj);
-			btTransform trans;
-			if (body && body->getMotionState())
-			{
-				body->getMotionState()->getWorldTransform(trans);
+	//	//print positions of all objects
+	//	for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
+	//	{
+	//		btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
+	//		btRigidBody* body = btRigidBody::upcast(obj);
+	//		btTransform trans;
+	//		if (body && body->getMotionState())
+	//			body->getMotionState()->getWorldTransform(trans);
+	//		else
+	//			trans = obj->getWorldTransform();
 
-			}
-			else
-			{
-				trans = obj->getWorldTransform();
-			}
-			std::cout << "world pos object " << j << " = " << float(trans.getOrigin().getX()) << "," << float(trans.getOrigin().getY()) << "," << float(trans.getOrigin().getZ()) << std::endl;
-		}
-	}
+	//		std::cout << "world pos object " << j << " = " << float(trans.getOrigin().getX()) << "," << float(trans.getOrigin().getY()) << "," << float(trans.getOrigin().getZ()) << std::endl;
+	//	}
+	//}
 
 
 	// Build and compile our shader program
@@ -209,7 +130,8 @@ int main(int argc, char * argv[]) {
 
 	// Initialize the lighting system
 	// Directional light
-	ls.addDLight(glm::vec3(-1.f, -1.f, -1.f));
+	ls.addDLight(glm::vec3(-1.f, -1.f, -1.f), glm::vec3(0.05f), glm::vec3(0.25f));
+	//ls.dLight.on = false;
 	// Positions of the point lights
 	ls.addPLight(glm::vec3(-5.f, 0.f, -5.f));
 	ls.addPLight(glm::vec3( 5.f, 0.f, -5.f));
@@ -217,6 +139,7 @@ int main(int argc, char * argv[]) {
 	ls.addPLight(glm::vec3(-5.f, 0.f,  5.f));
 	// Spotlight
 	ls.addSLight(camera.Position, camera.Front);
+	//ls.sLight.on = false;
 
 
 	// Example cube objects
@@ -250,6 +173,8 @@ int main(int argc, char * argv[]) {
 		lastFrame = currentFrame;
 		
 		do_movement();
+
+		step_physics();
 
         // Background Fill Color
         glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
@@ -437,6 +362,29 @@ void do_movement()
 	if (keys[GLFW_KEY_R])
 		s->setOrientation();
 
+	if (keys[GLFW_KEY_O])
+	{
+		btMotionState* motionState = testBody->getMotionState();
+		btTransform trans;
+		motionState->getWorldTransform(trans);
+		trans.setOrigin(btVector3(0.f, 10.f, 0.f));
+		motionState->setWorldTransform(trans);
+		testBody->setMotionState(motionState);
+		testBody->activate();
+	}
+
+	if (keys[GLFW_KEY_U])
+	{
+		testBody->activate();
+		testBody->applyCentralImpulse(btVector3(0.f, 10.f, 0.f));
+	}
+
+	if (keys[GLFW_KEY_I])
+	{
+		testBody->activate();
+		testBody->applyCentralImpulse(btVector3(0.f, 0.f, -1.f));
+	}
+
 	if (keys[GLFW_KEY_KP_8])
 	{
 		glm::quat oldOrientation = s->getOrientation();
@@ -567,4 +515,102 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	camera.ProcessMouseScroll( static_cast<GLfloat>( yoffset ));
+}
+
+void init_physics()
+{
+	//collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
+	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
+
+	//use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
+	btCollisionDispatcher* dispatcher = new	btCollisionDispatcher(collisionConfiguration);
+
+	//btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
+	btBroadphaseInterface* overlappingPairCache = new btDbvtBroadphase();
+
+	//the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
+	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
+
+	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+
+	dynamicsWorld->setGravity(btVector3(0, -10, 0));
+	//-----initialization_end-----
+	//create a few basic rigid bodies
+	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0.f, 1.f, 0.f), btScalar(-5.f));
+
+	//keep track of the shapes, we release memory at exit.
+	//make sure to re-use collision shapes among rigid bodies whenever possible!
+	btAlignedObjectArray<btCollisionShape*> collisionShapes;
+
+	collisionShapes.push_back(groundShape);
+
+	{
+		btScalar mass(0.f);
+		btVector3 localInertia(0.f, 0.f, 0.f);
+
+		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
+		btDefaultMotionState* myMotionState = new btDefaultMotionState();
+		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
+		btRigidBody* body = new btRigidBody(rbInfo);
+
+		//add the body to the dynamics world
+		dynamicsWorld->addRigidBody(body);
+	}
+
+
+	{
+		//create a dynamic rigidbody
+
+		//btCollisionShape* colShape = new btBoxShape(btVector3(1,1,1));
+		btCollisionShape* colShape = new btSphereShape(btScalar(0.));
+		collisionShapes.push_back(colShape);
+
+		/// Create Dynamic Objects
+		btTransform startTransform;
+		startTransform.setIdentity();
+
+		btScalar	mass(10.f);
+
+		//rigidbody is dynamic if and only if mass is non zero, otherwise static
+		bool isDynamic = (mass != 0.f);
+
+		btVector3 localInertia(0, 0, 0);
+		if (isDynamic)
+			colShape->calculateLocalInertia(mass, localInertia);
+
+		startTransform.setOrigin(btVector3(0, 10, 0));
+
+		//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+		btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, colShape, localInertia);
+		testBody = new btRigidBody(rbInfo);
+
+		dynamicsWorld->addRigidBody(testBody);
+	}
+}
+
+void step_physics()
+{
+	dynamicsWorld->stepSimulation(1.f / 60.f, 10);
+
+	//print positions of all objects
+	for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
+	{
+		btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
+		btRigidBody* body = btRigidBody::upcast(obj);
+		btTransform trans;
+		if (body && body->getMotionState())
+			body->getMotionState()->getWorldTransform(trans);
+		else
+			trans = obj->getWorldTransform();
+
+		if (j == 1)
+		{
+			const btVector3 o = trans.getOrigin();
+			s->setPosition(glm::vec3(o.getX(), o.getY(), o.getZ()));
+			//std::cout << "world pos object " << j << ": (" << o.getX() << ", " << o.getY() << ", " << o.getZ() << ")" << std::endl;
+		}
+
+		//std::cout << "world pos object " << j << " = " << float(trans.getOrigin().getX()) << "," << float(trans.getOrigin().getY()) << "," << float(trans.getOrigin().getZ()) << std::endl;
+	}
 }
