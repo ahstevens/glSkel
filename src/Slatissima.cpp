@@ -5,12 +5,11 @@
 #include <algorithm>
 #include <cmath>
 
-#include <bullet/BulletSoftBody/btSoftRigidDynamicsWorld.h>
 #include <bullet/BulletSoftBody/btSoftBodyHelpers.h>
 
 const float gridSpacing = 0.5f; // cm, approx
 
-Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, std::vector<Gabor*> g, btDiscreteDynamicsWorld* dynamicsWorld)
+Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, std::vector<Gabor*> g, btSoftRigidDynamicsWorld* dynamicsWorld)
 {
 	this->length = length_cm;
 	this->width = width_cm; 
@@ -112,29 +111,25 @@ void Slatissima::initPhysics()
 	std::vector<glm::vec3> verts;
 	mesh->getIndexedVertices(inds, verts);
 
-	btSoftBodyWorldInfo sbInfo;
-	sbInfo.air_density = (btScalar)1.2;
-	sbInfo.m_gravity.setValue(0, -9.81, 0);
-	sbInfo.m_dispatcher = m_pDynamicsWorld->getDispatcher();
-	sbInfo.m_sparsesdf.Reset();
-	sbInfo.m_broadphase = m_pDynamicsWorld->getBroadphase();
-	sbInfo.m_sparsesdf.Initialize();
+	//m_pDynamicsWorld->getWorldInfo().air_density = (btScalar)1.2;
+	//m_pDynamicsWorld->getWorldInfo().m_gravity.setValue(0, 0, 0);
 
-	m_pSoftBody = btSoftBodyHelpers::CreateFromTriMesh(static_cast<btSoftRigidDynamicsWorld*>(m_pDynamicsWorld)->getWorldInfo()
+	m_pSoftBody = btSoftBodyHelpers::CreateFromTriMesh(m_pDynamicsWorld->getWorldInfo()
 		, (btScalar*)&verts[0]
 		, &inds[0]
 		, (int)mesh->getFaceCount()
 	);
 	btSoftBody::Material* pm = m_pSoftBody->appendMaterial();
-	pm->m_kLST = 0.9;
+	pm->m_kLST = 1.f;
 	m_pSoftBody->m_cfg.piterations = 2;
 	m_pSoftBody->m_cfg.kDF = 0.5;
+	m_pSoftBody->m_cfg.kAHR = 0.1;
 	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
-	m_pSoftBody->generateClusters(2);
-	m_pSoftBody->randomizeConstraints();
+	m_pSoftBody->generateClusters(0);
+	m_pSoftBody->generateBendingConstraints(3, pm);
 	m_pSoftBody->setTotalMass(300, true);
 
-	static_cast<btSoftRigidDynamicsWorld*>(this->m_pDynamicsWorld)->addSoftBody(m_pSoftBody);
+	this->m_pDynamicsWorld->addSoftBody(m_pSoftBody);
 }
 
 void Slatissima::buildStrip()

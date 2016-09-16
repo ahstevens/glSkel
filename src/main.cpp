@@ -58,7 +58,7 @@ Slatissima *s = NULL;
 std::vector<Gabor*> gabs;
 Gabor* currentEditGabor = NULL;
 
-btDiscreteDynamicsWorld* dynamicsWorld = NULL;
+btSoftRigidDynamicsWorld* dynamicsWorld = NULL;
 
 int main(int argc, char * argv[]) {
 

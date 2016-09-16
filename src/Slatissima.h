@@ -6,11 +6,12 @@
 
 #include <bullet/btBulletDynamicsCommon.h>
 #include <bullet/BulletSoftBody/btSoftBody.h>
+#include <bullet/BulletSoftBody/btSoftRigidDynamicsWorld.h>
 
 class Slatissima
 {
 public:
-	Slatissima(GLfloat length, GLfloat width, GLfloat thickness, std::vector<Gabor*> g, btDiscreteDynamicsWorld* dynamicsWorld);
+	Slatissima(GLfloat length, GLfloat width, GLfloat thickness, std::vector<Gabor*> g, btSoftRigidDynamicsWorld* dynamicsWorld);
 	~Slatissima();
 
 	void rotateX(float degrees);
@@ -41,8 +42,7 @@ private:
 	
 	std::vector<Texture> loadTextures();
 
-	btDiscreteDynamicsWorld* m_pDynamicsWorld;
-	btRigidBody* m_pRigidBody;
+	btSoftRigidDynamicsWorld* m_pDynamicsWorld;
 	btSoftBody* m_pSoftBody;
 };
 
