@@ -161,7 +161,7 @@ public:
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, this->m_glVBO);
 		glBufferData(GL_ARRAY_BUFFER, data.size(), 0, GL_STREAM_DRAW);
-		glBufferData(GL_ARRAY_BUFFER, data.size(), &data[0], GL_STREAM_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data[0], GL_STREAM_DRAW);
 	}
 
 	// Render the mesh
@@ -671,7 +671,7 @@ private:
 		// A great thing about structs is that their memory layout is sequential for all its items.
 		// The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
 		// again translates to 3/2 floats which translates to a byte array.
-		glBufferData(GL_ARRAY_BUFFER, bufferVertices.size() * sizeof(Vertex), &bufferVertices[0], GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, bufferVertices.size() * sizeof(Vertex), &bufferVertices[0], GL_STREAM_DRAW);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->m_glEBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, bufferIndices.size() * sizeof(GLuint), &bufferIndices[0], GL_STATIC_DRAW);

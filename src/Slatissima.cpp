@@ -7,19 +7,19 @@
 
 #include <bullet/BulletSoftBody/btSoftBodyHelpers.h>
 
-const float gridSpacing = 0.5f; // cm, approx
+const float gridSpacing = 0.25f; // cm, approx
 
-Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, std::vector<Gabor*> g, btSoftRigidDynamicsWorld* dynamicsWorld)
+Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, btSoftRigidDynamicsWorld* dynamicsWorld)
 {
 	this->length = length_cm;
 	this->width = width_cm; 
 	this->thickness = thickness_cm;
-	this->gabors = g;
 	this->m_pDynamicsWorld = dynamicsWorld;
 	this->nVertsTall = static_cast<GLuint>(length_cm / gridSpacing);
 	this->nVertsWide = static_cast<GLuint>(width_cm / gridSpacing);
-	this->buildStrip();
 
+	this->generateGabors();
+	this->buildModel();
 	this->initPhysics();
 }
 
@@ -96,7 +96,7 @@ void Slatissima::update()
 		data_serialized.push_back(0.5f);
 		data_serialized.push_back(0.5f);
 	}
-	//m_pSoftBody->m_faces[0].m_n[0]->
+
 	this->mesh->updateMeshSerial(data_serialized);
 }
 
@@ -112,7 +112,7 @@ void Slatissima::initPhysics()
 	mesh->getIndexedVertices(inds, verts);
 
 	//m_pDynamicsWorld->getWorldInfo().air_density = (btScalar)1.2;
-	//m_pDynamicsWorld->getWorldInfo().m_gravity.setValue(0, 0, 0);
+	m_pDynamicsWorld->getWorldInfo().m_gravity.setValue(0, 5, -5);
 
 	m_pSoftBody = btSoftBodyHelpers::CreateFromTriMesh(m_pDynamicsWorld->getWorldInfo()
 		, (btScalar*)&verts[0]
@@ -121,18 +121,23 @@ void Slatissima::initPhysics()
 	);
 	btSoftBody::Material* pm = m_pSoftBody->appendMaterial();
 	pm->m_kLST = 1.f;
+	pm->m_kAST = 0.8f;
 	m_pSoftBody->m_cfg.piterations = 2;
 	m_pSoftBody->m_cfg.kDF = 0.5;
-	m_pSoftBody->m_cfg.kAHR = 0.1;
+	//m_pSoftBody->m_cfg.kAHR = 0.5;
 	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
-	m_pSoftBody->generateClusters(0);
-	m_pSoftBody->generateBendingConstraints(3, pm);
-	m_pSoftBody->setTotalMass(300, true);
+	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SELF;
+	//m_pSoftBody->generateClusters(2);
+	m_pSoftBody->generateBendingConstraints(7, pm);
+	m_pSoftBody->setTotalMass(1000, true);
+	m_pSoftBody->setMass(0, 0.f);
+	m_pSoftBody->setMass(1, 0.f);
+	m_pSoftBody->setMass(2, 0.f);
 
 	this->m_pDynamicsWorld->addSoftBody(m_pSoftBody);
 }
 
-void Slatissima::buildStrip()
+void Slatissima::buildModel()
 {
 	std::vector<std::vector<glm::vec3>> vertices; // row major
 	glm::vec3 tempVert;
@@ -239,6 +244,10 @@ void Slatissima::buildStrip()
 
 	std::cout << "Creating DCEL mesh from geometry strip that is " << g.getWidthVertexCount() << " verts wide and " << g.getHeightVertexCount() << " verts long" << std::endl;
 	mesh = new Mesh(g.getVertices(), g.getIndices(), this->loadTextures());
+}
+
+void Slatissima::generateGabors()
+{
 }
 
 std::vector<Texture> Slatissima::loadTextures()

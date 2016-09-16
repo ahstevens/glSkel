@@ -55,8 +55,6 @@ bool showNormals = false;
 bool explode = false;
 
 Slatissima *s = NULL;
-std::vector<Gabor*> gabs;
-Gabor* currentEditGabor = NULL;
 
 btSoftRigidDynamicsWorld* dynamicsWorld = NULL;
 
@@ -141,29 +139,8 @@ int main(int argc, char * argv[]) {
 	ls.addSLight(camera.Position, camera.Front);
 	//ls.sLight.on = false;
 
-
-	// Example cube objects
-	// Cube c;	
-
-	// // Positions all cubes
-	// c.positions.push_back(glm::vec3( 0.0f,  0.0f,  5.0f));
-	// c.positions.push_back(glm::vec3( 2.0f,  5.0f, -15.0f));
-	// c.positions.push_back(glm::vec3(-1.5f, -2.2f, -2.5f));
-	// c.positions.push_back(glm::vec3(-3.8f, -2.0f, -12.3f));
-	// c.positions.push_back(glm::vec3( 2.4f, -0.4f, -3.5f));
-	// c.positions.push_back(glm::vec3(-1.7f,  3.0f, -7.5f));
-	// c.positions.push_back(glm::vec3( 1.3f, -2.0f, -2.5f));
-	// c.positions.push_back(glm::vec3( 1.5f,  2.0f, -2.5f));
-	// c.positions.push_back(glm::vec3( 1.5f,  0.2f, -1.5f));
-	// c.positions.push_back(glm::vec3(-1.3f,  1.0f, -1.5f));
-
-	// // Angles of cubes
-	// for (GLuint i = 0; i < 10; i++)	c.angles.push_back(20.0f * i);
-
-	Gabor* g = new Gabor();
-	currentEditGabor = g;
-	gabs.push_back(currentEditGabor);
-	s = new Slatissima(20.f, 5.f, 0.25f, gabs, dynamicsWorld);
+	//gabs.push_back(currentEditGabor);
+	s = new Slatissima(20.f, 5.f, 0.25f, dynamicsWorld);
 	
     // Main Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
@@ -270,60 +247,22 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_B && action == GLFW_PRESS)
 		explode = !explode;
 	
-	if (key == GLFW_KEY_MINUS && action == GLFW_PRESS && gabs.size() > 1)
+	if (key == GLFW_KEY_MINUS && action == GLFW_PRESS)
 	{
-		gabs.erase(std::remove(gabs.begin(), gabs.end(), currentEditGabor), gabs.end());
-		delete currentEditGabor;
-		currentEditGabor = gabs.back();
-
-		std::cout << "Gabor function removed (" << gabs.size() << " total)" << std::endl;
-
-		glm::quat oldOrientation = s->getOrientation();
-		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
-		s->setOrientation(oldOrientation);
+		
 	}
 	if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS)
 	{
-		Gabor* g = new Gabor();
-		currentEditGabor = g;
-		gabs.push_back(g);
 
-		std::cout << "Gabor function added (" << gabs.size() << " total)" << std::endl;
-
-		glm::quat oldOrientation = s->getOrientation();
-		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
-		s->setOrientation(oldOrientation);
 	}
 
 	if (key == GLFW_KEY_COMMA && action == GLFW_PRESS)
 	{
-		if (currentEditGabor == gabs.front())
-		{
-			currentEditGabor = gabs.back();
-			std::cout << "Gabor " << gabs.size() - 1 << " is now active for editing" << std::endl;
-		}
-		else
-		{
-			std::vector<Gabor*>::iterator it = std::find(gabs.begin(), gabs.end(), currentEditGabor) - 1u;
-			currentEditGabor = *it;
-			std::cout << "Gabor " << it - gabs.begin() << " is now active for editing" << std::endl;
-		}
+
 	}
 	if (key == GLFW_KEY_PERIOD && action == GLFW_PRESS)
 	{
-		if (currentEditGabor == gabs.back())
-		{
-			currentEditGabor = gabs.front();
-			std::cout << "Gabor 0 is now active for editing" << std::endl;
-		}
-		else
-		{
-			std::vector<Gabor*>::iterator it = std::find(gabs.begin(), gabs.end(), currentEditGabor) + 1u;
-			currentEditGabor = *it;
-			std::cout << "Gabor " << it - gabs.begin() << " is now active for editing" << std::endl;
-		}
+
 	}
 
 	if (key >= 0 && key < 1024)
@@ -372,110 +311,54 @@ void do_movement()
 
 	if (keys[GLFW_KEY_KP_8])
 	{
-		glm::quat oldOrientation = s->getOrientation();
-		glm::vec2 kernelSpread = currentEditGabor->getGaussianKernelSpread();
-		kernelSpread.y += 0.05f;
-		currentEditGabor->setGaussianKernelSpread(kernelSpread);
-		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
-		s->setOrientation(oldOrientation);
+
 	}
 	if (keys[GLFW_KEY_KP_2])
 	{
-		glm::quat oldOrientation = s->getOrientation();
-		glm::vec2 kernelSpread = currentEditGabor->getGaussianKernelSpread();
-		kernelSpread.y -= 0.05f;
-		currentEditGabor->setGaussianKernelSpread(kernelSpread);
-		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
-		s->setOrientation(oldOrientation);
+
 	}
 	if (keys[GLFW_KEY_KP_4])
 	{
-		glm::quat oldOrientation = s->getOrientation();
-		glm::vec2 kernelSpread = currentEditGabor->getGaussianKernelSpread();
-		kernelSpread.x -= 0.05f;
-		currentEditGabor->setGaussianKernelSpread(kernelSpread);
-		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
-		s->setOrientation(oldOrientation);
+
 	}
 	if (keys[GLFW_KEY_KP_6])
 	{
-		glm::quat oldOrientation = s->getOrientation();
-		glm::vec2 kernelSpread = currentEditGabor->getGaussianKernelSpread();
-		kernelSpread.x += 0.05f;
-		currentEditGabor->setGaussianKernelSpread(kernelSpread);
-		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
-		s->setOrientation(oldOrientation);
+
 	}
 
 	if (keys[GLFW_KEY_KP_7])
 	{
-		glm::quat oldOrientation = s->getOrientation();
-		currentEditGabor->setGaussianKernelAngle(currentEditGabor->getGaussianKernelAngle() - glm::radians(5.f));
-		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
-		s->setOrientation(oldOrientation);
+
 	}
 	if (keys[GLFW_KEY_KP_9])
 	{
-		glm::quat oldOrientation = s->getOrientation();
-		currentEditGabor->setGaussianKernelAngle(currentEditGabor->getGaussianKernelAngle() + glm::radians(5.f));
-		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
-		s->setOrientation(oldOrientation);
+
 	}
 
 	if (keys[GLFW_KEY_KP_SUBTRACT])
 	{
-		glm::quat oldOrientation = s->getOrientation();
-		currentEditGabor->setGaussianKernelAmplitude(currentEditGabor->getGaussianKernelAmplitude() - 0.1f);
-		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
-		s->setOrientation(oldOrientation);
+
 	}
 	if (keys[GLFW_KEY_KP_ADD])
 	{
-		glm::quat oldOrientation = s->getOrientation();
-		currentEditGabor->setGaussianKernelAmplitude(currentEditGabor->getGaussianKernelAmplitude() + 0.1f);
-		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
-		s->setOrientation(oldOrientation);
+
 	}
 
 	if (keys[GLFW_KEY_UP])
 	{
-		glm::quat oldOrientation = s->getOrientation();
-		currentEditGabor->setComplexSinusoidDistance(currentEditGabor->getComplexSinusoidDistance() + 0.1f);
-		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
-		s->setOrientation(oldOrientation);
+
 	}
 	if (keys[GLFW_KEY_DOWN])
 	{
-		glm::quat oldOrientation = s->getOrientation();
-		currentEditGabor->setComplexSinusoidDistance(currentEditGabor->getComplexSinusoidDistance() - 0.1f);
-		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
-		s->setOrientation(oldOrientation);
+
 	}
 	if (keys[GLFW_KEY_RIGHT])
 	{
-		glm::quat oldOrientation = s->getOrientation();
-		currentEditGabor->setComplexSinusoidAngle(currentEditGabor->getComplexSinusoidAngle() + glm::radians(5.f));
-		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
-		s->setOrientation(oldOrientation);
+
 	}
 	if (keys[GLFW_KEY_LEFT])
 	{
-		glm::quat oldOrientation = s->getOrientation();
-		currentEditGabor->setComplexSinusoidAngle(currentEditGabor->getComplexSinusoidAngle() - glm::radians(5.f));
-		if (s) delete s;
-		s = new Slatissima(10.f, 2.f, 0.25f, gabs, dynamicsWorld);
-		s->setOrientation(oldOrientation);
+
 	}
 }
 
