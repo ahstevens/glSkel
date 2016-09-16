@@ -114,6 +114,24 @@ public:
 		return p;
 	}
 
+	void getIndexedVertices(std::vector<int> &i, std::vector<glm::vec3> &v)
+	{
+		for (std::vector<HE_Face*>::iterator it = m_vpFaces.begin(); it != m_vpFaces.end(); it++)
+		{
+			HE_Edge *begin = (*it)->edge;
+			HE_Edge *e = begin;
+
+			do
+			{
+				i.push_back(e->head->id);
+				e = e->next;
+			} while (e != begin);
+		}
+
+		for (auto vert : m_vpVertices)
+			v.push_back(vert->pos);
+	}
+
 	void addRotation(glm::quat &q)
 	{
 		this->orientation *= q;
@@ -137,6 +155,13 @@ public:
 	glm::vec3 getPosition()
 	{
 		return this->position;
+	}
+
+	void updateMeshSerial(std::vector<float> &data)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, this->m_glVBO);
+		glBufferData(GL_ARRAY_BUFFER, data.size(), 0, GL_STREAM_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, data.size(), &data[0], GL_STREAM_DRAW);
 	}
 
 	// Render the mesh

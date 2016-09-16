@@ -5,7 +5,7 @@
 #include <glSkel/Gabor.h>
 
 #include <bullet/btBulletDynamicsCommon.h>
-#include <bullet/btBulletCollisionCommon.h>
+#include <bullet/BulletSoftBody/btSoftBody.h>
 
 class Slatissima
 {
@@ -21,8 +21,9 @@ public:
 	void setPosition(glm::vec3 pos);
 	glm::vec3 getPosition();
 
-	void drop(btVector3 pos);
 	void bump(btVector3 dir);
+
+	void update();
 
 	void Draw(Shader s);
 
@@ -35,11 +36,13 @@ private:
 
 	std::vector<Gabor*> gabors;
 
+	void initPhysics();
 	void buildStrip();
-
+	
 	std::vector<Texture> loadTextures();
 
 	btDiscreteDynamicsWorld* m_pDynamicsWorld;
 	btRigidBody* m_pRigidBody;
+	btSoftBody* m_pSoftBody;
 };
 

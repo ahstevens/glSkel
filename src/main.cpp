@@ -9,7 +9,8 @@
 
 // Bullet Physics headers
 #include <bullet/btBulletDynamicsCommon.h>
-#include <bullet/btBulletCollisionCommon.h>
+#include <bullet/BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.h>
+#include <bullet/BulletSoftBody/btSoftRigidDynamicsWorld.h>
 
 // glSkeleton headers
 #include <glSkel/shader.h>
@@ -360,21 +361,14 @@ void do_movement()
 		s->rotateZ(1.f);
 	if (keys[GLFW_KEY_R])
 		s->setOrientation();
-
 	if (keys[GLFW_KEY_O])
-	{
-		s->drop(btVector3(0.f, 10.f, 0.f));
-	}
-
-	if (keys[GLFW_KEY_U])
-	{
 		s->bump(btVector3(0.f, 10.f, 0.f));
-	}
-
+	if (keys[GLFW_KEY_U])
+		s->bump(btVector3(0.f, 10.f, 0.f));
 	if (keys[GLFW_KEY_I])
-	{
 		s->bump(btVector3(0.f, 0.f, -1.f));
-	}
+	if (keys[GLFW_KEY_K])
+		s->bump(btVector3(0.f, 0.f, 1.f));
 
 	if (keys[GLFW_KEY_KP_8])
 	{
@@ -511,31 +505,30 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 void init_physics()
 {
 	//collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
-	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
+	//btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
+	btDefaultCollisionConfiguration* collisionConfiguration = new btSoftBodyRigidBodyCollisionConfiguration();
 
 	//use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
 	btCollisionDispatcher* dispatcher = new	btCollisionDispatcher(collisionConfiguration);
 
-	//btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.
-	btBroadphaseInterface* overlappingPairCache = new btDbvtBroadphase();
+	//btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.	
+	//btBroadphaseInterface* overlappingPairCache = new btDbvtBroadphase();
+	btVector3 worldAabbMin(-10000,-10000,-10000);
+	btVector3 worldAabbMax(1000, 10000, 10000);
+	btBroadphaseInterface* overlappingPairCache = new btAxisSweep3(worldAabbMin, worldAabbMax);
 
 	//the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 
-	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
-
-	dynamicsWorld->setGravity(btVector3(0, -10, 0));
+	//dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+	dynamicsWorld = new btSoftRigidDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+	dynamicsWorld->getDispatchInfo().m_enableSPU = true;
+	dynamicsWorld->setGravity(btVector3(0.f, -9.8f, 0.f));
 	//-----initialization_end-----
 	//create a few basic rigid bodies
-	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0.f, 1.f, 0.f), btScalar(-5.f));
+	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0.f, 1.f, 0.f), btScalar(0.f));
 
-	//keep track of the shapes, we release memory at exit.
-	//make sure to re-use collision shapes among rigid bodies whenever possible!
-	btAlignedObjectArray<btCollisionShape*> collisionShapes;
-
-	collisionShapes.push_back(groundShape);
-
-	// GORUND PLANE
+	// GROUND PLANE
 	{
 		btScalar mass(0.f);
 		btVector3 localInertia(0.f, 0.f, 0.f);
@@ -554,24 +547,19 @@ void step_physics()
 {
 	dynamicsWorld->stepSimulation(1.f / 60.f, 10);
 
-	//print positions of all objects
-	for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
-	{
-		btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
-		btRigidBody* body = btRigidBody::upcast(obj);
-		btTransform trans;
-		if (body && body->getMotionState())
-			body->getMotionState()->getWorldTransform(trans);
-		else
-			trans = obj->getWorldTransform();
+	////print positions of all objects
+	//for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
+	//{
+	//	btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
+	//	btRigidBody* body = btRigidBody::upcast(obj);
+	//	btTransform trans;
+	//	if (body && body->getMotionState())
+	//		body->getMotionState()->getWorldTransform(trans);
+	//	else
+	//		trans = obj->getWorldTransform();
+	//
+	//	//std::cout << "world pos object " << j << " = " << float(trans.getOrigin().getX()) << "," << float(trans.getOrigin().getY()) << "," << float(trans.getOrigin().getZ()) << std::endl;
+	//}
 
-		if (j == 1)
-		{
-			const btVector3 o = trans.getOrigin();
-			s->setPosition(glm::vec3(o.getX(), o.getY(), o.getZ()));
-			//std::cout << "world pos object " << j << ": (" << o.getX() << ", " << o.getY() << ", " << o.getZ() << ")" << std::endl;
-		}
-
-		//std::cout << "world pos object " << j << " = " << float(trans.getOrigin().getX()) << "," << float(trans.getOrigin().getY()) << "," << float(trans.getOrigin().getZ()) << std::endl;
-	}
+	s->update();
 }

@@ -5,7 +5,10 @@
 #include <algorithm>
 #include <cmath>
 
-const float gridSpacing = 0.05f; // cm, approx
+#include <bullet/BulletSoftBody/btSoftRigidDynamicsWorld.h>
+#include <bullet/BulletSoftBody/btSoftBodyHelpers.h>
+
+const float gridSpacing = 0.5f; // cm, approx
 
 Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, std::vector<Gabor*> g, btDiscreteDynamicsWorld* dynamicsWorld)
 {
@@ -13,37 +16,12 @@ Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm
 	this->width = width_cm; 
 	this->thickness = thickness_cm;
 	this->gabors = g;
+	this->m_pDynamicsWorld = dynamicsWorld;
 	this->nVertsTall = static_cast<GLuint>(length_cm / gridSpacing);
 	this->nVertsWide = static_cast<GLuint>(width_cm / gridSpacing);
 	this->buildStrip();
-	this->m_pDynamicsWorld = dynamicsWorld;
 
-	//create a dynamic rigidbody
-
-	//btCollisionShape* colShape = new btBoxShape(btVector3(1,1,1));
-	btCollisionShape* colShape = new btSphereShape(btScalar(0.));
-
-	/// Create Dynamic Objects
-	btTransform startTransform;
-	startTransform.setIdentity();
-
-	btScalar	mass(10.f);
-
-	//rigidbody is dynamic if and only if mass is non zero, otherwise static
-	bool isDynamic = (mass != 0.f);
-
-	btVector3 localInertia(0, 0, 0);
-	if (isDynamic)
-		colShape->calculateLocalInertia(mass, localInertia);
-
-	startTransform.setOrigin(btVector3(0, 10, 0));
-
-	//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-	btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, colShape, localInertia);
-	m_pRigidBody = new btRigidBody(rbInfo);
-
-	this->m_pDynamicsWorld->addRigidBody(m_pRigidBody);
+	this->initPhysics();
 }
 
 
@@ -52,9 +30,8 @@ Slatissima::~Slatissima()
 	if (mesh)
 		delete(mesh);
 
-	delete m_pRigidBody->getMotionState();
-	m_pDynamicsWorld->removeCollisionObject(m_pRigidBody);
-	delete m_pRigidBody;
+	m_pDynamicsWorld->removeCollisionObject(m_pSoftBody);
+	delete m_pSoftBody;
 }
 
 void Slatissima::rotateX(float degrees)
@@ -92,26 +69,72 @@ glm::vec3 Slatissima::getPosition()
 	return mesh->getPosition();
 }
 
-void Slatissima::drop(btVector3 pos)
-{
-	btMotionState* motionState = m_pRigidBody->getMotionState();
-	btTransform trans;
-	motionState->getWorldTransform(trans);
-	trans.setOrigin(btVector3(0.f, 10.f, 0.f));
-	motionState->setWorldTransform(trans);
-	m_pRigidBody->setMotionState(motionState);
-	m_pRigidBody->activate();
-}
-
 void Slatissima::bump(btVector3 dir)
 {
-	m_pRigidBody->activate();
-	m_pRigidBody->applyCentralImpulse(dir);
+	m_pSoftBody->activate();
+	m_pSoftBody->addForce(dir);
+}
+
+void Slatissima::update()
+{
+	//btTransform trans;
+	//m_pRigidBody->getMotionState()->getWorldTransform(trans);
+
+	//const btVector3 o = trans.getOrigin();
+	//const btQuaternion q = trans.getRotation();
+	//this->mesh->setPosition(glm::vec3(o.getX(), o.getY(), o.getZ()));
+	//this->mesh->setRotation(glm::quat(q.getW(), q.getX(), q.getY(), q.getZ()));
+	btAlignedObjectArray<btSoftBody::Node> nodes = m_pSoftBody->m_nodes;
+	std::vector<float> data_serialized;
+	for (size_t i = 0; i < nodes.size(); ++i)
+	{
+		data_serialized.push_back(nodes[i].m_x.getX());
+		data_serialized.push_back(nodes[i].m_x.getY());
+		data_serialized.push_back(nodes[i].m_x.getZ());
+		data_serialized.push_back(nodes[i].m_n.getX());
+		data_serialized.push_back(nodes[i].m_n.getY());
+		data_serialized.push_back(nodes[i].m_n.getZ());
+		data_serialized.push_back(0.5f);
+		data_serialized.push_back(0.5f);
+	}
+	//m_pSoftBody->m_faces[0].m_n[0]->
+	this->mesh->updateMeshSerial(data_serialized);
 }
 
 void Slatissima::Draw(Shader s)
 {
 	mesh->Draw(s);
+}
+
+void Slatissima::initPhysics()
+{
+	std::vector<int> inds;
+	std::vector<glm::vec3> verts;
+	mesh->getIndexedVertices(inds, verts);
+
+	btSoftBodyWorldInfo sbInfo;
+	sbInfo.air_density = (btScalar)1.2;
+	sbInfo.m_gravity.setValue(0, -9.81, 0);
+	sbInfo.m_dispatcher = m_pDynamicsWorld->getDispatcher();
+	sbInfo.m_sparsesdf.Reset();
+	sbInfo.m_broadphase = m_pDynamicsWorld->getBroadphase();
+	sbInfo.m_sparsesdf.Initialize();
+
+	m_pSoftBody = btSoftBodyHelpers::CreateFromTriMesh(static_cast<btSoftRigidDynamicsWorld*>(m_pDynamicsWorld)->getWorldInfo()
+		, (btScalar*)&verts[0]
+		, &inds[0]
+		, (int)mesh->getFaceCount()
+	);
+	btSoftBody::Material* pm = m_pSoftBody->appendMaterial();
+	pm->m_kLST = 0.9;
+	m_pSoftBody->m_cfg.piterations = 2;
+	m_pSoftBody->m_cfg.kDF = 0.5;
+	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
+	m_pSoftBody->generateClusters(2);
+	m_pSoftBody->randomizeConstraints();
+	m_pSoftBody->setTotalMass(300, true);
+
+	static_cast<btSoftRigidDynamicsWorld*>(this->m_pDynamicsWorld)->addSoftBody(m_pSoftBody);
 }
 
 void Slatissima::buildStrip()
