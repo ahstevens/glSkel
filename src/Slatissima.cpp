@@ -9,7 +9,7 @@
 
 const float gridSpacing = 0.25f; // cm, approx
 
-Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, btSoftRigidDynamicsWorld* dynamicsWorld)
+Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, btSoftRigidDynamicsWorld* dynamicsWorld, btSoftBodyWorldInfo &sbInfo)
 {
 	this->length = length_cm;
 	this->width = width_cm; 
@@ -20,7 +20,7 @@ Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm
 
 	this->generateGabors();
 	this->buildModel();
-	this->initPhysics();
+	this->initPhysics(sbInfo);
 }
 
 
@@ -105,31 +105,27 @@ void Slatissima::Draw(Shader s)
 	mesh->Draw(s);
 }
 
-void Slatissima::initPhysics()
+void Slatissima::initPhysics(btSoftBodyWorldInfo &sbInfo)
 {
 	std::vector<int> inds;
 	std::vector<glm::vec3> verts;
 	mesh->getIndexedVertices(inds, verts);
-
-	//m_pDynamicsWorld->getWorldInfo().air_density = (btScalar)1.2;
-	m_pDynamicsWorld->getWorldInfo().m_gravity.setValue(0, 5, -5);
-
-	m_pSoftBody = btSoftBodyHelpers::CreateFromTriMesh(m_pDynamicsWorld->getWorldInfo()
+	m_pSoftBody = btSoftBodyHelpers::CreateFromTriMesh(sbInfo
 		, (btScalar*)&verts[0]
 		, &inds[0]
 		, (int)mesh->getFaceCount()
 	);
-	btSoftBody::Material* pm = m_pSoftBody->appendMaterial();
-	pm->m_kLST = 1.f;
-	pm->m_kAST = 0.8f;
+
+	m_pSoftBody->m_materials[0]->m_kLST = 1.f;
+	m_pSoftBody->m_materials[0]->m_kAST = 1.f;
 	m_pSoftBody->m_cfg.piterations = 2;
-	m_pSoftBody->m_cfg.kDF = 0.5;
-	//m_pSoftBody->m_cfg.kAHR = 0.5;
+	m_pSoftBody->m_cfg.kDF = 0.5; 
+	m_pSoftBody->m_cfg.kSSHR_CL = 1.f;
 	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
-	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SELF;
-	//m_pSoftBody->generateClusters(2);
-	m_pSoftBody->generateBendingConstraints(7, pm);
-	m_pSoftBody->setTotalMass(1000, true);
+	m_pSoftBody->generateBendingConstraints(2);
+	m_pSoftBody->randomizeConstraints();
+	m_pSoftBody->setTotalMass(5000, true);
+	m_pSoftBody->setPose(true, true);
 	m_pSoftBody->setMass(0, 0.f);
 	m_pSoftBody->setMass(1, 0.f);
 	m_pSoftBody->setMass(2, 0.f);

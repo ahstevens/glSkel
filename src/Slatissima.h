@@ -11,7 +11,7 @@
 class Slatissima
 {
 public:
-	Slatissima(GLfloat length, GLfloat width, GLfloat thickness, btSoftRigidDynamicsWorld* dynamicsWorld);
+	Slatissima(GLfloat length, GLfloat width, GLfloat thickness, btSoftRigidDynamicsWorld* dynamicsWorld, btSoftBodyWorldInfo &btInfo);
 	~Slatissima();
 
 	void rotateX(float degrees);
@@ -37,7 +37,7 @@ private:
 
 	std::vector<Gabor*> gabors;
 
-	void initPhysics();
+	void initPhysics(btSoftBodyWorldInfo &sbInfo);
 	void buildModel();
 
 	void generateGabors();

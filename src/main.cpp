@@ -57,6 +57,7 @@ bool explode = false;
 Slatissima *s = NULL;
 
 btSoftRigidDynamicsWorld* dynamicsWorld = NULL;
+btSoftBodyWorldInfo sbInfo;
 
 int main(int argc, char * argv[]) {
 
@@ -140,7 +141,7 @@ int main(int argc, char * argv[]) {
 	//ls.sLight.on = false;
 
 	//gabs.push_back(currentEditGabor);
-	s = new Slatissima(20.f, 5.f, 0.25f, dynamicsWorld);
+	s = new Slatissima(50.f, 5.f, 0.25f, dynamicsWorld, sbInfo);
 	
     // Main Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
@@ -387,31 +388,27 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 void init_physics()
 {
-	//collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
-	//btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
 	btDefaultCollisionConfiguration* collisionConfiguration = new btSoftBodyRigidBodyCollisionConfiguration();
-
-	//use the default collision dispatcher. For parallel processing you can use a diffent dispatcher (see Extras/BulletMultiThreaded)
 	btCollisionDispatcher* dispatcher = new	btCollisionDispatcher(collisionConfiguration);
 
-	//btDbvtBroadphase is a good general purpose broadphase. You can also try out btAxis3Sweep.	
-	//btBroadphaseInterface* overlappingPairCache = new btDbvtBroadphase();
 	btVector3 worldAabbMin(-10000,-10000,-10000);
-	btVector3 worldAabbMax(1000, 10000, 10000);
+	btVector3 worldAabbMax(10000, 10000, 10000);
 	btBroadphaseInterface* overlappingPairCache = new btAxisSweep3(worldAabbMin, worldAabbMax);
 
-	//the default constraint solver. For parallel processing you can use a different solver (see Extras/BulletMultiThreaded)
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 
-	//dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 	dynamicsWorld = new btSoftRigidDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 	dynamicsWorld->getDispatchInfo().m_enableSPU = true;
-	dynamicsWorld->setGravity(btVector3(0.f, -9.8f, 0.f));
-	//-----initialization_end-----
-	//create a few basic rigid bodies
-	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0.f, 1.f, 0.f), btScalar(0.f));
+	dynamicsWorld->setGravity(btVector3(0.f, 0.f, 0.f));
 
+	sbInfo.m_gravity = btVector3(0.f, 0.f, 0.f);
+	sbInfo.m_dispatcher = dispatcher;
+	sbInfo.m_broadphase = overlappingPairCache;
+	sbInfo.m_sparsesdf.Initialize();
+
+	//-----initialization_end-----
 	// GROUND PLANE
+	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0.f, 1.f, 0.f), btScalar(0.f));
 	{
 		btScalar mass(0.f);
 		btVector3 localInertia(0.f, 0.f, 0.f);
