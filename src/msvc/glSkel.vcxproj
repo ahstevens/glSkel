@@ -141,6 +141,8 @@ exit 0</Command>
     <None Include="..\shaders\explode.frag" />
     <None Include="..\shaders\explode.geom" />
     <None Include="..\shaders\explode.vs" />
+    <None Include="..\shaders\gabortest.frag" />
+    <None Include="..\shaders\gabortest.vs" />
     <None Include="..\shaders\lamp.frag" />
     <None Include="..\shaders\lamp.vs" />
     <None Include="..\shaders\multiple_lights.frag" />
@@ -154,6 +156,7 @@ exit 0</Command>
     <ClInclude Include="..\..\include\glSkel\GeometryStrip.h" />
     <ClInclude Include="..\..\include\glSkel\mesh.h" />
     <ClInclude Include="..\Cube.h" />
+    <ClInclude Include="..\GaborTest.h" />
     <ClInclude Include="..\Slatissima.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

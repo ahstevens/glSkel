@@ -7,7 +7,7 @@
 
 #include <bullet/BulletSoftBody/btSoftBodyHelpers.h>
 
-const float gridSpacing = 0.25f; // cm, approx
+const float gridSpacing = 0.2f; // cm, approx
 
 Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, btSoftRigidDynamicsWorld* dynamicsWorld, btSoftBodyWorldInfo &sbInfo)
 {
@@ -126,9 +126,11 @@ void Slatissima::initPhysics(btSoftBodyWorldInfo &sbInfo)
 	m_pSoftBody->randomizeConstraints();
 	m_pSoftBody->setTotalMass(5000, true);
 	m_pSoftBody->setPose(true, true);
-	m_pSoftBody->setMass(0, 0.f);
-	m_pSoftBody->setMass(1, 0.f);
-	m_pSoftBody->setMass(2, 0.f);
+
+	for (int i = 0; i < 11; ++i)
+	{
+		m_pSoftBody->setMass(i, 0.f);
+	}
 
 	this->m_pDynamicsWorld->addSoftBody(m_pSoftBody);
 }
@@ -138,15 +140,21 @@ void Slatissima::buildModel()
 	std::vector<std::vector<glm::vec3>> vertices; // row major
 	glm::vec3 tempVert;
 
-	Gabor* gabor = new Gabor();
-	gabor->setGaussianKernelCenter(glm::vec2(-width / 2.f, length / 2.f));
-	gabor->setGaussianKernelSpread(glm::vec2(width / 4.f, length / 6.f));
-	gabor->setGaussianKernelAngle(0.f);
-	gabor->setGaussianKernelAmplitude(0.8f);
-	gabor->setComplexSinusoidDistance(0.8f);
-	gabor->setComplexSinusoidAngle(0.f);
+	for (unsigned int i = 0; i < 100; ++i)
+	{
+		float randratio = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
+		float y = length * (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
+		float subwidth = 1.f;
+		Gabor *g = new Gabor();
+		g->setGaussianKernelCenter(glm::vec2(-width / 2.f, y));
+		g->setGaussianKernelSpread(glm::vec2(width / 4.f, length / 6.f));
+		g->setGaussianKernelAngle(0.f);
+		g->setGaussianKernelAmplitude(0.25f);
+		g->setComplexSinusoidDistance(5.f + 5.f * randratio);
+		g->setComplexSinusoidAngle(0.f);
 
-	gabors.push_back(gabor);
+		gabors.push_back(g);
+	}
 
 	// CENTRAL BLADE VERTICES
 	float centerBladeWidthPercent = 0.33f;
@@ -162,7 +170,7 @@ void Slatissima::buildModel()
 			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(nVertsWide * centerBladeWidthPercent - 1);
 
 			GLfloat displacement = -(centerBladeWidth / 2.f) + widthRatio * centerBladeWidth;
-			GLfloat sineOffset = sin(heightRatio * glm::pi<GLfloat>());
+			GLfloat sineOffset = sin((0.1f + 0.8f * heightRatio) * glm::pi<GLfloat>());
 			tempVert.x = sineOffset * displacement;
 			//tempVert.x = displacement * 0.5f;
 			tempVert.y = heightRatio * length;
@@ -208,7 +216,12 @@ void Slatissima::buildModel()
 
 	g.glueLeft(g2);
 
-	gabor->setGaussianKernelCenter(glm::vec2(width / 2.f, length / 2.f));
+	for (auto gab : gabors)
+	{
+		glm::vec2 temp = gab->getGaussianKernelCenter();
+		temp.x = width / 2.f;
+		gab->setGaussianKernelCenter(temp);
+	}
 
 	vertices.clear();
 	for (GLuint row = 0; row < nVertsTall; ++row)

@@ -21,10 +21,12 @@
 // Standard Headers
 #include <cstdio>
 #include <cstdlib>
+#include <random>
 
 // Our classes
 #include "Cube.h"
 #include "SLatissima.h"
+#include "GaborTest.h"
 
 // Define Some Constants
 const int mWidth = 1280;
@@ -55,6 +57,7 @@ bool showNormals = false;
 bool explode = false;
 
 Slatissima *s = NULL;
+GaborTest *gt = NULL;
 
 btSoftRigidDynamicsWorld* dynamicsWorld = NULL;
 btSoftBodyWorldInfo sbInfo;
@@ -96,6 +99,9 @@ int main(int argc, char * argv[]) {
 
 	// OpenGL options
 	glEnable(GL_DEPTH_TEST);
+	glLineWidth(5.f);
+
+	srand(time(NULL)); // Seed the time
 
 	init_physics();
 
@@ -125,6 +131,7 @@ int main(int argc, char * argv[]) {
 	Shader lampShader("shaders/lamp.vs", "shaders/lamp.frag");
 	Shader normalsShader("shaders/normals.vs", "shaders/normals.frag", "shaders/normals.geom");
 	Shader explodeShader("shaders/explode.vs", "shaders/explode.frag", "shaders/explode.geom");
+	Shader gaborShader("shaders/gabortest.vs", "shaders/gabortest.frag");
 
 
 	// Initialize the lighting system
@@ -143,6 +150,8 @@ int main(int argc, char * argv[]) {
 	//gabs.push_back(currentEditGabor);
 	s = new Slatissima(50.f, 5.f, 0.25f, dynamicsWorld, sbInfo);
 	
+	gt = new GaborTest();
+
     // Main Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
 		// Calculate deltatime of current frame
@@ -180,8 +189,7 @@ int main(int argc, char * argv[]) {
 		// Pass the matrices to the shader
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
-
+		
 		//c.Draw(lightingShader);
 
 		s->Draw(lightingShader);
@@ -211,6 +219,12 @@ int main(int argc, char * argv[]) {
 
 			ls.Draw(lampShader);
 		}
+
+		gaborShader.Use();
+			glUniformMatrix4fv(glGetUniformLocation(gaborShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glUniformMatrix4fv(glGetUniformLocation(gaborShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+			gt->Draw(gaborShader);
+		gaborShader.Off();
 
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
@@ -247,6 +261,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		showNormals = !showNormals;
 	if (key == GLFW_KEY_B && action == GLFW_PRESS)
 		explode = !explode;
+	if (key == GLFW_KEY_G && action == GLFW_PRESS)
+	{
+		delete gt;
+		gt = new GaborTest();
+	}
 	
 	if (key == GLFW_KEY_MINUS && action == GLFW_PRESS)
 	{

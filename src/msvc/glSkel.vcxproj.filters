@@ -59,6 +59,12 @@
     <None Include="..\shaders\explode.vs">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="..\shaders\gabortest.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\shaders\gabortest.vs">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Cube.h">
@@ -74,6 +80,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\glSkel\mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GaborTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
