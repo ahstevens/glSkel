@@ -419,7 +419,7 @@ void init_physics()
 	dynamicsWorld = new btSoftRigidDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 	dynamicsWorld->getDispatchInfo().m_enableSPU = true;
 
-	sbInfo.m_gravity = btVector3(0.f, 0.f, 0.f);
+	sbInfo.m_gravity = btVector3(1.f, 2.f, 0.f);
 	sbInfo.m_dispatcher = dispatcher;
 	sbInfo.m_broadphase = overlappingPairCache;
 	sbInfo.m_sparsesdf.Initialize();
