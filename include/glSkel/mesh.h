@@ -17,7 +17,7 @@
 
 #include <glSkel/shader.h>
 
-const float consolidationSearchRadius = 0.001f; // cm
+const float consolidationSearchRadius = 0.01f; // cm
 
 struct Texture {
     GLuint id;

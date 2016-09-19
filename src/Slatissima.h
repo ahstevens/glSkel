@@ -33,14 +33,14 @@ private:
 	std::vector<GLuint> indices;
 
 	GLfloat length, width, thickness;
-	GLuint nVertsTall, nVertsWide;
+	GLuint nVertsTall;
 
 	std::vector<Gabor*> gabors;
 
 	void initPhysics(btSoftBodyWorldInfo &sbInfo);
 	void buildModel();
 
-	void generateGabors();
+	void generateGabors(float x);
 	
 	std::vector<Texture> loadTextures();
 

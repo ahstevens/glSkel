@@ -418,7 +418,6 @@ void init_physics()
 
 	dynamicsWorld = new btSoftRigidDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 	dynamicsWorld->getDispatchInfo().m_enableSPU = true;
-	dynamicsWorld->setGravity(btVector3(0.f, 0.f, 0.f));
 
 	sbInfo.m_gravity = btVector3(0.f, 0.f, 0.f);
 	sbInfo.m_dispatcher = dispatcher;
