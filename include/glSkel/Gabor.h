@@ -147,7 +147,7 @@ private:
 
 		void calculateSpatialCentralFrequency()
 		{
-			m_vec2SpatialCentralFrequency = glm::vec2(m_fDistance * sin(m_fAngle), m_fDistance * cos(m_fAngle));
+			m_vec2SpatialCentralFrequency = glm::vec2(1.f / m_fDistance * sin(m_fAngle), 1.f / m_fDistance * cos(m_fAngle));
 			m_bNeedsRefresh = false;
 		}
 
