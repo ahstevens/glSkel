@@ -41,6 +41,8 @@ private:
 	void buildModel();
 
 	void generateGabors(float x);
+	float calculateEnvelope(float currentRatio, float begin, float max1, float max2, float end);
+	float getRandRatio();
 	
 	std::vector<Texture> loadTextures();
 

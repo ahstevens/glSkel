@@ -10,6 +10,7 @@
 const float lengthGridSpacing = 0.25f; // cm, approx
 const unsigned int center_nVertsWide = 2u;
 const unsigned int edge_nVertsWide = 6u;
+const float edgeCutoffPercent = 0.05f;
 
 Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, btSoftRigidDynamicsWorld* dynamicsWorld, btSoftBodyWorldInfo &sbInfo)
 {
@@ -60,6 +61,9 @@ glm::quat Slatissima::getOrientation()
 
 void Slatissima::setPosition(glm::vec3 pos)
 {
+	btTransform trans;
+	trans.setOrigin(btVector3(pos.x, pos.y, pos.z));
+	m_pSoftBody->setWorldTransform(trans);
 	mesh->setPosition(pos);
 }
 
@@ -124,7 +128,7 @@ void Slatissima::initPhysics(btSoftBodyWorldInfo &sbInfo)
 	m_pSoftBody->m_cfg.piterations = 5;
 	m_pSoftBody->m_cfg.kDF = 1.f;
 	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
-	m_pSoftBody->setTotalMass(5000, true);
+	m_pSoftBody->setTotalMass(50000, true);
 	//m_pSoftBody->m_cfg.kMT = 0.001f;
 	m_pSoftBody->setPose(true, true);
 	//m_pSoftBody->getCollisionShape()->setMargin(0.5f);
@@ -159,7 +163,7 @@ void Slatissima::buildModel()
 			GLfloat displacement = -(centerBladeWidth / 2.f) + widthRatio * centerBladeWidth;
 			GLfloat sineOffset = sin((0.1f + 0.8f * heightRatio) * glm::pi<GLfloat>());
 			tempVert.x = sineOffset * displacement;
-			//tempVert.x = displacement * 0.5f;
+
 			tempVert.y = heightRatio * length;
 						
 			tempVert.z = 0.f;
@@ -188,15 +192,15 @@ void Slatissima::buildModel()
 		{
 			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(edge_nVertsWide - 1);
 
-			tempVert.x = (widthRatio - 0.5f) * edgeWidth * sin(heightRatio * glm::pi<GLfloat>());
-			//tempVert.x = (widthRatio - 0.5f) * width * 0.5f;
+			tempVert.x = (widthRatio - 0.5f) * edgeWidth * calculateEnvelope(heightRatio, 0.f, 0.1f, 0.9f, 1.f);
+			
 			tempVert.y = heightRatio * length;
 
 			tempVert.z = 0.f;
 			for(auto g : gabors)
 				tempVert.z += g->get(glm::vec2(tempVert));
 
-			tempVert.z *= (1.f - widthRatio) * sin(heightRatio * glm::pi<GLfloat>());
+			tempVert.z *= calculateEnvelope(heightRatio, 0.05f, 0.1f, 0.9f, 0.95f);
 			vecRow.push_back(tempVert);
 		}
 
@@ -219,16 +223,15 @@ void Slatissima::buildModel()
 		{
 			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(edge_nVertsWide - 1);
 
-			tempVert.x = (widthRatio - 0.5f) * edgeWidth * sin(heightRatio * glm::pi<GLfloat>());
-			float xEnvelope = abs(heightRatio - 0.5f) >= 0.4f ? (heightRatio < 0.5f ? (0.5f - abs(heightRatio - 0.5f)) * 10 : heightRatio - 0.5f) : 1.f;
-			//tempVert.x = (widthRatio - 0.5f) * width * 0.5f;
+			tempVert.x = (widthRatio - 0.5f) * edgeWidth * calculateEnvelope(heightRatio, 0.f, 0.1f, 0.9f, 1.f);
+
 			tempVert.y = heightRatio * length;
 
 			tempVert.z = 0.f;
 			for (auto g : gabors)
 				tempVert.z += g->get(glm::vec2(tempVert));
 
-			tempVert.z *= widthRatio * sin(heightRatio * glm::pi<GLfloat>());
+			tempVert.z *= calculateEnvelope(heightRatio, 0.05f, 0.1f, 0.9f, 0.95f);
 			vecRow.push_back(tempVert);
 		}
 
@@ -247,36 +250,60 @@ void Slatissima::generateGabors(float x)
 {
 	gabors.clear();
 
-	for (unsigned int i = 0; i < 50; ++i)
+	unsigned int nLFWaves = 20u;
+	unsigned int nHFWaves = 1000u;
+
+	for (unsigned int i = 0; i < nLFWaves; ++i)
 	{
-		float randratio = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
-		float y = length * (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
+		float y = length * (i / (nLFWaves - 1.f));
+		//float y = length * getRandRatio();
+		//float y = length / 2.f;
 		Gabor *mainG = new Gabor();
 		mainG->setGaussianKernelCenter(glm::vec2(x, y));
-		mainG->setGaussianKernelSpread(glm::vec2(width / 2.f, length / 4.f));
-		mainG->setGaussianKernelAngle(0.f);
-		mainG->setGaussianKernelAmplitude(0.25f);
-		mainG->setComplexSinusoidDistance(1.f / (4.f + randratio * 3.f));
-		mainG->setComplexSinusoidAngle(0.f);
+		mainG->setGaussianKernelSpread(glm::vec2(width / 5.f, length / nLFWaves));
+		mainG->setGaussianKernelAmplitude(thickness * (0.75f + 0.25f * getRandRatio()));
+		mainG->setComplexSinusoidDistance(length / (5.f + 10.f * getRandRatio()));
 
 		gabors.push_back(mainG);
 	}
 
-	for (unsigned int i = 0; i < 20; ++i)
+	for (unsigned int i = 0; i < nHFWaves; ++i)
 	{
-		float randratio = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
-		float y = length * (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
-		float subwidth = 1.f;
+		//float y = length * (i / (nHFWaves - 1.f));
+		float y = length * getRandRatio();
 		Gabor *g = new Gabor();
 		g->setGaussianKernelCenter(glm::vec2(x, y));
-		g->setGaussianKernelSpread(glm::vec2(width / 20.f, 1.f));
-		g->setGaussianKernelAngle(0.f);
-		g->setGaussianKernelAmplitude(2.f);
-		g->setComplexSinusoidDistance(1.f + 1.f * randratio);
-		g->setComplexSinusoidAngle(0.f);
+		g->setGaussianKernelSpread(glm::vec2(width / 10.f, length / nHFWaves));
+		g->setGaussianKernelAmplitude(thickness * 2.f);
+		g->setComplexSinusoidDistance(0.5f + 5.5f * getRandRatio());
 
 		gabors.push_back(g);
 	}
+}
+
+float Slatissima::calculateEnvelope(float currentRatio, float beginRatio, float maxRatio1, float maxRatio2, float endRatio)
+{
+	if (currentRatio < beginRatio || currentRatio > endRatio)
+		return 0.f;
+
+	if (currentRatio > maxRatio1 && currentRatio < maxRatio2)
+		return 1.f;
+	
+	if (currentRatio < maxRatio1)
+	{
+		float r = (maxRatio1 - currentRatio) / (maxRatio1 - beginRatio);
+		return sin((1.f - r) * glm::half_pi<GLfloat>());
+	}
+	else // currentRatio > maxRatio2
+	{
+		float r = (maxRatio2 - currentRatio) / (maxRatio2 - endRatio);
+		return sin((1.f - r) * glm::half_pi<GLfloat>());
+	}
+}
+
+float Slatissima::getRandRatio()
+{
+	return static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
 }
 
 std::vector<Texture> Slatissima::loadTextures()

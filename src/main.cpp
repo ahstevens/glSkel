@@ -41,7 +41,7 @@ void init_physics();
 void step_physics();
 
 // Camera
-Camera  camera(glm::vec3(0.0f, 0.0f, 15.0f));
+Camera  camera(glm::vec3(0.0f, 50.0f, 50.0f));
 LightingSystem ls;
 GLfloat lastX = mWidth / 2.0;
 GLfloat lastY = mHeight / 2.0;
@@ -56,7 +56,7 @@ bool showLights = true;
 bool showNormals = false;
 bool explode = false;
 
-Slatissima *s = NULL;
+std::vector<Slatissima *> slats;
 GaborTest *gt = NULL;
 
 btSoftRigidDynamicsWorld* dynamicsWorld = NULL;
@@ -148,8 +148,14 @@ int main(int argc, char * argv[]) {
 	//ls.sLight.on = false;
 
 	//gabs.push_back(currentEditGabor);
-	s = new Slatissima(50.f, 5.f, 0.25f, dynamicsWorld, sbInfo);
-	
+	Slatissima *slat = new Slatissima(80.f, 10.f, 4.f, dynamicsWorld, sbInfo);
+	slat->setPosition(glm::vec3(-5.f, 0.f, 0.f));
+	slats.push_back(slat);
+
+	slat = new Slatissima(120.f, 20.f, 7.f, dynamicsWorld, sbInfo);
+	slat->setPosition(glm::vec3(5.f, 0.f, 0.f));
+	slats.push_back(slat);
+
 	gt = new GaborTest();
 
     // Main Rendering Loop
@@ -182,7 +188,7 @@ int main(int argc, char * argv[]) {
 		// Create camera transformations
 		glm::mat4 view;
 		view = camera.GetViewMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (GLfloat)mWidth / (GLfloat)mHeight, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (GLfloat)mWidth / (GLfloat)mHeight, 0.01f, 1000.0f);
 		// Get the uniform locations
 		GLint viewLoc = glGetUniformLocation(lightingShader.Program, "view");
 		GLint projLoc = glGetUniformLocation(lightingShader.Program, "projection");
@@ -192,14 +198,14 @@ int main(int argc, char * argv[]) {
 		
 		//c.Draw(lightingShader);
 
-		s->Draw(lightingShader);
+		for (auto s : slats) s->Draw(lightingShader);
 
 		if (showNormals)
 		{
 			normalsShader.Use();
 			glUniformMatrix4fv(glGetUniformLocation(normalsShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 			glUniformMatrix4fv(glGetUniformLocation(normalsShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-			s->Draw(normalsShader);
+			for (auto s : slats) s->Draw(normalsShader);
 		}
 
 		if (explode)
@@ -207,7 +213,7 @@ int main(int argc, char * argv[]) {
 			explodeShader.Use();
 			glUniformMatrix4fv(glGetUniformLocation(explodeShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 			glUniformMatrix4fv(glGetUniformLocation(explodeShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-			s->Draw(explodeShader);
+			for (auto s : slats) s->Draw(explodeShader);
 		}
 
 		if (showLights)
@@ -231,7 +237,7 @@ int main(int argc, char * argv[]) {
         glfwPollEvents();
     }   
 
-	if (s) delete s;
+	slats.clear();
 	
 	glfwTerminate();
 
@@ -307,27 +313,27 @@ void do_movement()
 	//	camera.ProcessKeyboard(RIGHT, deltaTime);
 
 	if (keys[GLFW_KEY_A])
-		s->rotateY(-1.f);
+		for (auto s: slats) s->rotateY(-1.f);
 	if (keys[GLFW_KEY_D])
-		s->rotateY(1.f);
+		for (auto s : slats) s->rotateY(1.f);
 	if (keys[GLFW_KEY_W])
-		s->rotateX(-1.f);
+		for (auto s : slats) s->rotateX(-1.f);
 	if (keys[GLFW_KEY_S])
-		s->rotateX(1.f);
+		for (auto s : slats) s->rotateX(1.f);
 	if (keys[GLFW_KEY_Q])
-		s->rotateZ(-1.f);
+		for (auto s : slats) s->rotateZ(-1.f);
 	if (keys[GLFW_KEY_E])
-		s->rotateZ(1.f);
+		for (auto s : slats) s->rotateZ(1.f);
 	if (keys[GLFW_KEY_R])
-		s->setOrientation();
+		for (auto s : slats) s->setOrientation();
 	if (keys[GLFW_KEY_O])
-		s->bump(btVector3(0.f, 10.f, 0.f));
+		for (auto s : slats) s->bump(btVector3(0.f, 10.f, 0.f));
 	if (keys[GLFW_KEY_U])
-		s->bump(btVector3(0.f, 10.f, 0.f));
+		for (auto s : slats) s->bump(btVector3(0.f, 10.f, 0.f));
 	if (keys[GLFW_KEY_I])
-		s->bump(btVector3(0.f, 0.f, -1.f));
+		for (auto s : slats) s->bump(btVector3(0.f, 0.f, -1.f));
 	if (keys[GLFW_KEY_K])
-		s->bump(btVector3(0.f, 0.f, 1.f));
+		for (auto s : slats) s->bump(btVector3(0.f, 0.f, 1.f));
 
 	if (keys[GLFW_KEY_KP_8])
 	{
@@ -417,9 +423,8 @@ void init_physics()
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 
 	dynamicsWorld = new btSoftRigidDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
-	dynamicsWorld->getDispatchInfo().m_enableSPU = true;
 
-	sbInfo.m_gravity = btVector3(1.f, 2.f, 0.f);
+	sbInfo.m_gravity = btVector3(3.f, 5.f, 0.f);
 	sbInfo.m_dispatcher = dispatcher;
 	sbInfo.m_broadphase = overlappingPairCache;
 	sbInfo.m_sparsesdf.Initialize();
@@ -459,5 +464,5 @@ void step_physics()
 	//	//std::cout << "world pos object " << j << " = " << float(trans.getOrigin().getX()) << "," << float(trans.getOrigin().getY()) << "," << float(trans.getOrigin().getZ()) << std::endl;
 	//}
 
-	s->update();
+	for (auto s : slats) s->update();
 }
