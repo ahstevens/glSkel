@@ -61,6 +61,7 @@ GaborTest *gt = NULL;
 
 btSoftRigidDynamicsWorld* dynamicsWorld = NULL;
 btSoftBodyWorldInfo sbInfo;
+btRigidBody* groundBody = NULL;
 
 int main(int argc, char * argv[]) {
 
@@ -149,12 +150,14 @@ int main(int argc, char * argv[]) {
 
 	//gabs.push_back(currentEditGabor);
 	Slatissima *slat;
-	//slat = new Slatissima(80.f, 10.f, 4.f, dynamicsWorld, sbInfo);
-	//slat->setPosition(glm::vec3(-5.f, 0.f, 0.f));
-	//slats.push_back(slat);
+	slat = new Slatissima(80.f, 10.f, 4.f, 0.4f, dynamicsWorld, sbInfo);
+	slat->setPosition(glm::vec3(-10.f, 0.f, 0.f));
+	slat->anchorToBody(groundBody);
+	slats.push_back(slat);
 
-	slat = new Slatissima(120.f, 20.f, 7.f, dynamicsWorld, sbInfo);
-	slat->setPosition(glm::vec3(5.f, 0.f, 0.f));
+	slat = new Slatissima(120.f, 20.f, 7.f, 0.5f, dynamicsWorld, sbInfo);
+	slat->setPosition(glm::vec3(10.f, 0.f, 0.f));
+	slat->anchorToBody(groundBody);
 	slats.push_back(slat);
 
 	gt = new GaborTest();
@@ -425,8 +428,9 @@ void init_physics()
 
 	dynamicsWorld = new btSoftRigidDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 
-	sbInfo.m_gravity = btVector3(0.f, 0.f, 0.f);
-	//sbInfo.m_gravity = btVector3(3.f, 5.f, 0.f);
+	//sbInfo.m_gravity = btVector3(0.f, 0.f, 0.f);
+	//sbInfo.m_gravity = btVector3(0.f, -9.8f, 0.f);
+	sbInfo.m_gravity = btVector3(3.f, 5.f, 0.f);
 	sbInfo.m_dispatcher = dispatcher;
 	sbInfo.m_broadphase = overlappingPairCache;
 	sbInfo.m_sparsesdf.Initialize();
@@ -441,17 +445,17 @@ void init_physics()
 		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
 		btDefaultMotionState* myMotionState = new btDefaultMotionState();
 		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
-		btRigidBody* body = new btRigidBody(rbInfo);
+		groundBody = new btRigidBody(rbInfo);
 
-		body->getWorldTransform().setOrigin(btVector3(0.f, -1.f, 0.f));
+		groundBody->getWorldTransform().setOrigin(btVector3(0.f, -1.f, 0.f));
 		//add the body to the dynamics world
-		dynamicsWorld->addRigidBody(body);
+		dynamicsWorld->addRigidBody(groundBody);
 	}
 }
 
 void step_physics()
 {
-	dynamicsWorld->stepSimulation(1.f / 60.f, 10);
+	dynamicsWorld->stepSimulation(1.f / 120.f, 10);
 
 	////print positions of all objects
 	//for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)

@@ -11,7 +11,7 @@
 class Slatissima
 {
 public:
-	Slatissima(GLfloat length, GLfloat width, GLfloat thickness, btSoftRigidDynamicsWorld* dynamicsWorld, btSoftBodyWorldInfo &btInfo);
+	Slatissima(GLfloat length, GLfloat width, GLfloat edgeWaveAmplitude, float solidThickness, btSoftRigidDynamicsWorld* dynamicsWorld, btSoftBodyWorldInfo &btInfo);
 	~Slatissima();
 
 	void rotateX(float degrees);
@@ -23,7 +23,9 @@ public:
 	glm::vec3 getPosition();
 
 	void bump(btVector3 dir);
-
+	
+	void anchorToBody(btRigidBody* body);
+	
 	void update();
 
 	void Draw(Shader s);
@@ -32,7 +34,7 @@ private:
 	Mesh* mesh;
 	std::vector<GLuint> indices;
 
-	GLfloat length, width, thickness;
+	GLfloat length, width, edgeWaveAmplitude;
 	GLuint nVertsTall;
 
 	std::vector<Gabor*> gabors;

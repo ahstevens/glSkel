@@ -12,15 +12,16 @@ const unsigned int center_nVertsWide = 2u;
 const unsigned int edge_nVertsWide = 6u;
 const float edgeCutoffPercent = 0.05f;
 
-Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat thickness_cm, btSoftRigidDynamicsWorld* dynamicsWorld, btSoftBodyWorldInfo &sbInfo)
+Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat edgeWaveAmplitude_cm, float solidThickness, btSoftRigidDynamicsWorld* dynamicsWorld, btSoftBodyWorldInfo &sbInfo)
 {
 	this->length = length_cm;
 	this->width = width_cm; 
-	this->thickness = thickness_cm;
+	this->edgeWaveAmplitude = edgeWaveAmplitude_cm;
 	this->m_pDynamicsWorld = dynamicsWorld;
 	this->nVertsTall = static_cast<GLuint>(length_cm / lengthGridSpacing);
 
 	this->buildModel();
+	if(solidThickness > 0.f) mesh->solidify(solidThickness);
 	this->initPhysics(sbInfo);
 }
 
@@ -78,6 +79,17 @@ void Slatissima::bump(btVector3 dir)
 	m_pSoftBody->addForce(dir);
 }
 
+void Slatissima::anchorToBody(btRigidBody * body)
+{
+	for (int i = 0; i < center_nVertsWide; ++i)
+	{
+		//m_pSoftBody->setMass(i, 0.f);
+		//m_pSoftBody->setMass(mesh->m_vOpposingVertPairs[i], 0.f);
+		m_pSoftBody->appendAnchor(i, body);
+		m_pSoftBody->appendAnchor(mesh->m_vOpposingVertPairs[i], body);
+	}
+}
+
 void Slatissima::update()
 {
 	//btTransform trans;
@@ -121,30 +133,31 @@ void Slatissima::initPhysics(btSoftBodyWorldInfo &sbInfo)
 		, true
 	);
 
-	btSoftBody::Material *mat = m_pSoftBody->appendMaterial();
-	mat->m_kLST = 0.75f;
-	mat->m_kAST = 0.5f;
-	m_pSoftBody->generateBendingConstraints(2, mat);
+	btSoftBody::Material *supportLinkMat = m_pSoftBody->appendMaterial();
+	m_pSoftBody->m_materials[0]->m_kLST = 0.75f;
+	m_pSoftBody->m_materials[0]->m_kAST = 0.5f;
 	m_pSoftBody->m_cfg.piterations = 2;
 	m_pSoftBody->m_cfg.kDF = 0.5f;
-	m_pSoftBody->m_cfg.kPR = 250.f;
+	m_pSoftBody->m_cfg.kPR = 500.f;
 	m_pSoftBody->m_cfg.kVC = 0.f;
 	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
-	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::SDF_RS;
-	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SS;
-	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SELF;
-	m_pSoftBody->randomizeConstraints();
+	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::SDF_RS;
+	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SS;
+	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SELF;
 	m_pSoftBody->setTotalMass(50000, true);
 	m_pSoftBody->m_cfg.kMT = 0.00001f;
 	m_pSoftBody->setPose(false, true);
 	//m_pSoftBody->getCollisionShape()->setMargin(0.5f);
 
-	// anchor points
-	for (int i = 0; i < center_nVertsWide; ++i)
-	{
-		m_pSoftBody->setMass(i, 0.f);
-	}
+	supportLinkMat->m_kLST = 1.f;
+	supportLinkMat->m_kAST = 1.f;
+	supportLinkMat->m_kVST = 1.f;
+	//m_pSoftBody->generateBendingConstraints(2, supportLinkMat);
+	for (auto p : mesh->m_vOpposingVertPairs)
+		m_pSoftBody->appendLink(p.first, p.second, supportLinkMat);
 
+	m_pSoftBody->generateBendingConstraints(2, m_pSoftBody->m_materials[0]);
+	m_pSoftBody->randomizeConstraints();
 	this->m_pDynamicsWorld->addSoftBody(m_pSoftBody);
 }
 
@@ -267,7 +280,7 @@ void Slatissima::generateGabors(float x)
 		Gabor *mainG = new Gabor();
 		mainG->setGaussianKernelCenter(glm::vec2(x, y));
 		mainG->setGaussianKernelSpread(glm::vec2(width / 5.f, length / nLFWaves));
-		mainG->setGaussianKernelAmplitude(thickness * (0.75f + 0.25f * getRandRatio()));
+		mainG->setGaussianKernelAmplitude(edgeWaveAmplitude * (0.75f + 0.25f * getRandRatio()));
 		mainG->setComplexSinusoidDistance(length / (5.f + 10.f * getRandRatio()));
 
 		gabors.push_back(mainG);
@@ -280,7 +293,7 @@ void Slatissima::generateGabors(float x)
 		Gabor *g = new Gabor();
 		g->setGaussianKernelCenter(glm::vec2(x, y));
 		g->setGaussianKernelSpread(glm::vec2(width / 10.f, length / nHFWaves));
-		g->setGaussianKernelAmplitude(thickness * 2.f);
+		g->setGaussianKernelAmplitude(edgeWaveAmplitude * 2.f);
 		g->setComplexSinusoidDistance(0.5f + 5.5f * getRandRatio());
 
 		gabors.push_back(g);
