@@ -304,37 +304,37 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void do_movement()
 {
 	// Camera controls
-	//if (keys[GLFW_KEY_W])
-	//	camera.ProcessKeyboard(FORWARD, deltaTime);
-	//if (keys[GLFW_KEY_S])
-	//	camera.ProcessKeyboard(BACKWARD, deltaTime);
-	//if (keys[GLFW_KEY_A])
-	//	camera.ProcessKeyboard(LEFT, deltaTime);
-	//if (keys[GLFW_KEY_D])
-	//	camera.ProcessKeyboard(RIGHT, deltaTime);
-
-	if (keys[GLFW_KEY_A])
-		for (auto s: slats) s->rotateY(-1.f);
-	if (keys[GLFW_KEY_D])
-		for (auto s : slats) s->rotateY(1.f);
 	if (keys[GLFW_KEY_W])
-		for (auto s : slats) s->rotateX(-1.f);
+		camera.ProcessKeyboard(FORWARD, deltaTime);
 	if (keys[GLFW_KEY_S])
-		for (auto s : slats) s->rotateX(1.f);
-	if (keys[GLFW_KEY_Q])
-		for (auto s : slats) s->rotateZ(-1.f);
-	if (keys[GLFW_KEY_E])
-		for (auto s : slats) s->rotateZ(1.f);
-	if (keys[GLFW_KEY_R])
-		for (auto s : slats) s->setOrientation();
+		camera.ProcessKeyboard(BACKWARD, deltaTime);
+	if (keys[GLFW_KEY_A])
+		camera.ProcessKeyboard(LEFT, deltaTime);
+	if (keys[GLFW_KEY_D])
+		camera.ProcessKeyboard(RIGHT, deltaTime);
+
+	//if (keys[GLFW_KEY_A])
+	//	for (auto s: slats) s->rotateY(-1.f);
+	//if (keys[GLFW_KEY_D])
+	//	for (auto s : slats) s->rotateY(1.f);
+	//if (keys[GLFW_KEY_W])
+	//	for (auto s : slats) s->rotateX(-1.f);
+	//if (keys[GLFW_KEY_S])
+	//	for (auto s : slats) s->rotateX(1.f);
+	//if (keys[GLFW_KEY_Q])
+	//	for (auto s : slats) s->rotateZ(-1.f);
+	//if (keys[GLFW_KEY_E])
+	//	for (auto s : slats) s->rotateZ(1.f);
+	//if (keys[GLFW_KEY_R])
+	//	for (auto s : slats) s->setOrientation();
 	if (keys[GLFW_KEY_O])
 		for (auto s : slats) s->bump(btVector3(0.f, 10.f, 0.f));
 	if (keys[GLFW_KEY_U])
 		for (auto s : slats) s->bump(btVector3(0.f, 10.f, 0.f));
 	if (keys[GLFW_KEY_I])
-		for (auto s : slats) s->bump(btVector3(0.f, 0.f, -1.f));
+		for (auto s : slats) s->bump(btVector3(0.f, 0.f, -5.f));
 	if (keys[GLFW_KEY_K])
-		for (auto s : slats) s->bump(btVector3(0.f, 0.f, 1.f));
+		for (auto s : slats) s->bump(btVector3(0.f, 0.f, 5.f));
 
 	if (keys[GLFW_KEY_KP_8])
 	{
@@ -421,7 +421,7 @@ void init_physics()
 	btVector3 worldAabbMax(10000, 10000, 10000);
 	btBroadphaseInterface* overlappingPairCache = new btAxisSweep3(worldAabbMin, worldAabbMax);
 
-	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
+	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver();
 
 	dynamicsWorld = new btSoftRigidDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 
