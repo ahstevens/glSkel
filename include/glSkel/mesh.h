@@ -51,9 +51,11 @@ public:
 		unsigned int nVertsConsolidated = this->consolidateDuplicateVertices(consolidationSearchRadius); // 1 mm
 		std::cout << "done! (" << nVertsConsolidated << " vertices removed)" << std::endl;
 
-		std::cout << "\t*Updating boundary edge pointer... ";
-		this->updateBoundaryEdgePointer();
-		std::cout << "done! (" << getBoundaryEdgeCount() << " boundary edges in mesh)" << std::endl;
+		solidifyMesh(1.f);
+
+		checkEdges();
+		checkFaces();
+		checkVertices();
 
 		std::cout << "\t*Surface area: " << getSurfaceArea() << " cm^2" << std::endl;
 
@@ -115,6 +117,24 @@ public:
 	}
 
 	void getIndexedVertices(std::vector<int> &i, std::vector<glm::vec3> &v)
+	{
+		for (std::vector<HE_Face*>::iterator it = m_vpFaces.begin(); it != m_vpFaces.end(); it++)
+		{
+			HE_Edge *begin = (*it)->edge;
+			HE_Edge *e = begin;
+
+			do
+			{
+				i.push_back(e->head->id);
+				e = e->next;
+			} while (e != begin);
+		}
+
+		for (auto vert : m_vpVertices)
+			v.push_back(vert->pos);
+	}
+
+	void getIndexedVerticesMirrored(std::vector<int> &i, std::vector<glm::vec3> &v)
 	{
 		for (std::vector<HE_Face*>::iterator it = m_vpFaces.begin(); it != m_vpFaces.end(); it++)
 		{
@@ -336,9 +356,9 @@ private:
 			e3->next = e1;
 			e3->head = m_vpVertices[vuiIndices[i]];
 
-			if (!m_vpVertices[vuiIndices[i]]->halfedge) m_vpVertices[vuiIndices[i]]->halfedge = e1;
-			if (!m_vpVertices[vuiIndices[i + 1]]->halfedge) m_vpVertices[vuiIndices[i + 1]]->halfedge = e2;
-			if (!m_vpVertices[vuiIndices[i + 2]]->halfedge) m_vpVertices[vuiIndices[i + 2]]->halfedge = e3;
+			if (!e1->head->halfedge) e1->head->halfedge = e2;
+			if (!e2->head->halfedge) e2->head->halfedge = e3;
+			if (!e3->head->halfedge) e3->head->halfedge = e1;
 
 			f->edge = e1; // doesn't matter which edge it points to
 			f->normal = glm::cross(e1->head->pos - e3->head->pos, e2->head->pos - e3->head->pos);
@@ -499,6 +519,8 @@ private:
 
 		if (vertexRemoved)
 			updateVertexIDs();
+		
+		this->updateBoundaryEdgePointer();
 
 		return static_cast<unsigned int>(nVertsBeforeConsolidation - m_vpVertices.size());
 	}
@@ -615,6 +637,184 @@ private:
 				e = e->next;
 			} while (e != begin);
 		}
+	}
+
+	void solidifyMesh(float distBetweenLayers)
+	{
+		std::vector<HE_Vertex*> backVerts;
+		std::vector<HE_Face*> backFaces, connectingFaces;
+		std::vector<HE_Edge*> backEdges, connectingEdges;
+
+		// back layer
+		for (auto frontVert : m_vpVertices)
+		{
+			HE_Vertex *v = new HE_Vertex();
+			v->pos = frontVert->pos;
+			frontVert->pos.z += distBetweenLayers / 2.f;
+			v->pos.z -= distBetweenLayers / 2.f;
+			v->id = m_vpVertices.size() + frontVert->id;
+
+			backVerts.push_back(v);
+		}
+
+		typedef std::pair<int, int> EdgeMapIndexT;
+		typedef std::map< EdgeMapIndexT, HE_Edge* > EdgeMapT;
+		EdgeMapT edgeMap;
+
+		for (auto frontFace : m_vpFaces)
+		{
+			HE_Face *f = new HE_Face();
+			HE_Edge *e1 = new HE_Edge();
+			HE_Edge *e2 = new HE_Edge();
+			HE_Edge *e3 = new HE_Edge();
+			e1->next = e2;
+			e2->next = e3;
+			e3->next = e1;
+			e1->face = f;
+			e2->face = f;
+			e3->face = f;
+			f->edge = e1;
+			e1->head = backVerts.at(frontFace->edge->opposite->head->id);
+			e2->head = backVerts.at(frontFace->edge->getPrev()->opposite->head->id);
+			e3->head = backVerts.at(frontFace->edge->next->opposite->head->id);
+
+			if (!e1->head->halfedge) e1->head->halfedge = e2;
+			if (!e2->head->halfedge) e2->head->halfedge = e3;
+			if (!e3->head->halfedge) e3->head->halfedge = e1;
+
+			f->normal = glm::cross(e1->head->pos - e3->head->pos, e2->head->pos - e3->head->pos);
+			backFaces.push_back(f);
+			backEdges.push_back(e1);
+			backEdges.push_back(e2);
+			backEdges.push_back(e3);
+
+			// enter these 
+			edgeMap[EdgeMapIndexT(e3->head->id, e1->head->id)] = e1;
+			edgeMap[EdgeMapIndexT(e1->head->id, e2->head->id)] = e2;
+			edgeMap[EdgeMapIndexT(e2->head->id, e3->head->id)] = e3;
+		}
+		
+		// link up paired half edges
+		for (EdgeMapT::iterator it = edgeMap.begin(); it != edgeMap.end(); it++)
+		{
+			if (it->second->opposite != NULL) continue;
+
+			// look for an edge going the opposite way in the edge map
+			EdgeMapT::iterator opp = edgeMap.find(std::pair<int, int>(it->first.second, it->first.first));
+			if (opp != edgeMap.end()) // found a match, so link 'em up
+			{
+				it->second->opposite = opp->second;
+				opp->second->opposite = it->second;
+			}
+			else // no match, therefore it's a boundary edge
+			{
+				HE_Edge *newBoundaryEdge = new HE_Edge();
+				newBoundaryEdge->head = it->second->next->next->head; // a boundary edge always points to boundary vertex 
+				newBoundaryEdge->face = NULL; // NULL face indicates a boundary edge
+
+											  // link new edge to next, if it exists
+				if (!newBoundaryEdge->head->halfedge->face)
+					newBoundaryEdge->next = newBoundaryEdge->head->halfedge;
+
+				// link opposite edges
+				newBoundaryEdge->opposite = it->second;
+				it->second->opposite = newBoundaryEdge;
+
+				// change emanating vertex to point to new boundary edge.
+				// edges of boundary are oriented in CW order
+				it->second->head->halfedge = newBoundaryEdge;
+
+				backEdges.push_back(newBoundaryEdge);
+			}
+		}
+
+		// one more pass to fill in any unlinked boundary edges
+		for (int i = 0; i < backEdges.size(); ++i)
+			if (!backEdges[i]->next)
+				backEdges[i]->next = backEdges[i]->head->halfedge;
+
+		// stich them together
+		HE_Edge *startEdge = m_pBoundaryEdge;
+		HE_Edge *bEdge = startEdge;
+		EdgeMapT unlinkedEdgeMap;
+		do {
+			HE_Edge *nextBEdge = bEdge->next;
+
+			HE_Face *tri1 = new HE_Face();
+			HE_Face *tri2 = new HE_Face();
+			HE_Edge *tri1e1 = bEdge;
+			HE_Edge *tri1e2 = new HE_Edge();
+			HE_Edge *tri1e3 = new HE_Edge();
+			HE_Edge *tri2e1 = backVerts.at(bEdge->head->id)->halfedge;
+			HE_Edge *tri2e2 = new HE_Edge();
+			HE_Edge *tri2e3 = new HE_Edge();
+
+			tri1e1->face = tri1;
+			tri1e1->next = tri1e2;
+
+			tri1e2->face = tri1;
+			tri1e2->next = tri1e3;
+			tri1e2->head = backVerts.at(bEdge->opposite->head->id);
+			tri1e2->opposite = tri2e2;
+
+			tri1e3->face = tri1;
+			tri1e3->next = tri1e1;
+			tri1e3->head = bEdge->opposite->head;
+			unlinkedEdgeMap[EdgeMapIndexT(tri1e2->head->id, tri1e3->head->id)] = tri1e3;
+
+			tri2e1->face = tri2;
+			tri2e1->next = tri2e2;
+
+			tri2e2->face = tri2;
+			tri2e2->next = tri2e3;
+			tri2e2->head = bEdge->head;
+			tri2e2->opposite = tri1e2;
+
+			tri2e3->face = tri2;
+			tri2e3->next = tri2e1;
+			tri2e3->head = backVerts.at(bEdge->head->id);
+			unlinkedEdgeMap[EdgeMapIndexT(tri2e2->head->id, tri2e3->head->id)] = tri2e3;
+
+			tri1->edge = tri1e1;
+			tri2->edge = tri2e1;
+
+			tri1->normal = glm::cross(tri1e1->head->pos - tri1e3->head->pos, tri1e2->head->pos - tri1e3->head->pos);
+			tri2->normal = glm::cross(tri2e1->head->pos - tri2e3->head->pos, tri2e2->head->pos - tri2e3->head->pos);
+
+			connectingFaces.push_back(tri1);
+			connectingFaces.push_back(tri2);
+			connectingEdges.push_back(tri1e1);
+			connectingEdges.push_back(tri1e2);
+			connectingEdges.push_back(tri1e3);
+			connectingEdges.push_back(tri2e1);
+			connectingEdges.push_back(tri2e2);
+			connectingEdges.push_back(tri2e3);
+
+			bEdge = nextBEdge;
+		} while (bEdge != startEdge);
+
+		for (EdgeMapT::iterator it = unlinkedEdgeMap.begin(); it != unlinkedEdgeMap.end(); it++)
+		{
+			if (it->second->opposite != NULL) continue;
+
+			// look for an edge going the opposite way in the edge map
+			EdgeMapT::iterator opp = unlinkedEdgeMap.find(std::pair<int, int>(it->first.second, it->first.first));
+			if (opp != unlinkedEdgeMap.end()) // found a match, so link 'em up
+			{
+				it->second->opposite = opp->second;
+				opp->second->opposite = it->second;
+			}
+		}
+
+		m_vpVertices.insert(std::end(m_vpVertices), std::begin(backVerts), std::end(backVerts));
+
+		m_vpFaces.insert(std::end(m_vpFaces), std::begin(backFaces), std::end(backFaces));
+		m_vpFaces.insert(std::end(m_vpFaces), std::begin(connectingFaces), std::end(connectingFaces));
+
+		m_vpEdges.insert(std::end(m_vpEdges), std::begin(backEdges), std::end(backEdges));
+		m_vpEdges.insert(std::end(m_vpEdges), std::begin(connectingEdges), std::end(connectingEdges));
+
+		m_pBoundaryEdge = NULL;
 	}
 
 	void checkVertices()

@@ -122,15 +122,21 @@ void Slatissima::initPhysics(btSoftBodyWorldInfo &sbInfo)
 	);
 
 	btSoftBody::Material *mat = m_pSoftBody->appendMaterial();
-	mat->m_kLST = 0.25f;
+	mat->m_kLST = 0.75f;
 	mat->m_kAST = 0.5f;
 	m_pSoftBody->generateBendingConstraints(2, mat);
-	m_pSoftBody->m_cfg.piterations = 5;
-	m_pSoftBody->m_cfg.kDF = 1.f;
+	m_pSoftBody->m_cfg.piterations = 2;
+	m_pSoftBody->m_cfg.kDF = 0.5f;
+	m_pSoftBody->m_cfg.kPR = 250.f;
+	m_pSoftBody->m_cfg.kVC = 0.f;
 	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
+	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::SDF_RS;
+	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SS;
+	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SELF;
+	m_pSoftBody->randomizeConstraints();
 	m_pSoftBody->setTotalMass(50000, true);
-	//m_pSoftBody->m_cfg.kMT = 0.001f;
-	m_pSoftBody->setPose(true, true);
+	m_pSoftBody->m_cfg.kMT = 0.00001f;
+	m_pSoftBody->setPose(false, true);
 	//m_pSoftBody->getCollisionShape()->setMargin(0.5f);
 
 	// anchor points

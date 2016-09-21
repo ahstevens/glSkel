@@ -148,9 +148,10 @@ int main(int argc, char * argv[]) {
 	//ls.sLight.on = false;
 
 	//gabs.push_back(currentEditGabor);
-	Slatissima *slat = new Slatissima(80.f, 10.f, 4.f, dynamicsWorld, sbInfo);
-	slat->setPosition(glm::vec3(-5.f, 0.f, 0.f));
-	slats.push_back(slat);
+	Slatissima *slat;
+	//slat = new Slatissima(80.f, 10.f, 4.f, dynamicsWorld, sbInfo);
+	//slat->setPosition(glm::vec3(-5.f, 0.f, 0.f));
+	//slats.push_back(slat);
 
 	slat = new Slatissima(120.f, 20.f, 7.f, dynamicsWorld, sbInfo);
 	slat->setPosition(glm::vec3(5.f, 0.f, 0.f));
@@ -424,14 +425,15 @@ void init_physics()
 
 	dynamicsWorld = new btSoftRigidDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 
-	sbInfo.m_gravity = btVector3(3.f, 5.f, 0.f);
+	sbInfo.m_gravity = btVector3(0.f, 0.f, 0.f);
+	//sbInfo.m_gravity = btVector3(3.f, 5.f, 0.f);
 	sbInfo.m_dispatcher = dispatcher;
 	sbInfo.m_broadphase = overlappingPairCache;
 	sbInfo.m_sparsesdf.Initialize();
 
 	//-----initialization_end-----
 	// GROUND PLANE
-	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0.f, 1.f, 0.f), btScalar(0.f));
+	btCollisionShape* groundShape = new btBoxShape(btVector3(5000.f, 1.f, 5000.f));
 	{
 		btScalar mass(0.f);
 		btVector3 localInertia(0.f, 0.f, 0.f);
@@ -441,6 +443,7 @@ void init_physics()
 		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
 		btRigidBody* body = new btRigidBody(rbInfo);
 
+		body->getWorldTransform().setOrigin(btVector3(0.f, -1.f, 0.f));
 		//add the body to the dynamics world
 		dynamicsWorld->addRigidBody(body);
 	}
