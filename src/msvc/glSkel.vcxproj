@@ -155,6 +155,7 @@ exit 0</Command>
     <ClInclude Include="..\..\include\glSkel\Gabor.h" />
     <ClInclude Include="..\..\include\glSkel\GeometryStrip.h" />
     <ClInclude Include="..\..\include\glSkel\mesh.h" />
+    <ClInclude Include="..\..\include\glSkel\TorusMesh.h" />
     <ClInclude Include="..\Cube.h" />
     <ClInclude Include="..\GaborTest.h" />
     <ClInclude Include="..\Slatissima.h" />

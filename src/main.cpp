@@ -11,6 +11,7 @@
 #include <bullet/btBulletDynamicsCommon.h>
 #include <bullet/BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.h>
 #include <bullet/BulletSoftBody/btSoftRigidDynamicsWorld.h>
+#include <bullet/BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 
 // glSkeleton headers
 #include <glSkel/shader.h>
@@ -149,13 +150,13 @@ int main(int argc, char * argv[]) {
 
 	//gabs.push_back(currentEditGabor);
 	Slatissima *slat;
-	slat = new Slatissima(80.f, 10.f, 4.f, 5.f);
+	slat = new Slatissima(80.f, 10.f, 4.f, 0.2f);
 	slat->setPosition(glm::vec3(0.f, 0.1f, -5.f));
 	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
 	slat->anchorToBody(groundBody);
 	slats.push_back(slat);
 
-	slat = new Slatissima(120.f, 20.f, 7.f, 5.f);
+	slat = new Slatissima(120.f, 20.f, 7.f, 0.4f);
 	slat->setPosition(glm::vec3(0.f, 0.1f, 5.f));
 	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
 	slat->anchorToBody(groundBody);
@@ -338,7 +339,7 @@ void do_movement()
 	if (keys[GLFW_KEY_I])
 		for (auto s : slats) s->bump(btVector3(0.f, 0.f, -5.f));
 	if (keys[GLFW_KEY_K])
-		for (auto s : slats) s->bump(btVector3(0.f, 0.f, 5.f));
+		slats[0]->bump(btVector3(0.f, 0.f, 5.f));
 
 	if (keys[GLFW_KEY_KP_8])
 	{
@@ -420,7 +421,7 @@ void init_physics()
 {
 	btDefaultCollisionConfiguration* collisionConfiguration = new btSoftBodyRigidBodyCollisionConfiguration();
 	btCollisionDispatcher* dispatcher = new	btCollisionDispatcher(collisionConfiguration);
-
+	btGImpactCollisionAlgorithm::registerAlgorithm(dispatcher);
 	btVector3 worldAabbMin(-1000,-1000,-1000);
 	btVector3 worldAabbMax(1000, 1000, 1000);
 	btBroadphaseInterface* broadphase = new btAxisSweep3(worldAabbMin, worldAabbMax, 32766U);
@@ -430,9 +431,9 @@ void init_physics()
 	dynamicsWorld = new btSoftRigidDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
 
 	btSoftBodyWorldInfo &sbInfo = static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld)->getWorldInfo();
-	//sbInfo.m_gravity = btVector3(0.f, 0.f, 0.f);
+	sbInfo.m_gravity = btVector3(0.f, 0.f, 0.f);
 	//sbInfo.m_gravity = btVector3(0.f, -9.8f, 0.f);
-	sbInfo.m_gravity = btVector3(3.f, 5.f, 0.f);
+	//sbInfo.m_gravity = btVector3(1.f, 3.f, -0.5f);
 	sbInfo.m_dispatcher = dispatcher;
 	sbInfo.m_broadphase = broadphase;
 	sbInfo.m_sparsesdf.Initialize();
@@ -460,19 +461,6 @@ void step_physics()
 {
 	dynamicsWorld->stepSimulation(1.f / 120.f, 10);
 
-	////print positions of all objects
-	//for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
-	//{
-	//	btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
-	//	btRigidBody* body = btRigidBody::upcast(obj);
-	//	btTransform trans;
-	//	if (body && body->getMotionState())
-	//		body->getMotionState()->getWorldTransform(trans);
-	//	else
-	//		trans = obj->getWorldTransform();
-	//
-	//	//std::cout << "world pos object " << j << " = " << float(trans.getOrigin().getX()) << "," << float(trans.getOrigin().getY()) << "," << float(trans.getOrigin().getZ()) << std::endl;
-	//}
-
+	// update soft mesh vertices
 	for (auto s : slats) s->update();
 }

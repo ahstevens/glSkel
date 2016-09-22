@@ -124,7 +124,7 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 	m_pDynamicsWorld = dynamicsWorld;
 
 	btSoftBodyWorldInfo &sbInfo = m_pDynamicsWorld->getWorldInfo();
-
+	
 	std::vector<int> inds;
 	std::vector<glm::vec3> verts;
 	mesh->getIndexedVertices(inds, verts);
@@ -134,6 +134,19 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 		, (int)mesh->getFaceCount()
 		, true
 	);
+	
+	btIndexedMesh *iMesh = new btIndexedMesh();
+	iMesh->m_numTriangles = mesh->getFaceCount();
+	iMesh->m_numVertices = mesh->getVertexCount();
+	iMesh->m_triangleIndexBase = (unsigned char *)&inds[0];
+	iMesh->m_triangleIndexStride = 3 * sizeof(int);
+	iMesh->m_vertexBase = (unsigned char *)&verts[0];
+	iMesh->m_vertexStride = sizeof(glm::vec3);
+
+	btTriangleIndexVertexArray *triIVA = new btTriangleIndexVertexArray();
+	triIVA->addIndexedMesh(*iMesh);
+
+	btGImpactMeshShape *gImpactMeshShape = new btGImpactMeshShape(triIVA);
 
 	btSoftBody::Material *supportLinkMat = new btSoftBody::Material();
 	btSoftBody::Material *mat = m_pSoftBody->appendMaterial();
@@ -144,6 +157,8 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 	//m_pSoftBody->m_materials[0]->m_kAST = 0.5f;
 	m_pSoftBody->m_cfg.piterations = 2;
 	m_pSoftBody->m_cfg.kDF = 0.5f;
+	//m_pSoftBody->m_cfg.aeromodel = btSoftBody::eAeroModel::F_TwoSided;
+	m_pSoftBody->m_cfg.kSHR = 1.f;
 	//m_pSoftBody->m_cfg.kPR = 5000.f;
 	//m_pSoftBody->m_cfg.kVC = 0.f;
 	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
@@ -170,10 +185,12 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 	btTransform trans(m, pos);
 	m_pSoftBody->transform(trans);
 	m_pSoftBody->setTotalMass(1000, true);
-	m_pSoftBody->generateClusters(1000);
+	m_pSoftBody->getCollisionShape()->setMargin(0.f);
 	this->m_pDynamicsWorld->addSoftBody(m_pSoftBody);
 
 	sbInfo.m_sparsesdf.Reset();
+
+	m_bPhysicsInit = true;
 }
 
 void Slatissima::buildModel()
