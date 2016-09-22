@@ -59,8 +59,7 @@ bool explode = false;
 std::vector<Slatissima *> slats;
 GaborTest *gt = NULL;
 
-btSoftRigidDynamicsWorld* dynamicsWorld = NULL;
-btSoftBodyWorldInfo sbInfo;
+btDynamicsWorld* dynamicsWorld = NULL;
 btRigidBody* groundBody = NULL;
 
 int main(int argc, char * argv[]) {
@@ -150,13 +149,15 @@ int main(int argc, char * argv[]) {
 
 	//gabs.push_back(currentEditGabor);
 	Slatissima *slat;
-	slat = new Slatissima(80.f, 10.f, 4.f, 0.4f, dynamicsWorld, sbInfo);
-	slat->setPosition(glm::vec3(-10.f, 0.f, 0.f));
+	slat = new Slatissima(80.f, 10.f, 4.f, 5.f);
+	slat->setPosition(glm::vec3(0.f, 0.1f, -5.f));
+	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
 	slat->anchorToBody(groundBody);
 	slats.push_back(slat);
 
-	slat = new Slatissima(120.f, 20.f, 7.f, 0.5f, dynamicsWorld, sbInfo);
-	slat->setPosition(glm::vec3(10.f, 0.f, 0.f));
+	slat = new Slatissima(120.f, 20.f, 7.f, 5.f);
+	slat->setPosition(glm::vec3(0.f, 0.1f, 5.f));
+	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
 	slat->anchorToBody(groundBody);
 	slats.push_back(slat);
 
@@ -420,19 +421,20 @@ void init_physics()
 	btDefaultCollisionConfiguration* collisionConfiguration = new btSoftBodyRigidBodyCollisionConfiguration();
 	btCollisionDispatcher* dispatcher = new	btCollisionDispatcher(collisionConfiguration);
 
-	btVector3 worldAabbMin(-10000,-10000,-10000);
-	btVector3 worldAabbMax(10000, 10000, 10000);
-	btBroadphaseInterface* overlappingPairCache = new btAxisSweep3(worldAabbMin, worldAabbMax);
+	btVector3 worldAabbMin(-1000,-1000,-1000);
+	btVector3 worldAabbMax(1000, 1000, 1000);
+	btBroadphaseInterface* broadphase = new btAxisSweep3(worldAabbMin, worldAabbMax, 32766U);
 
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver();
 
-	dynamicsWorld = new btSoftRigidDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+	dynamicsWorld = new btSoftRigidDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
 
+	btSoftBodyWorldInfo &sbInfo = static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld)->getWorldInfo();
 	//sbInfo.m_gravity = btVector3(0.f, 0.f, 0.f);
 	//sbInfo.m_gravity = btVector3(0.f, -9.8f, 0.f);
 	sbInfo.m_gravity = btVector3(3.f, 5.f, 0.f);
 	sbInfo.m_dispatcher = dispatcher;
-	sbInfo.m_broadphase = overlappingPairCache;
+	sbInfo.m_broadphase = broadphase;
 	sbInfo.m_sparsesdf.Initialize();
 
 	//-----initialization_end-----
@@ -441,13 +443,14 @@ void init_physics()
 	{
 		btScalar mass(0.f);
 		btVector3 localInertia(0.f, 0.f, 0.f);
+		btTransform trans(btQuaternion(), btVector3(0.f, -1.f, 0.f));
 
 		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
-		btDefaultMotionState* myMotionState = new btDefaultMotionState();
+		btDefaultMotionState* myMotionState = new btDefaultMotionState(trans);
 		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
 		groundBody = new btRigidBody(rbInfo);
 
-		groundBody->getWorldTransform().setOrigin(btVector3(0.f, -1.f, 0.f));
+		groundBody;
 		//add the body to the dynamics world
 		dynamicsWorld->addRigidBody(groundBody);
 	}

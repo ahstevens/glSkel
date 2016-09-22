@@ -11,8 +11,10 @@
 class Slatissima
 {
 public:
-	Slatissima(GLfloat length, GLfloat width, GLfloat edgeWaveAmplitude, float solidThickness, btSoftRigidDynamicsWorld* dynamicsWorld, btSoftBodyWorldInfo &btInfo);
+	Slatissima(GLfloat length, GLfloat width, GLfloat edgeWaveAmplitude, float solidThickness);
 	~Slatissima();
+
+	void initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld);
 
 	void rotateX(float degrees);
 	void rotateY(float degrees);
@@ -39,7 +41,6 @@ private:
 
 	std::vector<Gabor*> gabors;
 
-	void initPhysics(btSoftBodyWorldInfo &sbInfo);
 	void buildModel();
 
 	void generateGabors(float x);
@@ -48,6 +49,7 @@ private:
 	
 	std::vector<Texture> loadTextures();
 
+	bool m_bPhysicsInit;
 	btSoftRigidDynamicsWorld* m_pDynamicsWorld;
 	btSoftBody* m_pSoftBody;
 };

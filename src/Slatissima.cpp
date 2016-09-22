@@ -8,21 +8,22 @@
 #include <bullet/BulletSoftBody/btSoftBodyHelpers.h>
 
 const float lengthGridSpacing = 0.25f; // cm, approx
-const unsigned int center_nVertsWide = 2u;
+const unsigned int center_nVertsWide = 6u;
 const unsigned int edge_nVertsWide = 6u;
 const float edgeCutoffPercent = 0.05f;
 
-Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat edgeWaveAmplitude_cm, float solidThickness, btSoftRigidDynamicsWorld* dynamicsWorld, btSoftBodyWorldInfo &sbInfo)
+Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat edgeWaveAmplitude_cm, float solidThickness)
+	: length(length_cm)
+	, width(width_cm)
+	, edgeWaveAmplitude(edgeWaveAmplitude_cm)
+	, m_bPhysicsInit(false)
+	, m_pDynamicsWorld(NULL)
+	, m_pSoftBody(NULL)
 {
-	this->length = length_cm;
-	this->width = width_cm; 
-	this->edgeWaveAmplitude = edgeWaveAmplitude_cm;
-	this->m_pDynamicsWorld = dynamicsWorld;
 	this->nVertsTall = static_cast<GLuint>(length_cm / lengthGridSpacing);
 
 	this->buildModel();
 	if(solidThickness > 0.f) mesh->solidify(solidThickness);
-	this->initPhysics(sbInfo);
 }
 
 
@@ -62,9 +63,6 @@ glm::quat Slatissima::getOrientation()
 
 void Slatissima::setPosition(glm::vec3 pos)
 {
-	btTransform trans;
-	trans.setOrigin(btVector3(pos.x, pos.y, pos.z));
-	m_pSoftBody->setWorldTransform(trans);
 	mesh->setPosition(pos);
 }
 
@@ -121,8 +119,12 @@ void Slatissima::Draw(Shader s)
 	mesh->Draw(s);
 }
 
-void Slatissima::initPhysics(btSoftBodyWorldInfo &sbInfo)
+void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 {
+	m_pDynamicsWorld = dynamicsWorld;
+
+	btSoftBodyWorldInfo &sbInfo = m_pDynamicsWorld->getWorldInfo();
+
 	std::vector<int> inds;
 	std::vector<glm::vec3> verts;
 	mesh->getIndexedVertices(inds, verts);
@@ -133,32 +135,45 @@ void Slatissima::initPhysics(btSoftBodyWorldInfo &sbInfo)
 		, true
 	);
 
-	btSoftBody::Material *supportLinkMat = m_pSoftBody->appendMaterial();
-	m_pSoftBody->m_materials[0]->m_kLST = 0.75f;
-	m_pSoftBody->m_materials[0]->m_kAST = 0.5f;
+	btSoftBody::Material *supportLinkMat = new btSoftBody::Material();
+	btSoftBody::Material *mat = m_pSoftBody->appendMaterial();
+	mat->m_kLST = 0.5;
+	mat->m_flags -= btSoftBody::fMaterial::DebugDraw;
+	m_pSoftBody->generateBendingConstraints(2, mat);
+	//m_pSoftBody->m_materials[0]->m_kLST = 0.75f;
+	//m_pSoftBody->m_materials[0]->m_kAST = 0.5f;
 	m_pSoftBody->m_cfg.piterations = 2;
 	m_pSoftBody->m_cfg.kDF = 0.5f;
-	m_pSoftBody->m_cfg.kPR = 500.f;
-	m_pSoftBody->m_cfg.kVC = 0.f;
+	//m_pSoftBody->m_cfg.kPR = 5000.f;
+	//m_pSoftBody->m_cfg.kVC = 0.f;
 	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
 	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::SDF_RS;
 	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SS;
 	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SELF;
-	m_pSoftBody->setTotalMass(50000, true);
-	m_pSoftBody->m_cfg.kMT = 0.00001f;
-	m_pSoftBody->setPose(false, true);
+	//m_pSoftBody->setTotalMass(5000, true);
+	//m_pSoftBody->m_cfg.kMT = 0.00001f;
+	//m_pSoftBody->setPose(false, true);
 	//m_pSoftBody->getCollisionShape()->setMargin(0.5f);
 
 	supportLinkMat->m_kLST = 1.f;
 	supportLinkMat->m_kAST = 1.f;
 	supportLinkMat->m_kVST = 1.f;
-	//m_pSoftBody->generateBendingConstraints(2, supportLinkMat);
+
 	for (auto p : mesh->m_vOpposingVertPairs)
 		m_pSoftBody->appendLink(p.first, p.second, supportLinkMat);
 
-	m_pSoftBody->generateBendingConstraints(2, m_pSoftBody->m_materials[0]);
+	m_pSoftBody->generateBendingConstraints(2, supportLinkMat);
 	m_pSoftBody->randomizeConstraints();
+	btMatrix3x3 m;
+	m.setIdentity();
+	btVector3 pos(mesh->getPosition().x, mesh->getPosition().y, mesh->getPosition().z);
+	btTransform trans(m, pos);
+	m_pSoftBody->transform(trans);
+	m_pSoftBody->setTotalMass(1000, true);
+	m_pSoftBody->generateClusters(1000);
 	this->m_pDynamicsWorld->addSoftBody(m_pSoftBody);
+
+	sbInfo.m_sparsesdf.Reset();
 }
 
 void Slatissima::buildModel()
