@@ -75,8 +75,12 @@ glm::vec3 Slatissima::getPosition()
 
 void Slatissima::bump(btVector3 dir)
 {
+	glm::mat4 trans = glm::translate(glm::mat4(1.f), mesh->getPosition());
+	glm::mat4 rot = glm::mat4_cast(mesh->getRotation());
+	glm::mat4 m = glm::inverse(trans * rot);
+	glm::vec3 d = glm::vec3(m * glm::vec4(dir.getX(), dir.getY(), dir.getZ(), 0.f));
 	m_pSoftBody->activate();
-	m_pSoftBody->addForce(dir);
+	m_pSoftBody->addForce(btVector3(d.x, d.y, d.z));
 }
 
 void Slatissima::anchorToBody(btRigidBody * body)
