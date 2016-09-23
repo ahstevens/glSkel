@@ -394,9 +394,10 @@ public:
 			glBindTexture(GL_TEXTURE_2D, this->m_vTextures[i].id);
 		}
 
-		glm::mat4 model = glm::mat4();
-		model = glm::translate(model, position);
-		model *= glm::mat4_cast(orientation);
+		glm::mat4 model = glm::mat4(1.f);
+		glm::mat4 t = glm::translate(glm::mat4(1.f), position);
+		glm::mat4 o = glm::mat4_cast(orientation);
+		model = t * o;
 
 		glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 

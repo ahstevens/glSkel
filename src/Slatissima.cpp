@@ -7,7 +7,7 @@
 
 #include <bullet/BulletSoftBody/btSoftBodyHelpers.h>
 
-const float lengthGridSpacing = 0.25f; // cm, approx
+const float lengthGridSpacing = 1.f; // cm, approx
 const unsigned int center_nVertsWide = 6u;
 const unsigned int edge_nVertsWide = 6u;
 const float edgeCutoffPercent = 0.05f;
@@ -17,13 +17,15 @@ Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat edgeWaveAmpl
 	, width(width_cm)
 	, edgeWaveAmplitude(edgeWaveAmplitude_cm)
 	, m_bPhysicsInit(false)
+	, m_bSolidMesh(solidThickness > 0.f)
 	, m_pDynamicsWorld(NULL)
 	, m_pSoftBody(NULL)
+	, m_pMeshCollisionShape(NULL)
 {
 	this->nVertsTall = static_cast<GLuint>(length_cm / lengthGridSpacing);
 
 	this->buildModel();
-	if(solidThickness > 0.f) mesh->solidify(solidThickness);
+	if(m_bSolidMesh) mesh->solidify(solidThickness);
 }
 
 
@@ -90,13 +92,6 @@ void Slatissima::anchorToBody(btRigidBody * body)
 
 void Slatissima::update()
 {
-	//btTransform trans;
-	//m_pRigidBody->getMotionState()->getWorldTransform(trans);
-
-	//const btVector3 o = trans.getOrigin();
-	//const btQuaternion q = trans.getRotation();
-	//this->mesh->setPosition(glm::vec3(o.getX(), o.getY(), o.getZ()));
-	//this->mesh->setRotation(glm::quat(q.getW(), q.getX(), q.getY(), q.getZ()));
 	btAlignedObjectArray<btSoftBody::Node> nodes = m_pSoftBody->m_nodes;
 	std::vector<float> data_serialized;
 	for (size_t i = 0; i < nodes.size(); ++i)
@@ -112,6 +107,8 @@ void Slatissima::update()
 	}
 
 	this->mesh->updateMeshSerial(data_serialized);
+
+	static_cast<btGImpactMeshShape*>(m_pMeshCollisionShape)->postUpdate();
 }
 
 void Slatissima::Draw(Shader s)
@@ -124,7 +121,7 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 	m_pDynamicsWorld = dynamicsWorld;
 
 	btSoftBodyWorldInfo &sbInfo = m_pDynamicsWorld->getWorldInfo();
-	
+
 	std::vector<int> inds;
 	std::vector<glm::vec3> verts;
 	mesh->getIndexedVertices(inds, verts);
@@ -134,23 +131,27 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 		, (int)mesh->getFaceCount()
 		, true
 	);
-	
+
 	btIndexedMesh *iMesh = new btIndexedMesh();
 	iMesh->m_numTriangles = mesh->getFaceCount();
 	iMesh->m_numVertices = mesh->getVertexCount();
-	iMesh->m_triangleIndexBase = (unsigned char *)&inds[0];
+	iMesh->m_triangleIndexBase = reinterpret_cast<unsigned char *>(inds.data());
 	iMesh->m_triangleIndexStride = 3 * sizeof(int);
-	iMesh->m_vertexBase = (unsigned char *)&verts[0];
+	iMesh->m_vertexBase = reinterpret_cast<unsigned char *>(verts.data());
 	iMesh->m_vertexStride = sizeof(glm::vec3);
 
 	btTriangleIndexVertexArray *triIVA = new btTriangleIndexVertexArray();
 	triIVA->addIndexedMesh(*iMesh);
 
 	btGImpactMeshShape *gImpactMeshShape = new btGImpactMeshShape(triIVA);
+	gImpactMeshShape->setMargin(btScalar(0.01));
+	gImpactMeshShape->updateBound();
+	m_pMeshCollisionShape = gImpactMeshShape;
 
 	btSoftBody::Material *supportLinkMat = new btSoftBody::Material();
 	btSoftBody::Material *mat = m_pSoftBody->appendMaterial();
 	mat->m_kLST = 0.5;
+	mat->m_kVST = 0.f;
 	mat->m_flags -= btSoftBody::fMaterial::DebugDraw;
 	m_pSoftBody->generateBendingConstraints(2, mat);
 	//m_pSoftBody->m_materials[0]->m_kLST = 0.75f;
@@ -159,7 +160,7 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 	m_pSoftBody->m_cfg.kDF = 0.5f;
 	//m_pSoftBody->m_cfg.aeromodel = btSoftBody::eAeroModel::F_TwoSided;
 	m_pSoftBody->m_cfg.kSHR = 1.f;
-	//m_pSoftBody->m_cfg.kPR = 5000.f;
+	//m_pSoftBody->m_cfg.kPR = 50000.f;
 	//m_pSoftBody->m_cfg.kVC = 0.f;
 	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
 	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::SDF_RS;
@@ -170,22 +171,28 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 	//m_pSoftBody->setPose(false, true);
 	//m_pSoftBody->getCollisionShape()->setMargin(0.5f);
 
-	supportLinkMat->m_kLST = 1.f;
-	supportLinkMat->m_kAST = 1.f;
-	supportLinkMat->m_kVST = 1.f;
+	if (m_bSolidMesh)
+	{
+		supportLinkMat->m_kLST = 1.f;
+		supportLinkMat->m_kAST = 1.f;
+		supportLinkMat->m_kVST = 1.f;
 
-	for (auto p : mesh->m_vOpposingVertPairs)
-		m_pSoftBody->appendLink(p.first, p.second, supportLinkMat);
+		for (auto p : mesh->m_vOpposingVertPairs)
+			m_pSoftBody->appendLink(p.first, p.second, supportLinkMat);
 
-	m_pSoftBody->generateBendingConstraints(2, supportLinkMat);
+		m_pSoftBody->generateBendingConstraints(2, supportLinkMat);
+	}
+
 	m_pSoftBody->randomizeConstraints();
-	btMatrix3x3 m;
-	m.setIdentity();
+	btQuaternion o(mesh->getRotation().x, mesh->getRotation().y, mesh->getRotation().z, mesh->getRotation().w);
 	btVector3 pos(mesh->getPosition().x, mesh->getPosition().y, mesh->getPosition().z);
-	btTransform trans(m, pos);
-	m_pSoftBody->transform(trans);
-	m_pSoftBody->setTotalMass(1000, true);
-	m_pSoftBody->getCollisionShape()->setMargin(0.f);
+	btTransform trans(o, pos);
+	//m_pSoftBody->transform(trans);
+	m_pSoftBody->setWorldTransform(trans);;
+	m_pSoftBody->setTotalMass(10, true);
+
+	m_pSoftBody->setCollisionShape(gImpactMeshShape);
+
 	this->m_pDynamicsWorld->addSoftBody(m_pSoftBody);
 
 	sbInfo.m_sparsesdf.Reset();

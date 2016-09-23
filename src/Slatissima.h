@@ -50,8 +50,9 @@ private:
 	
 	std::vector<Texture> loadTextures();
 
-	bool m_bPhysicsInit;
+	bool m_bPhysicsInit, m_bSolidMesh;;
 	btSoftRigidDynamicsWorld* m_pDynamicsWorld;
 	btSoftBody* m_pSoftBody;
+	btCollisionShape* m_pMeshCollisionShape;
 };
 
