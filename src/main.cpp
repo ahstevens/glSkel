@@ -18,6 +18,7 @@
 #include <glSkel/camera.h>
 #include <glSkel/mesh.h>
 #include <glSkel/lighting.h>
+#include <glSkel/TorusMesh.h>
 
 // Standard Headers
 #include <cstdio>
@@ -62,6 +63,8 @@ GaborTest *gt = NULL;
 
 btDynamicsWorld* dynamicsWorld = NULL;
 btRigidBody* groundBody = NULL;
+
+TorusMesh* tm = NULL;
 
 int main(int argc, char * argv[]) {
 
@@ -150,31 +153,36 @@ int main(int argc, char * argv[]) {
 
 	//gabs.push_back(currentEditGabor);
 	Slatissima *slat;
-	slat = new Slatissima(80.f, 10.f, 4.f, 0.2f);
-	slat->setPosition(glm::vec3(20.f, 1.f, -30.f));
-	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
-	slat->anchorToBody(groundBody);
-	slats.push_back(slat);
+	//slat = new Slatissima(80.f, 10.f, 4.f, 0.4f);
+	//slat->setPosition(glm::vec3(20.f, 1.f, -30.f));
+	//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
+	//slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
+	//slat->anchorToBody(groundBody);
+	//slats.push_back(slat);
 
-	slat = new Slatissima(120.f, 20.f, 7.f, 0.2f);
-	slat->setPosition(glm::vec3(-10.f, 0.1f, -17.5));
-	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
-	slat->anchorToBody(groundBody);
-	slats.push_back(slat);
+	//slat = new Slatissima(120.f, 20.f, 7.f, 0.4f);
+	//slat->setPosition(glm::vec3(-10.f, 0.1f, -17.5));
+	//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
+	//slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
+	//slat->anchorToBody(groundBody);
+	//slats.push_back(slat);
 
-	slat = new Slatissima(100.f, 30.f, 10.f, 0.2f);
-	slat->setPosition(glm::vec3(-5.f, 10.f, 60.f));
-	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
-	slat->anchorToBody(groundBody);
-	slats.push_back(slat);
+	//slat = new Slatissima(100.f, 30.f, 10.f, 0.4f);
+	//slat->setPosition(glm::vec3(-5.f, 10.f, 40.f));
+	//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
+	//slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
+	//slat->anchorToBody(groundBody);
+	//slats.push_back(slat);
 
-	slat = new Slatissima(140.f, 22.f, 4.f, 0.f);
-	slat->setPosition(glm::vec3(100.f, 0.f, 0.f));
-	glm::quat q = glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
-	slat->setOrientation(q);
-	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
-	slat->anchorToBody(groundBody);
-	slats.push_back(slat);
+	//slat = new Slatissima(140.f, 22.f, 4.f, 0.4f);
+	//slat->setPosition(glm::vec3(10.f, 0.f, 0.f));
+	//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
+	//slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
+	//slat->anchorToBody(groundBody);
+	//slats.push_back(slat);
+
+	tm = new TorusMesh();
+	tm->init(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));	
 
 	gt = new GaborTest();
 
@@ -219,6 +227,8 @@ int main(int argc, char * argv[]) {
 		//c.Draw(lightingShader);
 
 		for (auto s : slats) s->Draw(lightingShader);
+
+		if (tm) tm->Draw(lightingShader);
 
 		if (showNormals)
 		{
@@ -477,4 +487,6 @@ void step_physics()
 
 	// update soft mesh vertices
 	for (auto s : slats) s->update();
+
+	if (tm) tm->update();
 }
