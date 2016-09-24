@@ -59,10 +59,10 @@
     <None Include="..\shaders\explode.vs">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\shaders\gabortest.frag">
+    <None Include="..\shaders\line.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="..\shaders\gabortest.vs">
+    <None Include="..\shaders\line.vs">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
@@ -86,6 +86,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\glSkel\TorusMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\glSkel\BulletDebugDrawer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

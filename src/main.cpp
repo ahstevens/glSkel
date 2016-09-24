@@ -19,6 +19,7 @@
 #include <glSkel/mesh.h>
 #include <glSkel/lighting.h>
 #include <glSkel/TorusMesh.h>
+#include <glSkel/BulletDebugDrawer.h>
 
 // Standard Headers
 #include <cstdio>
@@ -63,6 +64,8 @@ GaborTest *gt = NULL;
 
 btDynamicsWorld* dynamicsWorld = NULL;
 btRigidBody* groundBody = NULL;
+
+BulletDebugDrawer* debugDrawer = NULL;
 
 TorusMesh* tm = NULL;
 
@@ -135,7 +138,7 @@ int main(int argc, char * argv[]) {
 	Shader lampShader("shaders/lamp.vs", "shaders/lamp.frag");
 	Shader normalsShader("shaders/normals.vs", "shaders/normals.frag", "shaders/normals.geom");
 	Shader explodeShader("shaders/explode.vs", "shaders/explode.frag", "shaders/explode.geom");
-	Shader gaborShader("shaders/gabortest.vs", "shaders/gabortest.frag");
+	Shader lineShader("shaders/line.vs", "shaders/line.frag");
 
 
 	// Initialize the lighting system
@@ -153,12 +156,12 @@ int main(int argc, char * argv[]) {
 
 	//gabs.push_back(currentEditGabor);
 	Slatissima *slat;
-	//slat = new Slatissima(80.f, 10.f, 4.f, 0.4f);
-	//slat->setPosition(glm::vec3(20.f, 1.f, -30.f));
-	//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
-	//slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
-	//slat->anchorToBody(groundBody);
-	//slats.push_back(slat);
+	slat = new Slatissima(80.f, 10.f, 4.f, 5.f);
+	slat->setPosition(glm::vec3(20.f, 1.f, -30.f));
+	slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
+	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
+	slat->anchorToBody(groundBody);
+	slats.push_back(slat);
 
 	//slat = new Slatissima(120.f, 20.f, 7.f, 0.4f);
 	//slat->setPosition(glm::vec3(-10.f, 0.1f, -17.5));
@@ -256,11 +259,12 @@ int main(int argc, char * argv[]) {
 			ls.Draw(lampShader);
 		}
 
-		gaborShader.Use();
-			glUniformMatrix4fv(glGetUniformLocation(gaborShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-			glUniformMatrix4fv(glGetUniformLocation(gaborShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-			gt->Draw(gaborShader);
-		gaborShader.Off();
+		lineShader.Use();
+			glUniformMatrix4fv(glGetUniformLocation(lineShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glUniformMatrix4fv(glGetUniformLocation(lineShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+			gt->Draw(lineShader);
+			debugDrawer->Draw(lineShader);
+		lineShader.Off();
 
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
@@ -462,13 +466,19 @@ void init_physics()
 	sbInfo.m_broadphase = broadphase;
 	sbInfo.m_sparsesdf.Initialize();
 
+	debugDrawer = new BulletDebugDrawer();
+	debugDrawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
+	dynamicsWorld->setDebugDrawer(debugDrawer);	
+
 	//-----initialization_end-----
 	// GROUND PLANE
-	btCollisionShape* groundShape = new btBoxShape(btVector3(5000.f, 1.f, 5000.f));
+	btCollisionShape* groundShape = new btBoxShape(btVector3(50.f, 10.f, 50.f));
 	{
 		btScalar mass(0.f);
 		btVector3 localInertia(0.f, 0.f, 0.f);
-		btTransform trans(btQuaternion(), btVector3(0.f, -1.f, 0.f));
+		btMatrix3x3 m;
+		m.setIdentity();
+		btTransform trans(m, btVector3(0.f, -10.f, 0.f));
 
 		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
 		btDefaultMotionState* myMotionState = new btDefaultMotionState(trans);
@@ -485,8 +495,12 @@ void step_physics()
 {
 	dynamicsWorld->stepSimulation(1.f / 120.f, 10);
 
+	// Despite misleading interface name, this actually just fills up the debug buffer with geometry
+	dynamicsWorld->debugDrawWorld();
+
 	// update soft mesh vertices
 	for (auto s : slats) s->update();
 
 	if (tm) tm->update();
+	
 }

@@ -1,5 +1,5 @@
 #version 330 core
-layout (location = 0) in vec2 position;
+layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 color;
 
 uniform mat4 model;
@@ -11,5 +11,5 @@ out vec3 col;
 void main()
 {
     col = color;
-    gl_Position = projection * view * model * vec4(position.x, position.y, 0.f, 1.0f);
+    gl_Position = projection * view * model * vec4(position.x, position.y, position.z, 1.0f);
 } 

@@ -141,8 +141,8 @@ exit 0</Command>
     <None Include="..\shaders\explode.frag" />
     <None Include="..\shaders\explode.geom" />
     <None Include="..\shaders\explode.vs" />
-    <None Include="..\shaders\gabortest.frag" />
-    <None Include="..\shaders\gabortest.vs" />
+    <None Include="..\shaders\line.frag" />
+    <None Include="..\shaders\line.vs" />
     <None Include="..\shaders\lamp.frag" />
     <None Include="..\shaders\lamp.vs" />
     <None Include="..\shaders\multiple_lights.frag" />
@@ -152,6 +152,7 @@ exit 0</Command>
     <None Include="..\shaders\normals.vs" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\glSkel\BulletDebugDrawer.h" />
     <ClInclude Include="..\..\include\glSkel\Gabor.h" />
     <ClInclude Include="..\..\include\glSkel\GeometryStrip.h" />
     <ClInclude Include="..\..\include\glSkel\mesh.h" />

@@ -7,9 +7,9 @@
 
 #include <bullet/BulletSoftBody/btSoftBodyHelpers.h>
 
-const float lengthGridSpacing = 1.f; // cm, approx
-const unsigned int center_nVertsWide = 6u;
-const unsigned int edge_nVertsWide = 6u;
+const float lengthGridSpacing = 3.f; // cm, approx
+const unsigned int center_nVertsWide = 3u;
+const unsigned int edge_nVertsWide = 3u;
 const float edgeCutoffPercent = 0.05f;
 
 Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat edgeWaveAmplitude_cm, float solidThickness)
@@ -156,7 +156,7 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 	btSoftBody::Material *mat = m_pSoftBody->appendMaterial();
 	mat->m_kLST = 0.5;
 	mat->m_kVST = 0.f;
-	mat->m_flags -= btSoftBody::fMaterial::DebugDraw;
+	//mat->m_flags -= btSoftBody::fMaterial::DebugDraw;
 	m_pSoftBody->generateBendingConstraints(2, mat);
 	//m_pSoftBody->m_materials[0]->m_kLST = 0.75f;
 	//m_pSoftBody->m_materials[0]->m_kAST = 0.5f;
