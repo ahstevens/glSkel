@@ -1,6 +1,7 @@
 #include "Slatissima.h"
 
 #include <glSkel/GeometryStrip.h>
+#include <glSkel/BulletDebugDrawer.h>
 
 #include <algorithm>
 #include <cmath>
@@ -20,7 +21,6 @@ Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat edgeWaveAmpl
 	, m_bSolidMesh(solidThickness > 0.f)
 	, m_pDynamicsWorld(NULL)
 	, m_pSoftBody(NULL)
-	, m_pMeshCollisionShape(NULL)
 {
 	this->nVertsTall = static_cast<GLuint>(length_cm / lengthGridSpacing);
 
@@ -112,7 +112,13 @@ void Slatissima::update()
 
 	this->mesh->updateMeshSerial(data_serialized);
 
-	static_cast<btGImpactMeshShape*>(m_pMeshCollisionShape)->postUpdate();
+	if (m_pDynamicsWorld->getDebugDrawer() && (m_pDynamicsWorld->getDebugDrawer()->getDebugMode() & (btIDebugDraw::DBG_DrawWireframe)))
+	{
+		static_cast<BulletDebugDrawer*>(m_pDynamicsWorld->getDebugDrawer())->setTransform(m_pSoftBody->getWorldTransform());
+
+		btSoftBodyHelpers::DrawFrame(m_pSoftBody, m_pDynamicsWorld->getDebugDrawer());
+		btSoftBodyHelpers::Draw(m_pSoftBody, m_pDynamicsWorld->getDebugDrawer(), fDrawFlags::Nodes | fDrawFlags::Faces | fDrawFlags::Anchors | fDrawFlags::Contacts);
+	}
 }
 
 void Slatissima::Draw(Shader s)
@@ -136,50 +142,17 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 		, true
 	);
 
-	btIndexedMesh *iMesh = new btIndexedMesh();
-	iMesh->m_numTriangles = mesh->getFaceCount();
-	iMesh->m_numVertices = mesh->getVertexCount();
-	iMesh->m_triangleIndexBase = reinterpret_cast<unsigned char *>(inds.data());
-	iMesh->m_triangleIndexStride = 3 * sizeof(int);
-	iMesh->m_vertexBase = reinterpret_cast<unsigned char *>(verts.data());
-	iMesh->m_vertexStride = sizeof(glm::vec3);
-
-	btTriangleIndexVertexArray *triIVA = new btTriangleIndexVertexArray();
-	triIVA->addIndexedMesh(*iMesh);
-
-	btGImpactMeshShape *gImpactMeshShape = new btGImpactMeshShape(triIVA);
-	gImpactMeshShape->setMargin(btScalar(0.01));
-	gImpactMeshShape->updateBound();
-	m_pMeshCollisionShape = gImpactMeshShape;
-
 	btSoftBody::Material *supportLinkMat = new btSoftBody::Material();
-	btSoftBody::Material *mat = m_pSoftBody->appendMaterial();
-	mat->m_kLST = 0.5;
-	mat->m_kVST = 0.f;
-	//mat->m_flags -= btSoftBody::fMaterial::DebugDraw;
-	m_pSoftBody->generateBendingConstraints(2, mat);
-	//m_pSoftBody->m_materials[0]->m_kLST = 0.75f;
-	//m_pSoftBody->m_materials[0]->m_kAST = 0.5f;
-	m_pSoftBody->m_cfg.piterations = 2;
-	m_pSoftBody->m_cfg.kDF = 0.5f;
-	//m_pSoftBody->m_cfg.aeromodel = btSoftBody::eAeroModel::F_TwoSided;
-	m_pSoftBody->m_cfg.kSHR = 1.f;
-	//m_pSoftBody->m_cfg.kPR = 50000.f;
-	//m_pSoftBody->m_cfg.kVC = 0.f;
-	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
-	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::SDF_RS;
-	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SS;
-	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SELF;
-	//m_pSoftBody->setTotalMass(5000, true);
-	//m_pSoftBody->m_cfg.kMT = 0.00001f;
-	//m_pSoftBody->setPose(false, true);
-	//m_pSoftBody->getCollisionShape()->setMargin(0.5f);
+	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
+
+	m_pSoftBody->m_materials[0]->m_flags |= btSoftBody::fMaterial::DebugDraw;
 
 	if (m_bSolidMesh)
 	{
 		supportLinkMat->m_kLST = 1.f;
 		supportLinkMat->m_kAST = 1.f;
 		supportLinkMat->m_kVST = 1.f;
+		//supportLinkMat->m_flags |= btSoftBody::fMaterial::DebugDraw;
 
 		for (auto p : mesh->m_vOpposingVertPairs)
 			m_pSoftBody->appendLink(p.first, p.second, supportLinkMat);
@@ -191,12 +164,10 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 	btQuaternion o(mesh->getRotation().x, mesh->getRotation().y, mesh->getRotation().z, mesh->getRotation().w);
 	btVector3 pos(mesh->getPosition().x, mesh->getPosition().y, mesh->getPosition().z);
 	btTransform trans(o, pos);
-	//m_pSoftBody->transform(trans);
+	m_pSoftBody->transform(trans);
 	m_pSoftBody->setWorldTransform(trans);;
 	m_pSoftBody->setTotalMass(10, true);
-
-	m_pSoftBody->setCollisionShape(gImpactMeshShape);
-
+	
 	this->m_pDynamicsWorld->addSoftBody(m_pSoftBody);
 
 	sbInfo.m_sparsesdf.Reset();

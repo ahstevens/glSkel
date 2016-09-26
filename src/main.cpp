@@ -157,18 +157,18 @@ int main(int argc, char * argv[]) {
 	//gabs.push_back(currentEditGabor);
 	Slatissima *slat;
 	slat = new Slatissima(80.f, 10.f, 4.f, 5.f);
-	slat->setPosition(glm::vec3(20.f, 1.f, -30.f));
+	slat->setPosition(glm::vec3(20.f, 5.f, -30.f));
 	slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
 	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
 	slat->anchorToBody(groundBody);
 	slats.push_back(slat);
 
-	//slat = new Slatissima(120.f, 20.f, 7.f, 0.4f);
-	//slat->setPosition(glm::vec3(-10.f, 0.1f, -17.5));
-	//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
-	//slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
-	//slat->anchorToBody(groundBody);
-	//slats.push_back(slat);
+	slat = new Slatissima(120.f, 20.f, 7.f, 5.f);
+	slat->setPosition(glm::vec3(-10.f, 10.f, -17.5));
+	slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
+	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
+	slat->anchorToBody(groundBody);
+	slats.push_back(slat);
 
 	//slat = new Slatissima(100.f, 30.f, 10.f, 0.4f);
 	//slat->setPosition(glm::vec3(-5.f, 10.f, 40.f));
@@ -187,7 +187,7 @@ int main(int argc, char * argv[]) {
 	tm = new TorusMesh();
 	tm->init(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));	
 
-	gt = new GaborTest();
+	//gt = new GaborTest();
 
     // Main Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
@@ -229,7 +229,7 @@ int main(int argc, char * argv[]) {
 		
 		//c.Draw(lightingShader);
 
-		for (auto s : slats) s->Draw(lightingShader);
+		//for (auto s : slats) s->Draw(lightingShader);
 
 		if (tm) tm->Draw(lightingShader);
 
@@ -262,7 +262,7 @@ int main(int argc, char * argv[]) {
 		lineShader.Use();
 			glUniformMatrix4fv(glGetUniformLocation(lineShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 			glUniformMatrix4fv(glGetUniformLocation(lineShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-			gt->Draw(lineShader);
+			if (gt) gt->Draw(lineShader);
 			debugDrawer->Draw(lineShader);
 		lineShader.Off();
 
@@ -449,7 +449,7 @@ void init_physics()
 {
 	btDefaultCollisionConfiguration* collisionConfiguration = new btSoftBodyRigidBodyCollisionConfiguration();
 	btCollisionDispatcher* dispatcher = new	btCollisionDispatcher(collisionConfiguration);
-	btGImpactCollisionAlgorithm::registerAlgorithm(dispatcher);
+
 	btVector3 worldAabbMin(-1000,-1000,-1000);
 	btVector3 worldAabbMax(1000, 1000, 1000);
 	btBroadphaseInterface* broadphase = new btAxisSweep3(worldAabbMin, worldAabbMax, 32766U);
@@ -459,7 +459,7 @@ void init_physics()
 	dynamicsWorld = new btSoftRigidDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
 
 	btSoftBodyWorldInfo &sbInfo = static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld)->getWorldInfo();
-	sbInfo.m_gravity = btVector3(0.f, 0.f, 0.f);
+	sbInfo.m_gravity = btVector3(0.f, -10.f, 0.f);
 	//sbInfo.m_gravity = btVector3(0.f, -9.8f, 0.f);
 	//sbInfo.m_gravity = btVector3(1.f, 3.f, -0.5f);
 	sbInfo.m_dispatcher = dispatcher;
@@ -467,18 +467,19 @@ void init_physics()
 	sbInfo.m_sparsesdf.Initialize();
 
 	debugDrawer = new BulletDebugDrawer();
+	//debugDrawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
 	debugDrawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
 	dynamicsWorld->setDebugDrawer(debugDrawer);	
 
 	//-----initialization_end-----
 	// GROUND PLANE
-	btCollisionShape* groundShape = new btBoxShape(btVector3(50.f, 10.f, 50.f));
+	btCollisionShape* groundShape = new btBoxShape(btVector3(500.f, 10.f, 500.f));
 	{
 		btScalar mass(0.f);
 		btVector3 localInertia(0.f, 0.f, 0.f);
 		btMatrix3x3 m;
 		m.setIdentity();
-		btTransform trans(m, btVector3(0.f, -10.f, 0.f));
+		btTransform trans(m, btVector3(0.f, -20.f, 0.f));
 
 		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
 		btDefaultMotionState* myMotionState = new btDefaultMotionState(trans);
@@ -496,7 +497,7 @@ void step_physics()
 	dynamicsWorld->stepSimulation(1.f / 120.f, 10);
 
 	// Despite misleading interface name, this actually just fills up the debug buffer with geometry
-	dynamicsWorld->debugDrawWorld();
+	static_cast<btCollisionWorld*>(dynamicsWorld)->debugDrawWorld();
 
 	// update soft mesh vertices
 	for (auto s : slats) s->update();

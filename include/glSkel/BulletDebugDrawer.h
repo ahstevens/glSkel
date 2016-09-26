@@ -18,12 +18,31 @@ class BulletDebugDrawer : public btIDebugDraw
 public:
 	BulletDebugDrawer()
 	{
+		btMatrix3x3 r;
+		r.setIdentity();
+		m_Transform = btTransform(r);
 		initGL();
 	}
 
+	void setTransform(btTransform &t)
+	{
+		m_Transform = t;
+	}
+
 	void BulletDebugDrawer::drawLine(const btVector3& from, const btVector3& to, const btVector3& color) {
-		m_vVertices.push_back(DebugVertex(glm::vec3(from.getX(), from.getY(), from.getZ()), glm::vec3(color.getX(), color.getY(), color.getZ())));
-		m_vVertices.push_back(DebugVertex(glm::vec3(to.getX(), to.getY(), to.getZ()), glm::vec3(color.getX(), color.getY(), color.getZ())));
+		glm::vec3 frVec = glm::vec3(from.getX(), from.getY(), from.getZ());
+		glm::vec3 toVec = glm::vec3(to.getX(), to.getY(), to.getZ());
+		glm::vec3 col = glm::vec3(color.getX(), color.getY(), color.getZ());
+
+		glm::mat4 r = glm::mat4_cast(glm::quat(m_Transform.getRotation().getW(), m_Transform.getRotation().getX(), m_Transform.getRotation().getY(), m_Transform.getRotation().getZ()));
+		glm::mat4 t = glm::translate(glm::mat4(), glm::vec3(m_Transform.getOrigin().getX(), m_Transform.getOrigin().getY(), m_Transform.getOrigin().getZ()));
+		glm::mat4 m = t * r;		
+
+		frVec = glm::vec3(m * glm::vec4(frVec, 1.f));
+		toVec = glm::vec3(m * glm::vec4(toVec, 1.f));
+
+		m_vVertices.push_back(DebugVertex(frVec, col));
+		m_vVertices.push_back(DebugVertex(toVec, col));
 	}
 
 	void drawContactPoint(const btVector3& PointOnB, const btVector3& normalOnB, btScalar distance, int lifeTime, const btVector3& color)
@@ -65,6 +84,8 @@ public:
 		glBindVertexArray(this->m_glVAO);
 		glDrawArrays(GL_LINES, 0, m_vVertices.size());
 		glBindVertexArray(0);
+
+		flushLines();
 	}
 
 	void flushLines()
@@ -86,6 +107,7 @@ private:
 	GLuint m_glVAO, m_glVBO;
 	int m_iDebugMode;
 	std::vector<DebugVertex> m_vVertices;
+	btTransform m_Transform;
 
 	void initGL()
 	{
