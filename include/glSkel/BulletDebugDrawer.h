@@ -27,7 +27,9 @@ public:
 	}
 
 	void drawContactPoint(const btVector3& PointOnB, const btVector3& normalOnB, btScalar distance, int lifeTime, const btVector3& color)
-	{}
+	{
+		drawLine(PointOnB, PointOnB + normalOnB * distance, color);
+	}
 
 	void reportErrorWarning(const char* warningString)
 	{
@@ -63,7 +65,10 @@ public:
 		glBindVertexArray(this->m_glVAO);
 		glDrawArrays(GL_LINES, 0, m_vVertices.size());
 		glBindVertexArray(0);
+	}
 
+	void flushLines()
+	{
 		m_vVertices.clear();
 	}
 
@@ -73,10 +78,9 @@ private:
 		glm::vec3 col;
 
 		DebugVertex(glm::vec3 p, glm::vec3 c)
-		{
-			pos = p;
-			col = c;
-		}
+			: pos(p)
+			, col(c)
+		{}
 	};
 
 	GLuint m_glVAO, m_glVBO;

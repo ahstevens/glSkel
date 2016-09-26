@@ -117,7 +117,7 @@ public:
 	}
 
 	void getIndexedVertices(std::vector<int> &i, std::vector<glm::vec3> &v)
-	{
+	{		
 		for (std::vector<HE_Face*>::iterator it = m_vpFaces.begin(); it != m_vpFaces.end(); it++)
 		{
 			HE_Edge *begin = (*it)->edge;
