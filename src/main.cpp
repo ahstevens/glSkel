@@ -479,7 +479,7 @@ void init_physics()
 		btVector3 localInertia(0.f, 0.f, 0.f);
 		btMatrix3x3 m;
 		m.setIdentity();
-		btTransform trans(m, btVector3(0.f, -20.f, 0.f));
+		btTransform trans(m, btVector3(0.f, -10.f, 0.f));
 
 		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
 		btDefaultMotionState* myMotionState = new btDefaultMotionState(trans);

@@ -142,13 +142,14 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 		, true
 	);
 
-	btSoftBody::Material *supportLinkMat = new btSoftBody::Material();
-	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
-
+	m_pSoftBody->generateBendingConstraints(2);
+	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
+	m_pSoftBody->m_cfg.kCHR = 1.f;
 	m_pSoftBody->m_materials[0]->m_flags |= btSoftBody::fMaterial::DebugDraw;
 
 	if (m_bSolidMesh)
 	{
+		btSoftBody::Material *supportLinkMat = new btSoftBody::Material();
 		supportLinkMat->m_kLST = 1.f;
 		supportLinkMat->m_kAST = 1.f;
 		supportLinkMat->m_kVST = 1.f;
@@ -165,7 +166,6 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 	btVector3 pos(mesh->getPosition().x, mesh->getPosition().y, mesh->getPosition().z);
 	btTransform trans(o, pos);
 	m_pSoftBody->transform(trans);
-	m_pSoftBody->setWorldTransform(trans);;
 	m_pSoftBody->setTotalMass(10, true);
 	
 	this->m_pDynamicsWorld->addSoftBody(m_pSoftBody);
