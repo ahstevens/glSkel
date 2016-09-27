@@ -21,6 +21,7 @@ Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat edgeWaveAmpl
 	, m_bSolidMesh(solidThickness > 0.f)
 	, m_pDynamicsWorld(NULL)
 	, m_pSoftBody(NULL)
+	, m_debugDrawFlags(0)
 {
 	this->nVertsTall = static_cast<GLuint>(length_cm / lengthGridSpacing);
 
@@ -73,6 +74,21 @@ glm::vec3 Slatissima::getPosition()
 	return mesh->getPosition();
 }
 
+void Slatissima::setDebugDrawFlags(int flags)
+{
+	m_debugDrawFlags = flags;
+}
+
+int Slatissima::getDebugDrawFlags()
+{
+	return m_debugDrawFlags;
+}
+
+void Slatissima::toggleDebugDrawFlag(int flag)
+{
+	m_debugDrawFlags ^= flag;
+}
+
 void Slatissima::bump(btVector3 dir)
 {
 	glm::mat4 trans = glm::translate(glm::mat4(1.f), mesh->getPosition());
@@ -100,44 +116,32 @@ void Slatissima::update()
 	std::vector<float> data_serialized;
 	for (size_t i = 0; i < nodes.size(); ++i)
 	{
-		data_serialized.push_back(nodes[i].m_x.getX());
-		data_serialized.push_back(nodes[i].m_x.getY());
-		data_serialized.push_back(nodes[i].m_x.getZ());
-		data_serialized.push_back(nodes[i].m_n.getX());
-		data_serialized.push_back(nodes[i].m_n.getY());
-		data_serialized.push_back(nodes[i].m_n.getZ());
+		glm::vec3 pos(nodes[i].m_x.getX(), nodes[i].m_x.getY(), nodes[i].m_x.getZ());
+		glm::vec3 norm(nodes[i].m_n.getX(), nodes[i].m_n.getY(), nodes[i].m_n.getZ());
+		glm::mat4 m = glm::translate(glm::mat4(), mesh->getPosition()) * glm::mat4_cast(mesh->getRotation());
+		m = glm::inverse(m);
+		pos = glm::vec3(m * glm::vec4(pos, 1.f));
+		//norm = glm::vec3(m * glm::vec4(norm, 1.f));
+
+		data_serialized.push_back(pos.x);
+		data_serialized.push_back(pos.y);
+		data_serialized.push_back(pos.z);
+		data_serialized.push_back(norm.x);
+		data_serialized.push_back(norm.y);
+		data_serialized.push_back(norm.z);
 		data_serialized.push_back(0.5f);
 		data_serialized.push_back(0.5f);
 	}
 
 	this->mesh->updateMeshSerial(data_serialized);
 
-	if (m_pDynamicsWorld->getDebugDrawer() && (m_pDynamicsWorld->getDebugDrawer()->getDebugMode() & (btIDebugDraw::DBG_DrawWireframe)))
-	{
-		static_cast<BulletDebugDrawer*>(m_pDynamicsWorld->getDebugDrawer())->setTransform(m_pSoftBody->getWorldTransform());
-
-		btSoftBodyHelpers::DrawFrame(m_pSoftBody, m_pDynamicsWorld->getDebugDrawer());
-		btSoftBodyHelpers::Draw(m_pSoftBody, m_pDynamicsWorld->getDebugDrawer(), fDrawFlags::Faces | fDrawFlags::Anchors | fDrawFlags::Contacts);
-
-		const btVector3	axis[] = { btVector3(1,0,0), btVector3(0,1,0), btVector3(0,0,1) };
-		const btScalar nscl = 0.5;
-		const btVector3 ccolor = btVector3(1, 0, 0);
-		for (int i = 0; i<m_pSoftBody->m_scontacts.size(); ++i)
-		{
-			const btSoftBody::SContact&	c = m_pSoftBody->m_scontacts[i];
-			const btVector3				o = c.m_node->m_x;// -c.m_normal*(btDot(c.m_node->m_x, c.m_normal));
-			const btVector3				x = btCross(c.m_normal, axis[c.m_normal.minAxis()]).normalized();
-			const btVector3				y = btCross(x, c.m_normal).normalized();
-			m_pDynamicsWorld->getDebugDrawer()->drawLine(o - x*nscl, o + x*nscl, ccolor);
-			m_pDynamicsWorld->getDebugDrawer()->drawLine(o - y*nscl, o + y*nscl, ccolor);
-			m_pDynamicsWorld->getDebugDrawer()->drawLine(o, o + c.m_normal*nscl * 3, btVector3(1, 1, 0));
-		}
-	}
+	debugDraw();
 }
 
 void Slatissima::Draw(Shader s)
 {
-	mesh->Draw(s);
+	if(!(m_debugDrawFlags & fDrawFlags::Faces) && !(m_debugDrawFlags & fDrawFlags::Nodes))
+		mesh->Draw(s);
 }
 
 void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
@@ -386,4 +390,38 @@ std::vector<Texture> Slatissima::loadTextures()
 	std::vector<Texture> textures = { diffuseMap, specularMap };
 
 	return textures;
+}
+
+void Slatissima::debugDraw()
+{
+	if (m_pDynamicsWorld->getDebugDrawer() && (m_pDynamicsWorld->getDebugDrawer()->getDebugMode() & (btIDebugDraw::DBG_DrawWireframe | btIDebugDraw::DBG_DrawContactPoints | btIDebugDraw::DBG_DrawNormals | btIDebugDraw::DBG_DrawFrames)))
+	{
+		// set debug drawer's transform to make sure debug drawings go to right place
+		static_cast<BulletDebugDrawer*>(m_pDynamicsWorld->getDebugDrawer())->setTransform(m_pSoftBody->getWorldTransform());
+
+		btSoftBodyHelpers::DrawFrame(m_pSoftBody, m_pDynamicsWorld->getDebugDrawer());
+		btSoftBodyHelpers::Draw(m_pSoftBody, m_pDynamicsWorld->getDebugDrawer(), m_debugDrawFlags);
+
+		// SOFT CONTACTS
+		if(m_debugDrawFlags & fDrawFlags::Contacts)
+		{
+			const btVector3	axis[] = { btVector3(1,0,0), btVector3(0,1,0), btVector3(0,0,1) };
+			const btScalar nscl = 0.5;
+			const btVector3 ccolor = btVector3(1, 0, 0);
+			for (int i = 0; i < m_pSoftBody->m_scontacts.size(); ++i)
+			{
+				const btSoftBody::SContact&	c = m_pSoftBody->m_scontacts[i];
+				const btVector3				o = c.m_node->m_x;// -c.m_normal*(btDot(c.m_node->m_x, c.m_normal));
+				const btVector3				x = btCross(c.m_normal, axis[c.m_normal.minAxis()]).normalized();
+				const btVector3				y = btCross(x, c.m_normal).normalized();
+				m_pDynamicsWorld->getDebugDrawer()->drawLine(o - x*nscl, o + x*nscl, ccolor);
+				m_pDynamicsWorld->getDebugDrawer()->drawLine(o - y*nscl, o + y*nscl, ccolor);
+				m_pDynamicsWorld->getDebugDrawer()->drawLine(o, o + c.m_normal*nscl * 3, btVector3(1, 1, 0));
+
+				m_pDynamicsWorld->getDebugDrawer()->drawLine(c.m_face->m_n[0]->m_x, c.m_face->m_n[1]->m_x, btVector3(0, 1, 1));
+				m_pDynamicsWorld->getDebugDrawer()->drawLine(c.m_face->m_n[1]->m_x, c.m_face->m_n[2]->m_x, btVector3(0, 1, 1));
+				m_pDynamicsWorld->getDebugDrawer()->drawLine(c.m_face->m_n[2]->m_x, c.m_face->m_n[0]->m_x, btVector3(0, 1, 1));
+			}
+		}
+	}
 }

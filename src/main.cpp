@@ -11,6 +11,7 @@
 #include <bullet/btBulletDynamicsCommon.h>
 #include <bullet/BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.h>
 #include <bullet/BulletSoftBody/btSoftRigidDynamicsWorld.h>
+#include <bullet/BulletSoftBody/btSoftBodyHelpers.h>
 
 // glSkeleton headers
 #include <glSkel/shader.h>
@@ -228,7 +229,7 @@ int main(int argc, char * argv[]) {
 		
 		//c.Draw(lightingShader);
 
-		//for (auto s : slats) s->Draw(lightingShader);
+		for (auto s : slats) s->Draw(lightingShader);
 
 		if (tm) tm->Draw(lightingShader);
 
@@ -324,6 +325,19 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 	}
 
+	if (keys[GLFW_KEY_KP_0])
+		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Std);
+	if (keys[GLFW_KEY_KP_1])
+		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Faces);
+	if (keys[GLFW_KEY_KP_2])
+		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Nodes);
+	if (keys[GLFW_KEY_KP_3])
+		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Links);
+	if (keys[GLFW_KEY_KP_4])
+		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Normals);
+	if (keys[GLFW_KEY_KP_5])
+		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Contacts);
+
 	if (key >= 0 && key < 1024)
 	{
 		if (action == GLFW_PRESS)
@@ -367,32 +381,6 @@ void do_movement()
 		for (auto s : slats) s->bump(btVector3(0.f, 0.f, -1.f));
 	if (keys[GLFW_KEY_K])
 		slats[0]->bump(btVector3(0.f, 0.f, 1.f));
-
-	if (keys[GLFW_KEY_KP_8])
-	{
-
-	}
-	if (keys[GLFW_KEY_KP_2])
-	{
-
-	}
-	if (keys[GLFW_KEY_KP_4])
-	{
-
-	}
-	if (keys[GLFW_KEY_KP_6])
-	{
-
-	}
-
-	if (keys[GLFW_KEY_KP_7])
-	{
-
-	}
-	if (keys[GLFW_KEY_KP_9])
-	{
-
-	}
 
 	if (keys[GLFW_KEY_KP_SUBTRACT])
 	{

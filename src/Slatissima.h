@@ -25,6 +25,10 @@ public:
 	void setPosition(glm::vec3 pos);
 	glm::vec3 getPosition();
 
+	void setDebugDrawFlags(int flags);
+	int getDebugDrawFlags();
+	void toggleDebugDrawFlag(int flag);
+
 	void bump(btVector3 dir);
 	
 	void anchorToBody(btRigidBody* body);
@@ -50,8 +54,12 @@ private:
 	
 	std::vector<Texture> loadTextures();
 
+	void debugDraw();
+
 	bool m_bPhysicsInit, m_bSolidMesh;;
 	btSoftRigidDynamicsWorld* m_pDynamicsWorld;
 	btSoftBody* m_pSoftBody;
+
+	int m_debugDrawFlags;
 };
 
