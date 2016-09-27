@@ -8,9 +8,9 @@
 
 #include <bullet/BulletSoftBody/btSoftBodyHelpers.h>
 
-const float lengthGridSpacing = 3.f; // cm, approx
-const unsigned int center_nVertsWide = 3u;
-const unsigned int edge_nVertsWide = 3u;
+const float lengthGridSpacing = 0.5f; // cm, approx
+const unsigned int center_nVertsWide = 9u;
+const unsigned int edge_nVertsWide = 9u;
 const float edgeCutoffPercent = 0.05f;
 
 Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat edgeWaveAmplitude_cm, float solidThickness)
@@ -117,7 +117,21 @@ void Slatissima::update()
 		static_cast<BulletDebugDrawer*>(m_pDynamicsWorld->getDebugDrawer())->setTransform(m_pSoftBody->getWorldTransform());
 
 		btSoftBodyHelpers::DrawFrame(m_pSoftBody, m_pDynamicsWorld->getDebugDrawer());
-		btSoftBodyHelpers::Draw(m_pSoftBody, m_pDynamicsWorld->getDebugDrawer(), fDrawFlags::Nodes | fDrawFlags::Faces | fDrawFlags::Anchors | fDrawFlags::Contacts);
+		btSoftBodyHelpers::Draw(m_pSoftBody, m_pDynamicsWorld->getDebugDrawer(), fDrawFlags::Faces | fDrawFlags::Anchors | fDrawFlags::Contacts);
+
+		const btVector3	axis[] = { btVector3(1,0,0), btVector3(0,1,0), btVector3(0,0,1) };
+		const btScalar nscl = 0.5;
+		const btVector3 ccolor = btVector3(1, 0, 0);
+		for (int i = 0; i<m_pSoftBody->m_scontacts.size(); ++i)
+		{
+			const btSoftBody::SContact&	c = m_pSoftBody->m_scontacts[i];
+			const btVector3				o = c.m_node->m_x;// -c.m_normal*(btDot(c.m_node->m_x, c.m_normal));
+			const btVector3				x = btCross(c.m_normal, axis[c.m_normal.minAxis()]).normalized();
+			const btVector3				y = btCross(x, c.m_normal).normalized();
+			m_pDynamicsWorld->getDebugDrawer()->drawLine(o - x*nscl, o + x*nscl, ccolor);
+			m_pDynamicsWorld->getDebugDrawer()->drawLine(o - y*nscl, o + y*nscl, ccolor);
+			m_pDynamicsWorld->getDebugDrawer()->drawLine(o, o + c.m_normal*nscl * 3, btVector3(1, 1, 0));
+		}
 	}
 }
 
