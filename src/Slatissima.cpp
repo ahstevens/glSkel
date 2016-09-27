@@ -8,9 +8,9 @@
 
 #include <bullet/BulletSoftBody/btSoftBodyHelpers.h>
 
-const float lengthGridSpacing = 0.5f; // cm, approx
-const unsigned int center_nVertsWide = 9u;
-const unsigned int edge_nVertsWide = 9u;
+const float lengthGridSpacing = 3.f; // cm, approx
+const unsigned int center_nVertsWide = 3u;
+const unsigned int edge_nVertsWide = 3u;
 const float edgeCutoffPercent = 0.05f;
 
 Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat edgeWaveAmplitude_cm, float solidThickness)
@@ -162,7 +162,12 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 
 	m_pSoftBody->generateBendingConstraints(2);
 	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
+	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SELF;
+	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_RS;
+	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SS;
 	m_pSoftBody->m_cfg.kCHR = 1.f;
+	m_pSoftBody->m_cfg.kSHR = 1.f;
+	m_pSoftBody->m_cfg.piterations = 5.f;
 	m_pSoftBody->m_materials[0]->m_flags |= btSoftBody::fMaterial::DebugDraw;
 
 	if (m_bSolidMesh)
@@ -186,6 +191,8 @@ void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
 	m_pSoftBody->transform(trans);
 	m_pSoftBody->setTotalMass(10, true);
 	
+	//m_pSoftBody->generateClusters(0);
+
 	this->m_pDynamicsWorld->addSoftBody(m_pSoftBody);
 
 	sbInfo.m_sparsesdf.Reset();

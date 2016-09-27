@@ -27,6 +27,7 @@ struct Texture {
 class Mesh {
 public:
 	std::map<int, int> m_vOpposingVertPairs;
+	std::vector<int> m_vBoundaryEdges;
 
     /*  Functions  */
     // Constructor to make a DCEL mesh from a triangle soup
