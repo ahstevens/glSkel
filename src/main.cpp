@@ -11,7 +11,6 @@
 #include <bullet/btBulletDynamicsCommon.h>
 #include <bullet/BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.h>
 #include <bullet/BulletSoftBody/btSoftRigidDynamicsWorld.h>
-#include <bullet/BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 
 // glSkeleton headers
 #include <glSkel/shader.h>
