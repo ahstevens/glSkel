@@ -8,7 +8,7 @@
 
 #include <bullet/BulletSoftBody/btSoftBodyHelpers.h>
 
-const float lengthGridSpacing = 3.f; // cm, approx
+const float lengthGridSpacing = 0.5f; // cm, approx
 const unsigned int center_nVertsWide = 3u;
 const unsigned int edge_nVertsWide = 3u;
 const float edgeCutoffPercent = 0.05f;
@@ -308,19 +308,19 @@ void Slatissima::generateGabors(float x)
 {
 	gabors.clear();
 
-	unsigned int nLFWaves = 20u;
-	unsigned int nHFWaves = 1000u;
+	unsigned int nLFWaves = 2u;
+	unsigned int nHFWaves = 0u;
 
 	for (unsigned int i = 0; i < nLFWaves; ++i)
 	{
-		float y = length * (i / (nLFWaves - 1.f));
+		//float y = length * (i / (nLFWaves - 1.f));
 		//float y = length * getRandRatio();
-		//float y = length / 2.f;
+		float y = length / 2.f;
 		Gabor *mainG = new Gabor();
 		mainG->setGaussianKernelCenter(glm::vec2(x, y));
 		mainG->setGaussianKernelSpread(glm::vec2(width / 5.f, length / nLFWaves));
 		mainG->setGaussianKernelAmplitude(edgeWaveAmplitude * (0.75f + 0.25f * getRandRatio()));
-		mainG->setComplexSinusoidDistance(length / (5.f + 10.f * getRandRatio()));
+		mainG->setComplexSinusoidDistance((5.f + 5.f * getRandRatio()) / length);
 
 		gabors.push_back(mainG);
 	}
