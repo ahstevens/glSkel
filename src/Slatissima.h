@@ -12,7 +12,7 @@
 class Slatissima
 {
 public:
-	Slatissima(GLfloat length, GLfloat width, GLfloat edgeWaveAmplitude, float solidThickness);
+	Slatissima(float solidThickness);
 	~Slatissima();
 
 	void initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld);

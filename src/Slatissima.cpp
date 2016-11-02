@@ -6,24 +6,47 @@
 #include <algorithm>
 #include <cmath>
 
+#include <random>
+
 #include <bullet/BulletSoftBody/btSoftBodyHelpers.h>
+
+extern std::default_random_engine generator;
 
 const float lengthGridSpacing = 0.5f; // cm, approx
 const unsigned int center_nVertsWide = 3u;
 const unsigned int edge_nVertsWide = 3u;
 const float edgeCutoffPercent = 0.05f;
 
-Slatissima::Slatissima(GLfloat length_cm, GLfloat width_cm, GLfloat edgeWaveAmplitude_cm, float solidThickness)
-	: length(length_cm)
-	, width(width_cm)
-	, edgeWaveAmplitude(edgeWaveAmplitude_cm)
-	, m_bPhysicsInit(false)
+const float L_AVG = 148.1f;
+const float L_STD = 55.26f;
+const float W_AVG = 23.73f;
+const float W_STD = 6.933f;
+const float P_AVG = 19.97f;
+const float P_STD = 3.446f;
+const float LW_RATIO_AVG = 6.277f;
+const float LW_RATIO_STD = 2.010f;
+const float LP_RATIO_AVG = 7.738f;
+const float LP_RATIO_STD = 2.389f;
+
+Slatissima::Slatissima(float solidThickness)
+	: m_bPhysicsInit(false)
 	, m_bSolidMesh(solidThickness > 0.f)
 	, m_pDynamicsWorld(NULL)
 	, m_pSoftBody(NULL)
 	, m_debugDrawFlags(0)
 {
-	this->nVertsTall = static_cast<GLuint>(length_cm / lengthGridSpacing);
+	std::normal_distribution<float> length_dist(148.1f, 55.26f);
+	std::normal_distribution<float> lwr_dist(6.277f, 2.010f);
+	std::normal_distribution<float> lpr_dist(7.738f, 2.389f);
+	std::normal_distribution<float> waveAmp_dist(7.738f, 1.f);
+
+	length = length_dist(generator);
+	width = length / lwr_dist(generator);
+	edgeWaveAmplitude = waveAmp_dist(generator);
+
+	std::cout << "Length: " << length << " | Width: " << width << std::endl;
+
+	this->nVertsTall = static_cast<GLuint>(length / lengthGridSpacing);
 
 	this->buildModel();
 	if(m_bSolidMesh) mesh->solidify(solidThickness);
@@ -269,7 +292,9 @@ void Slatissima::buildModel()
 
 	g.glueLeft(g2);
 
-	generateGabors(width / 2.f);
+	//generateGabors(width / 2.f);
+	for (int i = 0; i < gabors.size(); ++i)
+		gabors[i]->setGaussianKernelCenter(glm::vec2(width / 2.f, gabors[i]->getGaussianKernelCenter().y));
 
 	vertices.clear();
 	for (GLuint row = 0; row < nVertsTall; ++row)

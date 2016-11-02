@@ -31,6 +31,8 @@
 #include "SLatissima.h"
 #include "GaborTest.h"
 
+std::default_random_engine generator;
+
 // Define Some Constants
 const int mWidth = 1280;
 const int mHeight = 800;
@@ -156,33 +158,19 @@ int main(int argc, char * argv[]) {
 
 	//gabs.push_back(currentEditGabor);
 	Slatissima *slat;
-	slat = new Slatissima(80.f, 10.f, 4.f, 0.5f);
-	slat->setPosition(glm::vec3(10.f, 0.f, -10.f));
-	slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
-	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
-	slat->anchorToBody(groundBody);
-	slats.push_back(slat);
+	unsigned int nSlats = 4u;
+	float spaceBetween = 5.f;
 
-	slat = new Slatissima(120.f, 20.f, 7.f, 0.5f);
-	slat->setPosition(glm::vec3(-10.f, 0.f, -12.5));
-	slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
-	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
-	slat->anchorToBody(groundBody);
-	slats.push_back(slat);
-
-	slat = new Slatissima(100.f, 30.f, 7.f, 0.5f);
-	slat->setPosition(glm::vec3(-5.f, 0.f, 10.f));
-	slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
-	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
-	slat->anchorToBody(groundBody);
-	slats.push_back(slat);
-
-	slat = new Slatissima(140.f, 22.f, 4.f, 0.5f);
-	slat->setPosition(glm::vec3(10.f, 0.f, 0.f));
-	slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
-	slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
-	slat->anchorToBody(groundBody);
-	slats.push_back(slat);
+	for (int i = 0u; i < nSlats; ++i)
+	{
+		slat = new Slatissima(0.5f);
+		slat->setPosition(glm::vec3(-(nSlats * spaceBetween / 2) + i * spaceBetween, 0.f, 0.f));
+		//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
+		slat->setOrientation(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
+		slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
+		slat->anchorToBody(groundBody);
+		slats.push_back(slat);
+	}
 
 	//tm = new TorusMesh();
 	//tm->init(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));	
