@@ -294,6 +294,25 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		delete gt;
 		gt = new GaborTest();
 	}
+	if (key == GLFW_KEY_R && action == GLFW_PRESS)
+	{
+		slats.clear();
+		Slatissima *slat;
+		unsigned int nSlats = 4u;
+		float spaceBetween = 5.f;
+
+		for (int i = 0u; i < nSlats; ++i)
+		{
+			delete slats[i];
+			slat = new Slatissima(0.5f);
+			slat->setPosition(glm::vec3(-(nSlats * spaceBetween / 2) + i * spaceBetween, 0.f, 0.f));
+			//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
+			slat->setOrientation(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
+			slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
+			slat->anchorToBody(groundBody);
+			slats.push_back(slat);
+		}
+	}
 	
 	if (key == GLFW_KEY_MINUS && action == GLFW_PRESS)
 	{
