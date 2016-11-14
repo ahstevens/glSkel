@@ -114,27 +114,6 @@ int main(int argc, char * argv[]) {
 
 	init_physics();
 
-	//-----stepsimulation_start-----
-	//for (int i = 0; i<100; i++)
-	//{
-	//	dynamicsWorld->stepSimulation(1.f / 60.f, 10);
-
-	//	//print positions of all objects
-	//	for (int j = dynamicsWorld->getNumCollisionObjects() - 1; j >= 0; j--)
-	//	{
-	//		btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
-	//		btRigidBody* body = btRigidBody::upcast(obj);
-	//		btTransform trans;
-	//		if (body && body->getMotionState())
-	//			body->getMotionState()->getWorldTransform(trans);
-	//		else
-	//			trans = obj->getWorldTransform();
-
-	//		std::cout << "world pos object " << j << " = " << float(trans.getOrigin().getX()) << "," << float(trans.getOrigin().getY()) << "," << float(trans.getOrigin().getZ()) << std::endl;
-	//	}
-	//}
-
-
 	// Build and compile our shader program
 	Shader lightingShader("shaders/multiple_lights.vs", "shaders/multiple_lights.frag");
 	Shader lampShader("shaders/lamp.vs", "shaders/lamp.frag");
@@ -171,11 +150,6 @@ int main(int argc, char * argv[]) {
 		slat->anchorToBody(groundBody);
 		slats.push_back(slat);
 	}
-
-	//tm = new TorusMesh();
-	//tm->init(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));	
-
-	//gt = new GaborTest();
 
     // Main Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
@@ -485,6 +459,45 @@ void init_physics()
 		groundBody;
 		//add the body to the dynamics world
 		dynamicsWorld->addRigidBody(groundBody);
+	}
+
+	if (0)
+	{
+		btTransform trans;
+		trans.setIdentity();
+		btVector3 worldPos(-20, 0, 30);
+		trans.setOrigin(worldPos);
+
+		btTransform frameInA, frameInB;
+		frameInA = btTransform::getIdentity();
+		frameInB = btTransform::getIdentity();
+
+		btRigidBody* pRbA1 = createRigidBody(mass, trans, shape);
+		//	btRigidBody* pRbA1 = createRigidBody(0.f, trans, shape);
+		pRbA1->setActivationState(DISABLE_DEACTIVATION);
+
+		// add dynamic rigid body B1
+		worldPos.setValue(-30, 0, 30);
+		trans.setOrigin(worldPos);
+		btRigidBody* pRbB1 = createRigidBody(mass, trans, shape);
+		//	btRigidBody* pRbB1 = createRigidBody(0.f, trans, shape);
+		pRbB1->setActivationState(DISABLE_DEACTIVATION);
+
+		// create slider constraint between A1 and B1 and add it to world
+
+		btSliderConstraint* spSlider1 = new btSliderConstraint(*pRbA1, *pRbB1, frameInA, frameInB, true);
+		//	spSlider1 = new btSliderConstraint(*pRbA1, *pRbB1, frameInA, frameInB, false);
+		spSlider1->setLowerLinLimit(-15.0F);
+		spSlider1->setUpperLinLimit(-5.0F);
+		//	spSlider1->setLowerLinLimit(5.0F);
+		//	spSlider1->setUpperLinLimit(15.0F);
+		//	spSlider1->setLowerLinLimit(-10.0F);
+		//	spSlider1->setUpperLinLimit(-10.0F);
+
+		spSlider1->setLowerAngLimit(-SIMD_PI / 3.0F);
+		spSlider1->setUpperAngLimit(SIMD_PI / 3.0F);
+
+		dynamicsWorld->addConstraint(spSlider1, true);
 	}
 }
 
