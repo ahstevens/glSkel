@@ -66,6 +66,7 @@ GaborTest *gt = NULL;
 
 btDynamicsWorld* dynamicsWorld = NULL;
 btRigidBody* groundBody = NULL;
+btRigidBody* wall = NULL;
 
 BulletDebugDrawer* debugDrawer = NULL;
 
@@ -303,7 +304,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 	if (key == GLFW_KEY_PERIOD && action == GLFW_PRESS)
 	{
-
+		wall->applyForce(btVector3(1, 0, 0), btVector3(-50, 1, 0));
 	}
 
 	if (keys[GLFW_KEY_KP_0])
@@ -388,7 +389,7 @@ void do_movement()
 	}
 	if (keys[GLFW_KEY_LEFT])
 	{
-
+		
 	}
 }
 
@@ -463,39 +464,48 @@ void init_physics()
 
 	if (0)
 	{
+		btCollisionShape* shape = new btBoxShape(btVector3(1.f, 1.f, 1.f));
+		float mass = 0.f;
+		btVector3 localInertia(0.f, 0.f, 0.f);
+
 		btTransform trans;
 		trans.setIdentity();
-		btVector3 worldPos(-20, 0, 30);
+		btVector3 worldPos(-15, 1, 0);
 		trans.setOrigin(worldPos);
 
 		btTransform frameInA, frameInB;
 		frameInA = btTransform::getIdentity();
 		frameInB = btTransform::getIdentity();
 
-		btRigidBody* pRbA1 = createRigidBody(mass, trans, shape);
+		btDefaultMotionState* pMsA1 = new btDefaultMotionState(trans);
+		btRigidBody::btRigidBodyConstructionInfo rbInfoA(mass, pMsA1, shape, localInertia);
+		btRigidBody* pRbA1 = new btRigidBody(rbInfoA);
 		//	btRigidBody* pRbA1 = createRigidBody(0.f, trans, shape);
 		pRbA1->setActivationState(DISABLE_DEACTIVATION);
 
 		// add dynamic rigid body B1
-		worldPos.setValue(-30, 0, 30);
+		worldPos.setValue(-10, 1, 0);
 		trans.setOrigin(worldPos);
-		btRigidBody* pRbB1 = createRigidBody(mass, trans, shape);
+		btDefaultMotionState* pMsB1 = new btDefaultMotionState(trans);
+		btRigidBody::btRigidBodyConstructionInfo rbInfoB(mass, pMsB1, shape, localInertia);
+		wall = new btRigidBody(rbInfoB);
 		//	btRigidBody* pRbB1 = createRigidBody(0.f, trans, shape);
-		pRbB1->setActivationState(DISABLE_DEACTIVATION);
+		wall->setCollisionFlags(wall->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
+		wall->setActivationState(DISABLE_DEACTIVATION);
 
 		// create slider constraint between A1 and B1 and add it to world
 
-		btSliderConstraint* spSlider1 = new btSliderConstraint(*pRbA1, *pRbB1, frameInA, frameInB, true);
+		btSliderConstraint* spSlider1 = new btSliderConstraint(*pRbA1, *wall, frameInA, frameInB, true);
 		//	spSlider1 = new btSliderConstraint(*pRbA1, *pRbB1, frameInA, frameInB, false);
 		spSlider1->setLowerLinLimit(-15.0F);
-		spSlider1->setUpperLinLimit(-5.0F);
+		spSlider1->setUpperLinLimit(10.0F);
 		//	spSlider1->setLowerLinLimit(5.0F);
 		//	spSlider1->setUpperLinLimit(15.0F);
 		//	spSlider1->setLowerLinLimit(-10.0F);
 		//	spSlider1->setUpperLinLimit(-10.0F);
 
-		spSlider1->setLowerAngLimit(-SIMD_PI / 3.0F);
-		spSlider1->setUpperAngLimit(SIMD_PI / 3.0F);
+		spSlider1->setLowerAngLimit(0.f);
+		spSlider1->setUpperAngLimit(0.f);
 
 		dynamicsWorld->addConstraint(spSlider1, true);
 	}
