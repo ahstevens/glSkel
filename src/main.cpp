@@ -496,17 +496,12 @@ void init_physics()
 		// create slider constraint between A1 and B1 and add it to world
 
 		btSliderConstraint* spSlider1 = new btSliderConstraint(*pRbA1, *wall, frameInA, frameInB, true);
-		//	spSlider1 = new btSliderConstraint(*pRbA1, *pRbB1, frameInA, frameInB, false);
 		spSlider1->setLowerLinLimit(-15.0F);
 		spSlider1->setUpperLinLimit(10.0F);
-		//	spSlider1->setLowerLinLimit(5.0F);
-		//	spSlider1->setUpperLinLimit(15.0F);
-		//	spSlider1->setLowerLinLimit(-10.0F);
-		//	spSlider1->setUpperLinLimit(-10.0F);
 
 		spSlider1->setLowerAngLimit(0.f);
 		spSlider1->setUpperAngLimit(0.f);
-
+		
 		dynamicsWorld->addConstraint(spSlider1, true);
 	}
 }
@@ -515,12 +510,8 @@ void step_physics()
 {
 	dynamicsWorld->stepSimulation(1.f / 120.f, 10);
 
-	// Despite misleading interface name, this actually just fills up the debug buffer with geometry
-	//static_cast<btCollisionWorld*>(dynamicsWorld)->debugDrawWorld();
-
 	// update soft mesh vertices
 	for (auto s : slats) s->update();
 
-	if (tm) tm->update();
-	
+	if (tm) tm->update();	
 }
