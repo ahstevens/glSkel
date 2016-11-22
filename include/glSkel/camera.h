@@ -4,11 +4,10 @@
 #include <vector>
 
 // GL Includes
-#include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-
+#include <glSkel/Object.h>
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
 enum Camera_Movement {
@@ -27,7 +26,7 @@ const GLfloat ZOOM       =  45.0f;
 
 
 // An abstract camera class that processes input and calculates the corresponding Euler Angles, Vectors and Matrices for use in OpenGL
-class Camera
+class Camera : public Object
 {
 public:
     // Camera Attributes

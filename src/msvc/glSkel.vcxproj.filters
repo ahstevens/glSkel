@@ -27,6 +27,9 @@
     <ClCompile Include="..\Slatissima.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\InputComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\shaders\lamp.frag">
@@ -89,6 +92,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\glSkel\BulletDebugDrawer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\InputComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\glSkel\Object.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

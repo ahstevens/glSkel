@@ -134,6 +134,7 @@ exit 0</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Cube.cpp" />
+    <ClCompile Include="..\InputComponent.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\Slatissima.cpp" />
   </ItemGroup>
@@ -156,9 +157,11 @@ exit 0</Command>
     <ClInclude Include="..\..\include\glSkel\Gabor.h" />
     <ClInclude Include="..\..\include\glSkel\GeometryStrip.h" />
     <ClInclude Include="..\..\include\glSkel\mesh.h" />
+    <ClInclude Include="..\..\include\glSkel\Object.h" />
     <ClInclude Include="..\..\include\glSkel\TorusMesh.h" />
     <ClInclude Include="..\Cube.h" />
     <ClInclude Include="..\GaborTest.h" />
+    <ClInclude Include="..\InputComponent.h" />
     <ClInclude Include="..\Slatissima.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
