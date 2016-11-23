@@ -30,7 +30,6 @@ class Camera : public Object
 {
 public:
     // Camera Attributes
-    glm::vec3 Position;
     glm::vec3 Front;
     glm::vec3 Up;
     glm::vec3 Right;
@@ -46,7 +45,7 @@ public:
     // Constructor with vectors
     Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), GLfloat yaw = YAW, GLfloat pitch = PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
     {
-        this->Position = position;
+        this->m_vec3Position = position;
         this->WorldUp = up;
         this->Yaw = yaw;
         this->Pitch = pitch;
@@ -55,7 +54,7 @@ public:
     // Constructor with scalar values
     Camera(GLfloat posX, GLfloat posY, GLfloat posZ, GLfloat upX, GLfloat upY, GLfloat upZ, GLfloat yaw, GLfloat pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
     {
-        this->Position = glm::vec3(posX, posY, posZ);
+        this->m_vec3Position = glm::vec3(posX, posY, posZ);
         this->WorldUp = glm::vec3(upX, upY, upZ);
         this->Yaw = yaw;
         this->Pitch = pitch;
@@ -65,7 +64,7 @@ public:
     // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
     glm::mat4 GetViewMatrix()
     {
-        return glm::lookAt(this->Position, this->Position + this->Front, this->Up);
+        return glm::lookAt(this->m_vec3Position, this->m_vec3Position + this->Front, this->Up);
     }
 
     // Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
@@ -73,13 +72,13 @@ public:
     {
         GLfloat velocity = this->MovementSpeed * deltaTime;
         if (direction == FORWARD)
-            this->Position += this->Front * velocity;
+            this->m_vec3Position += this->Front * velocity;
         if (direction == BACKWARD)
-            this->Position -= this->Front * velocity;
+            this->m_vec3Position -= this->Front * velocity;
         if (direction == LEFT)
-            this->Position -= this->Right * velocity;
+            this->m_vec3Position -= this->Right * velocity;
         if (direction == RIGHT)
-            this->Position += this->Right * velocity;
+            this->m_vec3Position += this->Right * velocity;
     }
 
     // Processes input received from a mouse input system. Expects the offset value in both the x and y direction.

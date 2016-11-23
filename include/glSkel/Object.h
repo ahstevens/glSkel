@@ -18,7 +18,7 @@ public:
 	void setOrientation(glm::quat o) { m_quatOrientation = o; }
 	glm::quat getOrientation() { return m_quatOrientation; }
 
-private:
+protected:
 	glm::vec3 m_vec3Position;
 	glm::quat m_quatOrientation;
 };
