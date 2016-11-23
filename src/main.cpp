@@ -81,7 +81,7 @@ int main(int argc, char * argv[]) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    auto mWindow = glfwCreateWindow(mWidth, mHeight, "Saccharina latissima", nullptr, nullptr);
+    GLFWwindow* mWindow = glfwCreateWindow(mWidth, mHeight, "Saccharina latissima", nullptr, nullptr);
 
     // Check for Valid Context
     if (mWindow == nullptr) {
@@ -133,7 +133,7 @@ int main(int argc, char * argv[]) {
 	ls.addPLight(glm::vec3( 5.f, 0.f,  5.f));
 	ls.addPLight(glm::vec3(-5.f, 0.f,  5.f));
 	// Spotlight
-	ls.addSLight(camera.Position, camera.Front);
+	ls.addSLight(camera.getPosition(), camera.Front);
 	//ls.sLight.on = false;
 
 	//gabs.push_back(currentEditGabor);
@@ -170,18 +170,17 @@ int main(int argc, char * argv[]) {
 		// Use corresponding shader when setting uniforms/drawing objects
 		lightingShader.Use();
 		GLint viewPosLoc = glGetUniformLocation(lightingShader.Program, "viewPos");
-		glUniform3f(viewPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
+		glUniform3f(viewPosLoc, camera.getPosition().x, camera.getPosition().y, camera.getPosition().z);
 		// Set material properties
 		glUniform1f(glGetUniformLocation(lightingShader.Program, "material.shininess"), 32.0f);
 		
-		ls.sLight.position = camera.Position;
+		ls.sLight.position = camera.getPosition();
 		ls.sLight.direction = camera.Front;
 
 		ls.SetupLighting(lightingShader);
 
 		// Create camera transformations
-		glm::mat4 view;
-		view = camera.GetViewMatrix();
+		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (GLfloat)mWidth / (GLfloat)mHeight, 0.01f, 1000.0f);
 		// Get the uniform locations
 		GLint viewLoc = glGetUniformLocation(lightingShader.Program, "view");
