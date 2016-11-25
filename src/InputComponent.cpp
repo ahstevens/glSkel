@@ -8,6 +8,7 @@ InputComponent::~InputComponent()
 {
 }
 
-void InputComponent::update(Object * obj)
+void InputComponent::update(Object* obj)
 {
+
 }

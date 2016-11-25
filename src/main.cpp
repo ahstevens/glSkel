@@ -116,12 +116,32 @@ int main(int argc, char * argv[]) {
 	init_physics();
 
 	// Build and compile our shader program
-	Shader lightingShader("shaders/multiple_lights.vs", "shaders/multiple_lights.frag");
-	Shader lampShader("shaders/lamp.vs", "shaders/lamp.frag");
-	Shader normalsShader("shaders/normals.vs", "shaders/normals.frag", "shaders/normals.geom");
-	Shader explodeShader("shaders/explode.vs", "shaders/explode.frag", "shaders/explode.geom");
-	Shader lineShader("shaders/line.vs", "shaders/line.frag");
+	Shader lightingShader(
+		"shaders/multiple_lights.vs",
+		"shaders/multiple_lights.frag"
+	);
+	Shader lampShader(
+		"shaders/lamp.vs",
+		"shaders/lamp.frag"
+	);
+	Shader normalsShader(
+		"shaders/normals.vs",
+		"shaders/normals.frag",
+		"shaders/normals.geom"
+	);
+	Shader explodeShader(
+		"shaders/explode.vs",
+		"shaders/explode.frag",
+		"shaders/explode.geom"
+	);
+	Shader lineShader(
+		"shaders/line.vs", 
+		"shaders/line.frag"
+	);
 
+	// Get the uniform locations
+	GLint viewLoc = glGetUniformLocation(lightingShader.Program, "view");
+	GLint projLoc = glGetUniformLocation(lightingShader.Program, "projection");
 
 	// Initialize the lighting system
 	// Directional light
@@ -133,7 +153,7 @@ int main(int argc, char * argv[]) {
 	ls.addPLight(glm::vec3( 5.f, 0.f,  5.f));
 	ls.addPLight(glm::vec3(-5.f, 0.f,  5.f));
 	// Spotlight
-	ls.addSLight(camera.getPosition(), camera.Front);
+	ls.addSLight(camera.getPosition(), glm::vec3(camera.getOrientation()[2]));
 	//ls.sLight.on = false;
 
 	//gabs.push_back(currentEditGabor);
@@ -175,16 +195,14 @@ int main(int argc, char * argv[]) {
 		glUniform1f(glGetUniformLocation(lightingShader.Program, "material.shininess"), 32.0f);
 		
 		ls.sLight.position = camera.getPosition();
-		ls.sLight.direction = camera.Front;
+		ls.sLight.direction = glm::vec3(camera.getOrientation()[2]);
 
 		ls.SetupLighting(lightingShader);
 
 		// Create camera transformations
-		glm::mat4 view = camera.GetViewMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (GLfloat)mWidth / (GLfloat)mHeight, 0.01f, 1000.0f);
-		// Get the uniform locations
-		GLint viewLoc = glGetUniformLocation(lightingShader.Program, "view");
-		GLint projLoc = glGetUniformLocation(lightingShader.Program, "projection");
+		glm::mat4 view = camera.getViewMatrix();
+		glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (GLfloat)mWidth / (GLfloat)mHeight, 0.01f, 1000.0f);
+
 		// Pass the matrices to the shader
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
@@ -334,13 +352,13 @@ void do_movement()
 {
 	// Camera controls
 	if (keys[GLFW_KEY_W])
-		camera.ProcessKeyboard(FORWARD, deltaTime);
+		camera.move(FORWARD, deltaTime);
 	if (keys[GLFW_KEY_S])
-		camera.ProcessKeyboard(BACKWARD, deltaTime);
+		camera.move(BACKWARD, deltaTime);
 	if (keys[GLFW_KEY_A])
-		camera.ProcessKeyboard(LEFT, deltaTime);
+		camera.move(LEFT, deltaTime);
 	if (keys[GLFW_KEY_D])
-		camera.ProcessKeyboard(RIGHT, deltaTime);
+		camera.move(RIGHT, deltaTime);
 
 	//if (keys[GLFW_KEY_A])
 	//	for (auto s: slats) s->rotateY(-1.f);
@@ -407,12 +425,12 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	lastX = static_cast<GLfloat>( xpos );
 	lastY = static_cast<GLfloat>( ypos );
 
-	camera.ProcessMouseMovement(xoffset, yoffset);
+	camera.look(xoffset, yoffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	camera.ProcessMouseScroll( static_cast<GLfloat>( yoffset ));
+	camera.zoom(static_cast<GLfloat>( yoffset ));
 }
 
 void init_physics()
