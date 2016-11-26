@@ -142,6 +142,7 @@ int main(int argc, char * argv[]) {
 	// Get the uniform locations
 	GLint viewLoc = glGetUniformLocation(lightingShader.Program, "view");
 	GLint projLoc = glGetUniformLocation(lightingShader.Program, "projection");
+	GLint viewPosLoc = glGetUniformLocation(lightingShader.Program, "viewPos");
 
 	// Initialize the lighting system
 	// Directional light
@@ -189,7 +190,6 @@ int main(int argc, char * argv[]) {
 
 		// Use corresponding shader when setting uniforms/drawing objects
 		lightingShader.Use();
-		GLint viewPosLoc = glGetUniformLocation(lightingShader.Program, "viewPos");
 		glUniform3f(viewPosLoc, camera.getPosition().x, camera.getPosition().y, camera.getPosition().z);
 		// Set material properties
 		glUniform1f(glGetUniformLocation(lightingShader.Program, "material.shininess"), 32.0f);
