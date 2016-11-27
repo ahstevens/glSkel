@@ -27,39 +27,24 @@
 #include <random>
 
 // Our classes
+#include <glSkel/Settings.h>
 #include "Cube.h"
 #include "SLatissima.h"
 #include "GaborTest.h"
+#include "GLFWInputBroadcaster.h"
 
 std::default_random_engine generator;
 
-// Define Some Constants
-const int mWidth = 1280;
-const int mHeight = 800;
-
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void do_movement();
+
 void init_physics();
 void step_physics();
 
 // Camera
 Camera  camera(glm::vec3(0.0f, 50.0f, 50.0f));
 LightingSystem ls;
-GLfloat lastX = mWidth / 2.0;
-GLfloat lastY = mHeight / 2.0;
-bool    keys[1024];
-
-// Deltatime
-GLfloat deltaTime = 0.0f;	// Time between current frame and last frame
-GLfloat lastFrame = 0.0f;  	// Time of last frame
-
-bool firstMouse = true;
-bool showLights = true;
-bool showNormals = false;
-bool explode = false;
+Settings settings;
 
 std::vector<Slatissima *> slats;
 GaborTest *gt = NULL;
@@ -81,7 +66,7 @@ int main(int argc, char * argv[]) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    GLFWwindow* mWindow = glfwCreateWindow(mWidth, mHeight, "Saccharina latissima", nullptr, nullptr);
+    GLFWwindow* mWindow = glfwCreateWindow(settings.m_iWidth, settings.m_iHeight, "Saccharina latissima", nullptr, nullptr);
 
     // Check for Valid Context
     if (mWindow == nullptr) {
@@ -92,10 +77,6 @@ int main(int argc, char * argv[]) {
     // Create Context and Load OpenGL Functions
     glfwMakeContextCurrent(mWindow);
 
-	glfwSetKeyCallback(mWindow, key_callback);
-	glfwSetCursorPosCallback(mWindow, mouse_callback);
-	glfwSetScrollCallback(mWindow, scroll_callback);
-
 	// GLFW Options
 	glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -105,13 +86,18 @@ int main(int argc, char * argv[]) {
     fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
 	// Define the viewport dimensions
-	glViewport(0, 0, mWidth, mHeight);
+	glViewport(0, 0, settings.m_iWidth, settings.m_iHeight);
 
 	// OpenGL options
 	glEnable(GL_DEPTH_TEST);
 	glLineWidth(5.f);
 
 	srand(time(NULL)); // Seed the time
+	
+	GLFWInputBroadcaster::getInstance().init(mWindow);
+	GLFWInputBroadcaster::getInstance().attach(&ls);  // Register lighting system with input broadcaster
+	GLFWInputBroadcaster::getInstance().attach(&camera);  // Register camera with input broadcaster
+	GLFWInputBroadcaster::getInstance().attach(&settings);  // Register settings with input broadcaster
 
 	init_physics();
 
@@ -170,6 +156,7 @@ int main(int argc, char * argv[]) {
 		slat->setOrientation(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
 		slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
 		slat->anchorToBody(groundBody);
+		GLFWInputBroadcaster::getInstance().attach(slat);
 		slats.push_back(slat);
 	}
 
@@ -177,10 +164,10 @@ int main(int argc, char * argv[]) {
     while (glfwWindowShouldClose(mWindow) == false) {
 		// Calculate deltatime of current frame
 		GLfloat currentFrame = static_cast<GLfloat>( glfwGetTime() );
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
+		settings.m_fDeltaTime = currentFrame - settings.m_fLastFrame;
+		settings.m_fLastFrame = currentFrame;
 		
-		do_movement();
+		camera.update(settings.m_fDeltaTime);
 
 		step_physics();
 
@@ -201,7 +188,12 @@ int main(int argc, char * argv[]) {
 
 		// Create camera transformations
 		glm::mat4 view = camera.getViewMatrix();
-		glm::mat4 projection = glm::perspective(glm::radians(camera.getZoom()), (GLfloat)mWidth / (GLfloat)mHeight, 0.01f, 1000.0f);
+		glm::mat4 projection = glm::perspective(
+			glm::radians(camera.getZoom()),
+			static_cast<float>(settings.m_iWidth) / static_cast<float>(settings.m_iHeight),
+			0.01f,
+			1000.0f
+			);
 
 		// Pass the matrices to the shader
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -213,7 +205,7 @@ int main(int argc, char * argv[]) {
 
 		if (tm) tm->Draw(lightingShader);
 
-		if (showNormals)
+		if (settings.m_bShowNormals)
 		{
 			normalsShader.Use();
 			glUniformMatrix4fv(glGetUniformLocation(normalsShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -221,7 +213,7 @@ int main(int argc, char * argv[]) {
 			for (auto s : slats) s->Draw(normalsShader);
 		}
 
-		if (explode)
+		if (settings.m_bExplode)
 		{
 			explodeShader.Use();
 			glUniformMatrix4fv(glGetUniformLocation(explodeShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -229,7 +221,7 @@ int main(int argc, char * argv[]) {
 			for (auto s : slats) s->Draw(explodeShader);
 		}
 
-		if (showLights)
+		if (settings.m_bShowLights)
 		{
 			lampShader.Use();
 
@@ -248,7 +240,7 @@ int main(int argc, char * argv[]) {
 
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
-        glfwPollEvents();
+		GLFWInputBroadcaster::getInstance().update();
     }   
 
 	slats.clear();
@@ -261,31 +253,6 @@ int main(int argc, char * argv[]) {
 // Is called whenever a key is pressed/released via GLFW
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, GL_TRUE);
-	if (key == GLFW_KEY_L && action == GLFW_PRESS)
-		showLights = !showLights;
-	if (key == GLFW_KEY_1 && action == GLFW_PRESS)
-		ls.dLight.on = !ls.dLight.on;
-	if (key == GLFW_KEY_2 && action == GLFW_PRESS)
-		ls.pLights[0].on = !ls.pLights[0].on;
-	if (key == GLFW_KEY_3 && action == GLFW_PRESS)
-		ls.pLights[1].on = !ls.pLights[1].on;
-	if (key == GLFW_KEY_4 && action == GLFW_PRESS)
-		ls.pLights[2].on = !ls.pLights[2].on;
-	if (key == GLFW_KEY_5 && action == GLFW_PRESS)
-		ls.pLights[3].on = !ls.pLights[3].on;
-	if (key == GLFW_KEY_6 && action == GLFW_PRESS)
-		ls.sLight.on = !ls.sLight.on;
-	if (key == GLFW_KEY_N && action == GLFW_PRESS)
-		showNormals = !showNormals;
-	if (key == GLFW_KEY_B && action == GLFW_PRESS)
-		explode = !explode;
-	if (key == GLFW_KEY_G && action == GLFW_PRESS)
-	{
-		delete gt;
-		gt = new GaborTest();
-	}
 	if (key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
 		slats.clear();
@@ -306,131 +273,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		}
 	}
 	
-	if (key == GLFW_KEY_MINUS && action == GLFW_PRESS)
-	{
-		
-	}
-	if (key == GLFW_KEY_EQUAL && action == GLFW_PRESS)
-	{
-
-	}
-
-	if (key == GLFW_KEY_COMMA && action == GLFW_PRESS)
-	{
-
-	}
 	if (key == GLFW_KEY_PERIOD && action == GLFW_PRESS)
 	{
 		wall->applyForce(btVector3(1, 0, 0), btVector3(-50, 1, 0));
 	}
-
-	if (keys[GLFW_KEY_KP_0])
-		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Std);
-	if (keys[GLFW_KEY_KP_1])
-		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Faces);
-	if (keys[GLFW_KEY_KP_2])
-		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Nodes);
-	if (keys[GLFW_KEY_KP_3])
-		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Links);
-	if (keys[GLFW_KEY_KP_4])
-		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Normals);
-	if (keys[GLFW_KEY_KP_5])
-		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Contacts);
-	if (keys[GLFW_KEY_KP_6])
-		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Clusters);
-
-	if (key >= 0 && key < 1024)
-	{
-		if (action == GLFW_PRESS)
-			keys[key] = true;
-		else if (action == GLFW_RELEASE)
-			keys[key] = false;
-	}
-}
-
-void do_movement()
-{
-	// Camera controls
-	if (keys[GLFW_KEY_W])
-		camera.move(FORWARD, deltaTime);
-	if (keys[GLFW_KEY_S])
-		camera.move(BACKWARD, deltaTime);
-	if (keys[GLFW_KEY_A])
-		camera.move(LEFT, deltaTime);
-	if (keys[GLFW_KEY_D])
-		camera.move(RIGHT, deltaTime);
-
-	//if (keys[GLFW_KEY_A])
-	//	for (auto s: slats) s->rotateY(-1.f);
-	//if (keys[GLFW_KEY_D])
-	//	for (auto s : slats) s->rotateY(1.f);
-	//if (keys[GLFW_KEY_W])
-	//	for (auto s : slats) s->rotateX(-1.f);
-	//if (keys[GLFW_KEY_S])
-	//	for (auto s : slats) s->rotateX(1.f);
-	//if (keys[GLFW_KEY_Q])
-	//	for (auto s : slats) s->rotateZ(-1.f);
-	//if (keys[GLFW_KEY_E])
-	//	for (auto s : slats) s->rotateZ(1.f);
-	//if (keys[GLFW_KEY_R])
-	//	for (auto s : slats) s->setOrientation();
-	if (keys[GLFW_KEY_O])
-		for (auto s : slats) s->bump(btVector3(0.f, -1.f, 0.f));
-	if (keys[GLFW_KEY_U])
-		for (auto s : slats) s->bump(btVector3(0.f, 1.f, 0.f));
-	if (keys[GLFW_KEY_I])
-		for (auto s : slats) s->bump(btVector3(0.f, 0.f, -1.f));
-	if (keys[GLFW_KEY_K])
-		slats[0]->bump(btVector3(0.f, 0.f, 1.f));
-
-	if (keys[GLFW_KEY_KP_SUBTRACT])
-	{
-
-	}
-	if (keys[GLFW_KEY_KP_ADD])
-	{
-
-	}
-
-	if (keys[GLFW_KEY_UP])
-	{
-
-	}
-	if (keys[GLFW_KEY_DOWN])
-	{
-
-	}
-	if (keys[GLFW_KEY_RIGHT])
-	{
-
-	}
-	if (keys[GLFW_KEY_LEFT])
-	{
-		
-	}
-}
-
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
-{
-	if (firstMouse)
-	{
-		lastX = static_cast<GLfloat>( xpos );
-		lastY = static_cast<GLfloat>( ypos );
-		firstMouse = false;
-	}
-
-	GLfloat xoffset = static_cast<GLfloat>( xpos ) - lastX;
-	GLfloat yoffset = lastY - static_cast<GLfloat>( ypos );  // Reversed since y-coordinates go from bottom to left
-	
-	lastX = static_cast<GLfloat>( xpos );
-	lastY = static_cast<GLfloat>( ypos );
-
-	camera.look(xoffset, yoffset);
-}
-
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-	camera.zoom(static_cast<GLfloat>( yoffset ));
 }
 
 void init_physics()

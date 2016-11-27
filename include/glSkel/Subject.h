@@ -20,9 +20,9 @@ public:
 	}
 
 protected:
-	virtual void notify(Object* obj, const int event)
+	virtual void notify(Object* obj, const int event, void* data = NULL)
 	{
-		for (auto obs : observers) obs->receiveEvent(obj, event);
+		for (auto obs : observers) obs->receiveEvent(obj, event, data);
 	}
 	
 private:

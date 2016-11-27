@@ -1,5 +1,6 @@
 #include "Slatissima.h"
 
+#include <GLFW\glfw3.h>
 #include <glSkel/GeometryStrip.h>
 #include <glSkel/BulletDebugDrawer.h>
 
@@ -159,6 +160,39 @@ void Slatissima::update()
 	this->mesh->updateMeshSerial(data_serialized);
 
 	debugDraw();
+}
+
+void Slatissima::receiveEvent(Object * obj, const int event, void * data)
+{	
+	int key;
+	memcpy(&key, data, sizeof(key));
+
+	if (event == Observer::KEY_PRESS)
+	{
+		if (key == GLFW_KEY_KP_0)
+			toggleDebugDrawFlag(fDrawFlags::Std);
+		if (key == GLFW_KEY_KP_1)
+			toggleDebugDrawFlag(fDrawFlags::Faces);
+		if (key == GLFW_KEY_KP_2)
+			toggleDebugDrawFlag(fDrawFlags::Nodes);
+		if (key == GLFW_KEY_KP_3)
+			toggleDebugDrawFlag(fDrawFlags::Links);
+		if (key == GLFW_KEY_KP_4)
+			toggleDebugDrawFlag(fDrawFlags::Normals);
+		if (key == GLFW_KEY_KP_5)
+			toggleDebugDrawFlag(fDrawFlags::Contacts);
+		if (key == GLFW_KEY_KP_6)
+			toggleDebugDrawFlag(fDrawFlags::Clusters);
+
+		if (key == GLFW_KEY_O)
+			bump(btVector3(0.f, -1.f, 0.f));
+		if (key == GLFW_KEY_U)
+			bump(btVector3(0.f, 1.f, 0.f));
+		if (key == GLFW_KEY_I)
+			bump(btVector3(0.f, 0.f, -1.f));
+		if (key == GLFW_KEY_K)
+			bump(btVector3(0.f, 0.f, 1.f));
+	}
 }
 
 void Slatissima::Draw(Shader s)

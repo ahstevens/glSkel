@@ -3,6 +3,7 @@
 
 #include <GL/glew.h>
 
+#include <glSkel/Observer.h>
 #include <glSkel/shader.h>
 
 struct BasicLight {	
@@ -33,7 +34,7 @@ struct SLight : PLight {
 #define MAX_N_PLIGHTS 4
 
 
-class LightingSystem
+class LightingSystem : public Observer
 {
 public:
 	DLight dLight;
@@ -188,6 +189,28 @@ public:
 		}
 		glBindVertexArray(0);
 
+	}
+
+	void receiveEvent(Object * obj, const int event, void * data)
+	{
+		if (event == Observer::KEY_PRESS)
+		{
+			int key;
+			memcpy(&key, data, sizeof(key));
+
+			if (key == GLFW_KEY_1)
+				dLight.on = !dLight.on;
+			if (key == GLFW_KEY_2)
+				pLights[0].on = !pLights[0].on;
+			if (key == GLFW_KEY_3)
+				pLights[1].on = !pLights[1].on;
+			if (key == GLFW_KEY_4)
+				pLights[2].on = !pLights[2].on;
+			if (key == GLFW_KEY_5)
+				pLights[3].on = !pLights[3].on;
+			if (key == GLFW_KEY_6)
+				sLight.on = !sLight.on;
+		}
 	}
 
 private:

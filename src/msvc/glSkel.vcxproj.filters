@@ -27,10 +27,10 @@
     <ClCompile Include="..\Slatissima.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\InputComponent.cpp">
+    <ClCompile Include="..\GLFWInputBroadcaster.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\GLFWInputBroadcaster.cpp">
+    <ClCompile Include="..\InputComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -110,6 +110,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\GLFWInputBroadcaster.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\glSkel\Settings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

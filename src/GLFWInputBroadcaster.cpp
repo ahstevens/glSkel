@@ -1,16 +1,13 @@
 #pragma once
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 #include "GLFWInputBroadcaster.h"
 
 
 GLFWInputBroadcaster::GLFWInputBroadcaster()
-	: firstMouse(false)
-	, lastX(0)
-	, lastY(0)
 {
-	memset(keys, 0, sizeof keys);
 }
 
 GLFWInputBroadcaster& GLFWInputBroadcaster::getInstance()
@@ -22,56 +19,80 @@ GLFWInputBroadcaster& GLFWInputBroadcaster::getInstance()
 void GLFWInputBroadcaster::init(GLFWwindow * window)
 {
 	glfwSetKeyCallback(window, key_callback);
-	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
+	glfwSetCursorPosCallback(window, mouse_position_callback);
 	glfwSetScrollCallback(window, scroll_callback);
+
+	memset(keys, 0, sizeof keys);
+	firstMouse = true;
+	lastX = 0;
+	lastY = 0;
+}
+
+bool GLFWInputBroadcaster::keyPressed(const int glfwKeyCode)
+{
+	return keys[glfwKeyCode];
+}
+
+void GLFWInputBroadcaster::update()
+{
+	glfwPollEvents();
 }
 
 // Is called whenever a key is pressed/released via GLFW
 void GLFWInputBroadcaster::key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {	
-	if (keys[GLFW_KEY_KP_0])
-		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Std);
-	if (keys[GLFW_KEY_KP_1])
-		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Faces);
-	if (keys[GLFW_KEY_KP_2])
-		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Nodes);
-	if (keys[GLFW_KEY_KP_3])
-		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Links);
-	if (keys[GLFW_KEY_KP_4])
-		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Normals);
-	if (keys[GLFW_KEY_KP_5])
-		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Contacts);
-	if (keys[GLFW_KEY_KP_6])
-		for (auto s : slats) s->toggleDebugDrawFlag(fDrawFlags::Clusters);
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(window, true);
+		return;
+	}
 
 	if (key >= 0 && key < 1024)
 	{
 		if (action == GLFW_PRESS)
-			keys[key] = true;
+		{
+			getInstance().keys[key] = true;
+			getInstance().notify(NULL, Observer::KEY_PRESS, &key);
+		}
 		else if (action == GLFW_RELEASE)
-			keys[key] = false;
+		{
+			getInstance().keys[key] = false;
+			getInstance().notify(NULL, Observer::KEY_UNPRESS, &key);
+		}
 	}
 }
 
-void GLFWInputBroadcaster::mouse_callback(GLFWwindow * window, double xpos, double ypos)
+void GLFWInputBroadcaster::mouse_button_callback(GLFWwindow * window, int button, int action, int mods)
 {
-	if (firstMouse)
+	if (action == GLFW_PRESS)
+		getInstance().notify(NULL, Observer::MOUSE_CLICK, &button);
+	else if (action == GLFW_RELEASE)
+		getInstance().notify(NULL, Observer::MOUSE_UNCLICK, &button);
+}
+
+void GLFWInputBroadcaster::mouse_position_callback(GLFWwindow * window, double xpos, double ypos)
+{
+	if (getInstance().firstMouse)
 	{
-		lastX = static_cast<GLfloat>(xpos);
-		lastY = static_cast<GLfloat>(ypos);
-		firstMouse = false;
+		getInstance().lastX = static_cast<GLfloat>(xpos);
+		getInstance().lastY = static_cast<GLfloat>(ypos);
+		getInstance().firstMouse = false;
 	}
 
-	GLfloat xoffset = static_cast<GLfloat>(xpos) - lastX;
-	GLfloat yoffset = lastY - static_cast<GLfloat>(ypos);  // Reversed since y-coordinates go from bottom to left
+	GLfloat xoffset = static_cast<GLfloat>(xpos) - getInstance().lastX;
+	GLfloat yoffset = getInstance().lastY - static_cast<GLfloat>(ypos);  // Reversed since y-coordinates go from bottom to left
 
-	lastX = static_cast<GLfloat>(xpos);
-	lastY = static_cast<GLfloat>(ypos);
+	getInstance().lastX = static_cast<GLfloat>(xpos);
+	getInstance().lastY = static_cast<GLfloat>(ypos);
 
-	camera.look(xoffset, yoffset);
+	float offset[2] = { static_cast<float>(xoffset), static_cast<float>(yoffset) };
+
+	getInstance().notify(NULL, Observer::MOUSE_MOVE, &offset);
 }
 
 void GLFWInputBroadcaster::scroll_callback(GLFWwindow * window, double xoffset, double yoffset)
 {
-	camera.zoom(static_cast<GLfloat>(yoffset));
+	float offset = static_cast<float>(yoffset);
+	getInstance().notify(NULL, Observer::MOUSE_SCROLL, &offset);
 }

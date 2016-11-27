@@ -160,6 +160,7 @@ exit 0</Command>
     <ClInclude Include="..\..\include\glSkel\mesh.h" />
     <ClInclude Include="..\..\include\glSkel\Object.h" />
     <ClInclude Include="..\..\include\glSkel\Observer.h" />
+    <ClInclude Include="..\..\include\glSkel\Settings.h" />
     <ClInclude Include="..\..\include\glSkel\Subject.h" />
     <ClInclude Include="..\..\include\glSkel\TorusMesh.h" />
     <ClInclude Include="..\Cube.h" />

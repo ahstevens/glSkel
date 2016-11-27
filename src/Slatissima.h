@@ -1,6 +1,7 @@
 #pragma once
-#include <glSkel/mesh.h>
-#include <glSkel/shader.h>
+#include <glSkel/Observer.h>
+#include <glSkel/Mesh.h>
+#include <glSkel/Shader.h>
 
 #include <glSkel/Gabor.h>
 
@@ -9,7 +10,7 @@
 #include <bullet/BulletSoftBody/btSoftRigidDynamicsWorld.h>
 #include <bullet/BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 
-class Slatissima
+class Slatissima : public Observer
 {
 public:
 	Slatissima(float solidThickness);
@@ -34,6 +35,8 @@ public:
 	void anchorToBody(btRigidBody* body);
 	
 	void update();
+
+	void receiveEvent(Object* obj, const int event, void* data);
 
 	void Draw(Shader s);
 

@@ -8,6 +8,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <glSkel/Object.h>
+#include <glSkel/Observer.h>
+#include "GLFWInputBroadcaster.h"
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
 enum Camera_Movement {
@@ -29,7 +31,7 @@ const float m_fDefaultZoomMin         =  45.f;
 const float m_fDefaultZoomMax         =   1.f;
 
 // An abstract camera class that processes input and calculates the corresponding Euler Angles, Vectors and Matrices for use in OpenGL
-class Camera : public Object
+class Camera : public Object, public Observer
 {
 public:
     // Constructor with vectors
@@ -51,6 +53,7 @@ public:
         m_fYaw = yaw;
         m_fPitch = pitch;
         updateCameraVectors();
+		memset(m_brMovementState, 0, sizeof(m_brMovementState));
     }
 
     // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
@@ -64,52 +67,63 @@ public:
 		return m_fZoom; 
 	}
 
-    // Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-    void move(Camera_Movement direction, float deltaTime)
-    {
-        float velocity = m_fMovementSpeed * deltaTime;
-        if (direction == FORWARD)
-            m_vec3Position += m_vec3Front * velocity;
-        if (direction == BACKWARD)
-            m_vec3Position -= m_vec3Front * velocity;
-        if (direction == LEFT)
-            m_vec3Position -= m_vec3Right * velocity;
-        if (direction == RIGHT)
-            m_vec3Position += m_vec3Right * velocity;
-    }
+	void receiveEvent(Object * obj, const int event, void * data)
+	{
+		if (event == Observer::KEY_PRESS)
+		{
+			int key;
+			memcpy(&key, data, sizeof(key));
 
-    // Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-    void look(float dx, float dy, GLboolean constrainPitch = true)
-    {
-        dx *= m_fSensitivity;
-        dy *= m_fSensitivity;
+			// Camera controls
+			if (key == GLFW_KEY_W)
+				m_brMovementState[FORWARD] = true;
+			if (key == GLFW_KEY_S)
+				m_brMovementState[BACKWARD] = true;
+			if (key == GLFW_KEY_A)
+				m_brMovementState[LEFT] = true;
+			if (key == GLFW_KEY_D)
+				m_brMovementState[RIGHT] = true;
+		}
 
-        m_fYaw   += dx;
-        m_fPitch += dy;
+		if (event == Observer::KEY_UNPRESS)
+		{
+			int key;
+			memcpy(&key, data, sizeof(key));
 
-        // Make sure that when pitch is out of bounds, screen doesn't get flipped
-        if (constrainPitch)
-        {
-            if (m_fPitch > 89.f)
-				m_fPitch = 89.f;
-            if (m_fPitch < -89.f)
-				m_fPitch = -89.f;
-        }
+			// Camera controls
+			if (key == GLFW_KEY_W)
+				m_brMovementState[FORWARD] = false;
+			if (key == GLFW_KEY_S)
+				m_brMovementState[BACKWARD] = false;
+			if (key == GLFW_KEY_A)
+				m_brMovementState[LEFT] = false;
+			if (key == GLFW_KEY_D)
+				m_brMovementState[RIGHT] = false;
+		}
+
+		if (event == Observer::MOUSE_MOVE)
+		{
+			float offset[2];
+			memcpy(offset, data, sizeof(offset)); // recover array
+			look(offset[0], offset[1]);
+		}
+
+		if (event == Observer::MOUSE_SCROLL)
+		{
+			float yoffset;
+			memcpy(&yoffset, data, sizeof(yoffset));
+			zoom( yoffset );
+		}
+	}
+
+	void update(float deltaTime)
+	{		
+		// Move the camera based on its current movement state
+		move(deltaTime);
 
         // Update Front, Right and Up Vectors using the updated Eular angles
         this->updateCameraVectors();
-    }
-
-    // Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
-    void zoom(float dz)
-    {
-        if (m_fZoom >= m_fZoomMax && m_fZoom <= m_fZoomMin)
-			m_fZoom -= dz;
-        if (m_fZoom <= m_fZoomMax)
-			m_fZoom = m_fZoomMax;
-        if (m_fZoom >= m_fZoomMin)
-			m_fZoom = m_fZoomMin;
-    }
+	}
 
 private:
 	// Camera Attributes
@@ -126,6 +140,53 @@ private:
 	float m_fMovementSpeed;
 	float m_fSensitivity;
 	float m_fZoom, m_fZoomMin, m_fZoomMax;
+
+	bool m_brMovementState[4]; // FORWARD, BACKWARD, LEFT, RIGHT
+	
+
+	// Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
+	void move(float deltaTime)
+	{
+		float velocity = m_fMovementSpeed * deltaTime;
+		if (m_brMovementState[FORWARD])
+			m_vec3Position += m_vec3Front * velocity;
+		if (m_brMovementState[BACKWARD])
+			m_vec3Position -= m_vec3Front * velocity;
+		if (m_brMovementState[LEFT])
+			m_vec3Position -= m_vec3Right * velocity;
+		if (m_brMovementState[RIGHT])
+			m_vec3Position += m_vec3Right * velocity;
+	}
+
+	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
+	void look(float dx, float dy, GLboolean constrainPitch = true)
+	{
+		dx *= m_fSensitivity;
+		dy *= m_fSensitivity;
+
+		m_fYaw += dx;
+		m_fPitch += dy;
+
+		// Make sure that when pitch is out of bounds, screen doesn't get flipped
+		if (constrainPitch)
+		{
+			if (m_fPitch > 89.f)
+				m_fPitch = 89.f;
+			if (m_fPitch < -89.f)
+				m_fPitch = -89.f;
+		}
+	}
+
+	// Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
+	void zoom(float dz)
+	{
+		if (m_fZoom >= m_fZoomMax && m_fZoom <= m_fZoomMin)
+			m_fZoom -= dz;
+		if (m_fZoom <= m_fZoomMax)
+			m_fZoom = m_fZoomMax;
+		if (m_fZoom >= m_fZoomMin)
+			m_fZoom = m_fZoomMin;
+	}
 
     // Calculates the front vector from the Camera's (updated) Eular Angles
     void updateCameraVectors()
