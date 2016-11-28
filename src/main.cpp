@@ -38,6 +38,7 @@ std::default_random_engine generator;
 // Function prototypes
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 
+GLFWwindow* init_gl_context(std::string winName);
 void init_physics();
 void step_physics();
 
@@ -61,38 +62,15 @@ int main(int argc, char * argv[]) {
 
     // Load GLFW and Create a Window
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    GLFWwindow* mWindow = glfwCreateWindow(settings.m_iWidth, settings.m_iHeight, "Saccharina latissima", nullptr, nullptr);
 
-    // Check for Valid Context
-    if (mWindow == nullptr) {
-        fprintf(stderr, "Failed to Create OpenGL Context");
-        return EXIT_FAILURE;
-    }
+	GLFWwindow* mWindow = init_gl_context("Saccharina latissima");
+	if (!mWindow) 
+	{
+		fprintf(stderr, "Failed to Create OpenGL Context");
+		return EXIT_FAILURE;
+	}
 
-    // Create Context and Load OpenGL Functions
-    glfwMakeContextCurrent(mWindow);
-
-	// GLFW Options
-	glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-	// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
-	glewExperimental = GL_TRUE;
-    glewInit();
-    fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
-
-	// Define the viewport dimensions
-	glViewport(0, 0, settings.m_iWidth, settings.m_iHeight);
-
-	// OpenGL options
-	glEnable(GL_DEPTH_TEST);
-	glLineWidth(5.f);
-
-	srand(time(NULL)); // Seed the time
+	srand(time(NULL)); // Seed rand with time
 	
 	GLFWInputBroadcaster::getInstance().init(mWindow);
 	GLFWInputBroadcaster::getInstance().attach(&ls);  // Register lighting system with input broadcaster
@@ -166,6 +144,9 @@ int main(int argc, char * argv[]) {
 		GLfloat currentFrame = static_cast<GLfloat>( glfwGetTime() );
 		settings.m_fDeltaTime = currentFrame - settings.m_fLastFrame;
 		settings.m_fLastFrame = currentFrame;
+
+		// Poll input events
+		GLFWInputBroadcaster::getInstance().update();
 		
 		camera.update(settings.m_fDeltaTime);
 
@@ -240,7 +221,6 @@ int main(int argc, char * argv[]) {
 
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
-		GLFWInputBroadcaster::getInstance().update();
     }   
 
 	slats.clear();
@@ -277,6 +257,40 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	{
 		wall->applyForce(btVector3(1, 0, 0), btVector3(-50, 1, 0));
 	}
+}
+
+GLFWwindow* init_gl_context(std::string winName)
+{
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+	GLFWwindow* mWindow = glfwCreateWindow(settings.m_iWidth, settings.m_iHeight, winName.c_str(), nullptr, nullptr);
+
+	// Check for Valid Context
+	if (mWindow == nullptr)
+		return nullptr;
+
+	// Create Context and Load OpenGL Functions
+	glfwMakeContextCurrent(mWindow);
+
+	// GLFW Options
+	glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
+	glewExperimental = GL_TRUE;
+	glewInit();
+	fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
+
+	// Define the viewport dimensions
+	glViewport(0, 0, settings.m_iWidth, settings.m_iHeight);
+
+	// OpenGL options
+	glEnable(GL_DEPTH_TEST);
+	glLineWidth(5.f);
+
+	return mWindow;
 }
 
 void init_physics()

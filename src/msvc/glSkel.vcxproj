@@ -135,7 +135,6 @@ exit 0</Command>
   <ItemGroup>
     <ClCompile Include="..\Cube.cpp" />
     <ClCompile Include="..\GLFWInputBroadcaster.cpp" />
-    <ClCompile Include="..\InputComponent.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\Slatissima.cpp" />
   </ItemGroup>
@@ -166,7 +165,6 @@ exit 0</Command>
     <ClInclude Include="..\Cube.h" />
     <ClInclude Include="..\GaborTest.h" />
     <ClInclude Include="..\GLFWInputBroadcaster.h" />
-    <ClInclude Include="..\InputComponent.h" />
     <ClInclude Include="..\Slatissima.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
