@@ -34,7 +34,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 GLFWwindow* init_gl_context(std::string winName);
 void init_physics();
-void step_physics();
 
 // Camera
 Camera  camera(glm::vec3(0.0f, 50.0f, 50.0f));
@@ -142,8 +141,13 @@ int main(int argc, char * argv[]) {
 		GLFWInputBroadcaster::getInstance().update();
 		
 		camera.update(settings.m_fDeltaTime);
+		
+		ps->update();
 
-		step_physics();
+		// update soft mesh vertices
+		for (auto s : slats) s->update();
+
+		if (tm) tm->update();
 
         // Background Fill Color
         glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
@@ -352,14 +356,4 @@ void init_physics()
 		
 		ps->getDynamicsWorld()->addConstraint(spSlider1, true);
 	}
-}
-
-void step_physics()
-{
-	ps->update();
-
-	// update soft mesh vertices
-	for (auto s : slats) s->update();
-
-	if (tm) tm->update();	
 }
