@@ -7,19 +7,12 @@
 #include <glm/common.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-// Bullet Physics headers
-#include <bullet/btBulletDynamicsCommon.h>
-#include <bullet/BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.h>
-#include <bullet/BulletSoftBody/btSoftRigidDynamicsWorld.h>
-#include <bullet/BulletSoftBody/btSoftBodyHelpers.h>
-
 // glSkeleton headers
 #include <glSkel/shader.h>
 #include <glSkel/camera.h>
 #include <glSkel/mesh.h>
 #include <glSkel/lighting.h>
 #include <glSkel/TorusMesh.h>
-#include <glSkel/BulletDebugDrawer.h>
 
 // Standard Headers
 #include <cstdio>
@@ -32,6 +25,7 @@
 #include "SLatissima.h"
 #include "GaborTest.h"
 #include "GLFWInputBroadcaster.h"
+#include "PhysicsSystem.h"
 
 std::default_random_engine generator;
 
@@ -50,11 +44,9 @@ Settings settings;
 std::vector<Slatissima *> slats;
 GaborTest *gt = NULL;
 
-btDynamicsWorld* dynamicsWorld = NULL;
+PhysicsSystem* ps = NULL;
 btRigidBody* groundBody = NULL;
 btRigidBody* wall = NULL;
-
-BulletDebugDrawer* debugDrawer = NULL;
 
 TorusMesh* tm = NULL;
 
@@ -77,6 +69,7 @@ int main(int argc, char * argv[]) {
 	GLFWInputBroadcaster::getInstance().attach(&camera);  // Register camera with input broadcaster
 	GLFWInputBroadcaster::getInstance().attach(&settings);  // Register settings with input broadcaster
 
+	ps = new PhysicsSystem();
 	init_physics();
 
 	// Build and compile our shader program
@@ -132,7 +125,7 @@ int main(int argc, char * argv[]) {
 		slat->setPosition(glm::vec3(-(nSlats * spaceBetween / 2) + i * spaceBetween, 0.f, 0.f));
 		//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
 		slat->setOrientation(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
-		slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
+		slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(ps->getDynamicsWorld()));
 		slat->anchorToBody(groundBody);
 		GLFWInputBroadcaster::getInstance().attach(slat);
 		slats.push_back(slat);
@@ -216,7 +209,7 @@ int main(int argc, char * argv[]) {
 			glUniformMatrix4fv(glGetUniformLocation(lineShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 			glUniformMatrix4fv(glGetUniformLocation(lineShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 			if (gt) gt->Draw(lineShader);
-			debugDrawer->Draw(lineShader);
+			ps->getDebugDrawer()->Draw(lineShader);
 		lineShader.Off();
 
         // Flip Buffers and Draw
@@ -247,7 +240,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			slat->setPosition(glm::vec3(-(nSlats * spaceBetween / 2) + i * spaceBetween, 0.f, 0.f));
 			//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
 			slat->setOrientation(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
-			slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld));
+			slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(ps->getDynamicsWorld()));
 			slat->anchorToBody(groundBody);
 			slats.push_back(slat);
 		}
@@ -295,29 +288,7 @@ GLFWwindow* init_gl_context(std::string winName)
 
 void init_physics()
 {
-	btDefaultCollisionConfiguration* collisionConfiguration = new btSoftBodyRigidBodyCollisionConfiguration();
-	btCollisionDispatcher* dispatcher = new	btCollisionDispatcher(collisionConfiguration);
-
-	btVector3 worldAabbMin(-1000,-1000,-1000);
-	btVector3 worldAabbMax(1000, 1000, 1000);
-	btBroadphaseInterface* broadphase = new btAxisSweep3(worldAabbMin, worldAabbMax, 32766U);
-
-	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver();
-
-	dynamicsWorld = new btSoftRigidDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
-
-	btSoftBodyWorldInfo &sbInfo = static_cast<btSoftRigidDynamicsWorld*>(dynamicsWorld)->getWorldInfo();
-	//sbInfo.m_gravity = btVector3(0.f, 0.f, 0.f);
-	//sbInfo.m_gravity = btVector3(0.f, -9.8f, 0.f);
-	sbInfo.m_gravity = btVector3(1.f, 3.f, -0.5f);
-	sbInfo.m_dispatcher = dispatcher;
-	sbInfo.m_broadphase = broadphase;
-	sbInfo.m_sparsesdf.Initialize();
-
-	debugDrawer = new BulletDebugDrawer();
-	//debugDrawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
-	debugDrawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
-	dynamicsWorld->setDebugDrawer(debugDrawer);	
+	ps->init();
 
 	//-----initialization_end-----
 	// GROUND PLANE
@@ -336,7 +307,7 @@ void init_physics()
 
 		groundBody;
 		//add the body to the dynamics world
-		dynamicsWorld->addRigidBody(groundBody);
+		ps->getDynamicsWorld()->addRigidBody(groundBody);
 	}
 
 	if (0)
@@ -379,13 +350,13 @@ void init_physics()
 		spSlider1->setLowerAngLimit(0.f);
 		spSlider1->setUpperAngLimit(0.f);
 		
-		dynamicsWorld->addConstraint(spSlider1, true);
+		ps->getDynamicsWorld()->addConstraint(spSlider1, true);
 	}
 }
 
 void step_physics()
 {
-	dynamicsWorld->stepSimulation(1.f / 120.f, 10);
+	ps->update();
 
 	// update soft mesh vertices
 	for (auto s : slats) s->update();
