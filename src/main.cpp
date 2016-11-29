@@ -42,7 +42,6 @@ Settings settings;
 std::vector<Slatissima *> slats;
 GaborTest *gt = NULL;
 
-btRigidBody* groundBody = NULL;
 btRigidBody* wall = NULL;
 
 TorusMesh* tm = NULL;
@@ -67,6 +66,7 @@ int main(int argc, char * argv[]) {
 	GLFWInputBroadcaster::getInstance().attach(&settings);  // Register settings with input broadcaster
 
 	settings.m_pPhysicsSystem = new PhysicsSystem();
+	settings.m_pPhysicsSystem->init();
 	init_physics();
 
 	// Build and compile our shader program
@@ -123,7 +123,7 @@ int main(int argc, char * argv[]) {
 		//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
 		slat->setOrientation(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
 		slat->initPhysics(settings.m_pPhysicsSystem->getSoftDynamicsWorld());
-		slat->anchorToBody(groundBody);
+		slat->anchorToBody(settings.m_pPhysicsSystem->getGroundBody());
 		GLFWInputBroadcaster::getInstance().attach(slat);
 		slats.push_back(slat);
 	}
@@ -243,7 +243,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
 			slat->setOrientation(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
 			slat->initPhysics(settings.m_pPhysicsSystem->getSoftDynamicsWorld());
-			slat->anchorToBody(groundBody);
+			slat->anchorToBody(settings.m_pPhysicsSystem->getGroundBody());
 			slats.push_back(slat);
 		}
 	}
@@ -290,27 +290,6 @@ GLFWwindow* init_gl_context(std::string winName)
 
 void init_physics()
 {
-	settings.m_pPhysicsSystem->init();
-
-	//-----initialization_end-----
-	// GROUND PLANE
-	btCollisionShape* groundShape = new btBoxShape(btVector3(500.f, 10.f, 500.f));
-	{
-		btScalar mass(0.f);
-		btVector3 localInertia(0.f, 0.f, 0.f);
-		btMatrix3x3 m;
-		m.setIdentity();
-		btTransform trans(m, btVector3(0.f, -10.f, 0.f));
-
-		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
-		btDefaultMotionState* myMotionState = new btDefaultMotionState(trans);
-		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
-		groundBody = new btRigidBody(rbInfo);
-
-		groundBody;
-		//add the body to the dynamics world
-		settings.m_pPhysicsSystem->getDynamicsWorld()->addRigidBody(groundBody);
-	}
 
 	if (0)
 	{

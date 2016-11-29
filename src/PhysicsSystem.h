@@ -21,6 +21,8 @@ public:
 	btSoftRigidDynamicsWorld* getSoftDynamicsWorld();
 	BulletDebugDrawer* getDebugDrawer();
 
+	btRigidBody* getGroundBody();
+
 private:
 	btDynamicsWorld* m_pDynamicsWorld;
 
@@ -32,5 +34,10 @@ private:
 	btVector3 worldAabbMin, worldAabbMax;
 
 	BulletDebugDrawer* m_pDebugDrawer;
+	
+	btRigidBody* m_pGroundBody;
+
+private:
+	void setupGround();
 };
 
