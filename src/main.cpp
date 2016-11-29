@@ -32,7 +32,6 @@ std::default_random_engine generator;
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 
 GLFWwindow* init_gl_context(std::string winName);
-void init_physics();
 
 // Camera
 Camera  camera(glm::vec3(0.0f, 50.0f, 50.0f));
@@ -41,8 +40,6 @@ Settings settings;
 
 std::vector<Slatissima *> slats;
 GaborTest *gt = NULL;
-
-btRigidBody* wall = NULL;
 
 TorusMesh* tm = NULL;
 
@@ -67,7 +64,6 @@ int main(int argc, char * argv[]) {
 
 	settings.m_pPhysicsSystem = new PhysicsSystem();
 	settings.m_pPhysicsSystem->init();
-	init_physics();
 
 	// Build and compile our shader program
 	Shader lightingShader(
@@ -247,11 +243,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			slats.push_back(slat);
 		}
 	}
-	
-	if (key == GLFW_KEY_PERIOD && action == GLFW_PRESS)
-	{
-		wall->applyForce(btVector3(1, 0, 0), btVector3(-50, 1, 0));
-	}
 }
 
 GLFWwindow* init_gl_context(std::string winName)
@@ -286,51 +277,4 @@ GLFWwindow* init_gl_context(std::string winName)
 	glLineWidth(5.f);
 
 	return mWindow;
-}
-
-void init_physics()
-{
-
-	if (0)
-	{
-		btCollisionShape* shape = new btBoxShape(btVector3(1.f, 1.f, 1.f));
-		float mass = 0.f;
-		btVector3 localInertia(0.f, 0.f, 0.f);
-
-		btTransform trans;
-		trans.setIdentity();
-		btVector3 worldPos(-15, 1, 0);
-		trans.setOrigin(worldPos);
-
-		btTransform frameInA, frameInB;
-		frameInA = btTransform::getIdentity();
-		frameInB = btTransform::getIdentity();
-
-		btDefaultMotionState* pMsA1 = new btDefaultMotionState(trans);
-		btRigidBody::btRigidBodyConstructionInfo rbInfoA(mass, pMsA1, shape, localInertia);
-		btRigidBody* pRbA1 = new btRigidBody(rbInfoA);
-		//	btRigidBody* pRbA1 = createRigidBody(0.f, trans, shape);
-		pRbA1->setActivationState(DISABLE_DEACTIVATION);
-
-		// add dynamic rigid body B1
-		worldPos.setValue(-10, 1, 0);
-		trans.setOrigin(worldPos);
-		btDefaultMotionState* pMsB1 = new btDefaultMotionState(trans);
-		btRigidBody::btRigidBodyConstructionInfo rbInfoB(mass, pMsB1, shape, localInertia);
-		wall = new btRigidBody(rbInfoB);
-		//	btRigidBody* pRbB1 = createRigidBody(0.f, trans, shape);
-		wall->setCollisionFlags(wall->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT);
-		wall->setActivationState(DISABLE_DEACTIVATION);
-
-		// create slider constraint between A1 and B1 and add it to world
-
-		btSliderConstraint* spSlider1 = new btSliderConstraint(*pRbA1, *wall, frameInA, frameInB, true);
-		spSlider1->setLowerLinLimit(-15.0F);
-		spSlider1->setUpperLinLimit(10.0F);
-
-		spSlider1->setLowerAngLimit(0.f);
-		spSlider1->setUpperAngLimit(0.f);
-		
-		settings.m_pPhysicsSystem->getDynamicsWorld()->addConstraint(spSlider1, true);
-	}
 }
