@@ -24,6 +24,8 @@ public:
 	float m_fDeltaTime;	// Time between current frame and last frame
 	float m_fLastFrame; // Time of last frame
 
+	Shader *m_pShaderLighting, *m_pShaderLamps, *m_pShaderNormals, *m_pShaderExplode, *m_pShaderLines;
+
 	std::vector<Slatissima *> slats;
 
 public:
@@ -34,6 +36,11 @@ public:
 		, m_bExplode(false)
 		, m_fDeltaTime(0.f)
 		, m_fLastFrame(0.f)
+		, m_pShaderLighting(NULL)
+		, m_pShaderLamps(NULL)
+		, m_pShaderNormals(NULL)
+		, m_pShaderExplode(NULL)
+		, m_pShaderLines(NULL)
 	{
 
 	}
@@ -59,6 +66,33 @@ public:
 			if (key == GLFW_KEY_R)
 				generateModels();
 		}
+	}
+
+	void init_shaders()
+	{
+		// Build and compile our shader program
+		m_pShaderLighting = new Shader(
+			"shaders/multiple_lights.vs",
+			"shaders/multiple_lights.frag"
+			);
+		m_pShaderLamps = new Shader(
+			"shaders/lamp.vs",
+			"shaders/lamp.frag"
+			);
+		m_pShaderNormals = new Shader(
+			"shaders/normals.vs",
+			"shaders/normals.frag",
+			"shaders/normals.geom"
+			);
+		m_pShaderExplode = new Shader(
+			"shaders/explode.vs",
+			"shaders/explode.frag",
+			"shaders/explode.geom"
+			);
+		m_pShaderLines = new Shader(
+			"shaders/line.vs",
+			"shaders/line.frag"
+			);
 	}
 
 	void generateModels()

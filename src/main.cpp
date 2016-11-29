@@ -60,34 +60,12 @@ int main(int argc, char * argv[]) {
 	settings.m_pPhysicsSystem = new PhysicsSystem();
 	settings.m_pPhysicsSystem->init();
 
-	// Build and compile our shader program
-	Shader lightingShader(
-		"shaders/multiple_lights.vs",
-		"shaders/multiple_lights.frag"
-	);
-	Shader lampShader(
-		"shaders/lamp.vs",
-		"shaders/lamp.frag"
-	);
-	Shader normalsShader(
-		"shaders/normals.vs",
-		"shaders/normals.frag",
-		"shaders/normals.geom"
-	);
-	Shader explodeShader(
-		"shaders/explode.vs",
-		"shaders/explode.frag",
-		"shaders/explode.geom"
-	);
-	Shader lineShader(
-		"shaders/line.vs", 
-		"shaders/line.frag"
-	);
+	settings.init_shaders();
 
 	// Get the uniform locations
-	GLint viewLoc = glGetUniformLocation(lightingShader.Program, "view");
-	GLint projLoc = glGetUniformLocation(lightingShader.Program, "projection");
-	GLint viewPosLoc = glGetUniformLocation(lightingShader.Program, "viewPos");
+	GLint viewLoc = glGetUniformLocation(settings.m_pShaderLighting->Program, "view");
+	GLint projLoc = glGetUniformLocation(settings.m_pShaderLighting->Program, "projection");
+	GLint viewPosLoc = glGetUniformLocation(settings.m_pShaderLighting->Program, "viewPos");
 
 	// Initialize the lighting system
 	// Directional light
@@ -129,15 +107,15 @@ int main(int argc, char * argv[]) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Use corresponding shader when setting uniforms/drawing objects
-		lightingShader.Use();
+		settings.m_pShaderLighting->Use();
 		glUniform3f(viewPosLoc, camera.getPosition().x, camera.getPosition().y, camera.getPosition().z);
 		// Set material properties
-		glUniform1f(glGetUniformLocation(lightingShader.Program, "material.shininess"), 32.0f);
+		glUniform1f(glGetUniformLocation(settings.m_pShaderLighting->Program, "material.shininess"), 32.0f);
 		
 		ls.sLight.position = camera.getPosition();
 		ls.sLight.direction = glm::vec3(camera.getOrientation()[2]);
 
-		ls.SetupLighting(lightingShader);
+		ls.SetupLighting(*settings.m_pShaderLighting);
 
 		// Create camera transformations
 		glm::mat4 view = camera.getViewMatrix();
@@ -154,42 +132,42 @@ int main(int argc, char * argv[]) {
 		
 		//c.Draw(lightingShader);
 
-		for (auto s : settings.slats) s->Draw(lightingShader);
+		for (auto s : settings.slats) s->Draw(*settings.m_pShaderLighting);
 
-		if (tm) tm->Draw(lightingShader);
+		if (tm) tm->Draw(*settings.m_pShaderLighting);
 
 		if (settings.m_bShowNormals)
 		{
-			normalsShader.Use();
-			glUniformMatrix4fv(glGetUniformLocation(normalsShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-			glUniformMatrix4fv(glGetUniformLocation(normalsShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-			for (auto s : settings.slats) s->Draw(normalsShader);
+			settings.m_pShaderNormals->Use();
+			glUniformMatrix4fv(glGetUniformLocation(settings.m_pShaderNormals->Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glUniformMatrix4fv(glGetUniformLocation(settings.m_pShaderNormals->Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+			for (auto s : settings.slats) s->Draw(*settings.m_pShaderNormals);
 		}
 
 		if (settings.m_bExplode)
 		{
-			explodeShader.Use();
-			glUniformMatrix4fv(glGetUniformLocation(explodeShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-			glUniformMatrix4fv(glGetUniformLocation(explodeShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-			for (auto s : settings.slats) s->Draw(explodeShader);
+			settings.m_pShaderExplode->Use();
+			glUniformMatrix4fv(glGetUniformLocation(settings.m_pShaderExplode->Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glUniformMatrix4fv(glGetUniformLocation(settings.m_pShaderExplode->Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+			for (auto s : settings.slats) s->Draw(*settings.m_pShaderExplode);
 		}
 
 		if (settings.m_bShowLights)
 		{
-			lampShader.Use();
+			settings.m_pShaderLamps->Use();
 
-			glUniformMatrix4fv(glGetUniformLocation(lampShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-			glUniformMatrix4fv(glGetUniformLocation(lampShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+			glUniformMatrix4fv(glGetUniformLocation(settings.m_pShaderLamps->Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glUniformMatrix4fv(glGetUniformLocation(settings.m_pShaderLamps->Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-			ls.Draw(lampShader);
+			ls.Draw(*settings.m_pShaderLamps);
 		}
 
-		lineShader.Use();
-			glUniformMatrix4fv(glGetUniformLocation(lineShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-			glUniformMatrix4fv(glGetUniformLocation(lineShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-			if (gt) gt->Draw(lineShader);
-			settings.m_pPhysicsSystem->getDebugDrawer()->Draw(lineShader);
-		lineShader.Off();
+		settings.m_pShaderLines->Use();
+		glUniformMatrix4fv(glGetUniformLocation(settings.m_pShaderLines->Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(settings.m_pShaderLines->Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		if (gt) gt->Draw(*settings.m_pShaderLines);
+		settings.m_pPhysicsSystem->getDebugDrawer()->Draw(*settings.m_pShaderLines);
+		settings.m_pShaderLines->Off();
 
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
