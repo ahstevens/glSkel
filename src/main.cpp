@@ -25,7 +25,6 @@
 #include "SLatissima.h"
 #include "GaborTest.h"
 #include "GLFWInputBroadcaster.h"
-#include "PhysicsSystem.h"
 
 std::default_random_engine generator;
 
@@ -43,7 +42,6 @@ Settings settings;
 std::vector<Slatissima *> slats;
 GaborTest *gt = NULL;
 
-PhysicsSystem* ps = NULL;
 btRigidBody* groundBody = NULL;
 btRigidBody* wall = NULL;
 
@@ -68,7 +66,7 @@ int main(int argc, char * argv[]) {
 	GLFWInputBroadcaster::getInstance().attach(&camera);  // Register camera with input broadcaster
 	GLFWInputBroadcaster::getInstance().attach(&settings);  // Register settings with input broadcaster
 
-	ps = new PhysicsSystem();
+	settings.m_pPhysicsSystem = new PhysicsSystem();
 	init_physics();
 
 	// Build and compile our shader program
@@ -124,7 +122,7 @@ int main(int argc, char * argv[]) {
 		slat->setPosition(glm::vec3(-(nSlats * spaceBetween / 2) + i * spaceBetween, 0.f, 0.f));
 		//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
 		slat->setOrientation(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
-		slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(ps->getDynamicsWorld()));
+		slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(settings.m_pPhysicsSystem->getDynamicsWorld()));
 		slat->anchorToBody(groundBody);
 		GLFWInputBroadcaster::getInstance().attach(slat);
 		slats.push_back(slat);
@@ -142,7 +140,7 @@ int main(int argc, char * argv[]) {
 		
 		camera.update(settings.m_fDeltaTime);
 		
-		ps->update();
+		settings.m_pPhysicsSystem->update();
 
 		// update soft mesh vertices
 		for (auto s : slats) s->update();
@@ -213,7 +211,7 @@ int main(int argc, char * argv[]) {
 			glUniformMatrix4fv(glGetUniformLocation(lineShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 			glUniformMatrix4fv(glGetUniformLocation(lineShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 			if (gt) gt->Draw(lineShader);
-			ps->getDebugDrawer()->Draw(lineShader);
+			settings.m_pPhysicsSystem->getDebugDrawer()->Draw(lineShader);
 		lineShader.Off();
 
         // Flip Buffers and Draw
@@ -244,7 +242,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			slat->setPosition(glm::vec3(-(nSlats * spaceBetween / 2) + i * spaceBetween, 0.f, 0.f));
 			//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
 			slat->setOrientation(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
-			slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(ps->getDynamicsWorld()));
+			slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(settings.m_pPhysicsSystem->getDynamicsWorld()));
 			slat->anchorToBody(groundBody);
 			slats.push_back(slat);
 		}
@@ -292,7 +290,7 @@ GLFWwindow* init_gl_context(std::string winName)
 
 void init_physics()
 {
-	ps->init();
+	settings.m_pPhysicsSystem->init();
 
 	//-----initialization_end-----
 	// GROUND PLANE
@@ -311,7 +309,7 @@ void init_physics()
 
 		groundBody;
 		//add the body to the dynamics world
-		ps->getDynamicsWorld()->addRigidBody(groundBody);
+		settings.m_pPhysicsSystem->getDynamicsWorld()->addRigidBody(groundBody);
 	}
 
 	if (0)
@@ -354,6 +352,6 @@ void init_physics()
 		spSlider1->setLowerAngLimit(0.f);
 		spSlider1->setUpperAngLimit(0.f);
 		
-		ps->getDynamicsWorld()->addConstraint(spSlider1, true);
+		settings.m_pPhysicsSystem->getDynamicsWorld()->addConstraint(spSlider1, true);
 	}
 }

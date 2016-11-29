@@ -4,9 +4,13 @@
 
 #include <glSkel/Observer.h>
 
+#include "PhysicsSystem.h"
+
 class Settings : public Observer
 {
 public:
+	PhysicsSystem* m_pPhysicsSystem;
+
 	bool m_bShowLights;
 	bool m_bShowNormals;
 	bool m_bExplode; 
@@ -20,7 +24,8 @@ public:
 
 public:
 	Settings()
-		: m_bShowLights(true)
+		: m_pPhysicsSystem(NULL)
+		, m_bShowLights(true)
 		, m_bShowNormals(false)
 		, m_bExplode(false)
 		, m_fDeltaTime(0.f)
