@@ -122,7 +122,7 @@ int main(int argc, char * argv[]) {
 		slat->setPosition(glm::vec3(-(nSlats * spaceBetween / 2) + i * spaceBetween, 0.f, 0.f));
 		//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
 		slat->setOrientation(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
-		slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(settings.m_pPhysicsSystem->getDynamicsWorld()));
+		slat->initPhysics(settings.m_pPhysicsSystem->getSoftDynamicsWorld());
 		slat->anchorToBody(groundBody);
 		GLFWInputBroadcaster::getInstance().attach(slat);
 		slats.push_back(slat);
@@ -242,7 +242,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			slat->setPosition(glm::vec3(-(nSlats * spaceBetween / 2) + i * spaceBetween, 0.f, 0.f));
 			//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
 			slat->setOrientation(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
-			slat->initPhysics(static_cast<btSoftRigidDynamicsWorld*>(settings.m_pPhysicsSystem->getDynamicsWorld()));
+			slat->initPhysics(settings.m_pPhysicsSystem->getSoftDynamicsWorld());
 			slat->anchorToBody(groundBody);
 			slats.push_back(slat);
 		}

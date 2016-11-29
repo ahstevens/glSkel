@@ -52,6 +52,11 @@ btDynamicsWorld * PhysicsSystem::getDynamicsWorld()
 	return m_pDynamicsWorld;
 }
 
+btSoftRigidDynamicsWorld * PhysicsSystem::getSoftDynamicsWorld()
+{
+	return static_cast<btSoftRigidDynamicsWorld*>(m_pDynamicsWorld);
+}
+
 BulletDebugDrawer * PhysicsSystem::getDebugDrawer()
 {
 	return m_pDebugDrawer;

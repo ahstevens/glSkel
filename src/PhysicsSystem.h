@@ -18,6 +18,7 @@ public:
 	void update();
 
 	btDynamicsWorld* getDynamicsWorld();
+	btSoftRigidDynamicsWorld* getSoftDynamicsWorld();
 	BulletDebugDrawer* getDebugDrawer();
 
 private:
