@@ -22,14 +22,10 @@
 // Our classes
 #include <glSkel/Settings.h>
 #include "Cube.h"
-#include "SLatissima.h"
 #include "GaborTest.h"
 #include "GLFWInputBroadcaster.h"
 
 std::default_random_engine generator;
-
-// Function prototypes
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 
 GLFWwindow* init_gl_context(std::string winName);
 
@@ -38,7 +34,6 @@ Camera  camera(glm::vec3(0.0f, 50.0f, 50.0f));
 LightingSystem ls;
 Settings settings;
 
-std::vector<Slatissima *> slats;
 GaborTest *gt = NULL;
 
 TorusMesh* tm = NULL;
@@ -108,21 +103,7 @@ int main(int argc, char * argv[]) {
 	//ls.sLight.on = false;
 
 	//gabs.push_back(currentEditGabor);
-	Slatissima *slat;
-	unsigned int nSlats = 4u;
-	float spaceBetween = 5.f;
-
-	for (int i = 0u; i < nSlats; ++i)
-	{
-		slat = new Slatissima(0.5f);
-		slat->setPosition(glm::vec3(-(nSlats * spaceBetween / 2) + i * spaceBetween, 0.f, 0.f));
-		//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
-		slat->setOrientation(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
-		slat->initPhysics(settings.m_pPhysicsSystem->getSoftDynamicsWorld());
-		slat->anchorToBody(settings.m_pPhysicsSystem->getGroundBody());
-		GLFWInputBroadcaster::getInstance().attach(slat);
-		slats.push_back(slat);
-	}
+	settings.generateModels();
 
     // Main Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false) {
@@ -139,7 +120,7 @@ int main(int argc, char * argv[]) {
 		settings.m_pPhysicsSystem->update();
 
 		// update soft mesh vertices
-		for (auto s : slats) s->update();
+		for (auto s : settings.slats) s->update();
 
 		if (tm) tm->update();
 
@@ -173,7 +154,7 @@ int main(int argc, char * argv[]) {
 		
 		//c.Draw(lightingShader);
 
-		for (auto s : slats) s->Draw(lightingShader);
+		for (auto s : settings.slats) s->Draw(lightingShader);
 
 		if (tm) tm->Draw(lightingShader);
 
@@ -182,7 +163,7 @@ int main(int argc, char * argv[]) {
 			normalsShader.Use();
 			glUniformMatrix4fv(glGetUniformLocation(normalsShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 			glUniformMatrix4fv(glGetUniformLocation(normalsShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-			for (auto s : slats) s->Draw(normalsShader);
+			for (auto s : settings.slats) s->Draw(normalsShader);
 		}
 
 		if (settings.m_bExplode)
@@ -190,7 +171,7 @@ int main(int argc, char * argv[]) {
 			explodeShader.Use();
 			glUniformMatrix4fv(glGetUniformLocation(explodeShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 			glUniformMatrix4fv(glGetUniformLocation(explodeShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-			for (auto s : slats) s->Draw(explodeShader);
+			for (auto s : settings.slats) s->Draw(explodeShader);
 		}
 
 		if (settings.m_bShowLights)
@@ -214,35 +195,11 @@ int main(int argc, char * argv[]) {
         glfwSwapBuffers(mWindow);
     }   
 
-	slats.clear();
+	settings.slats.clear();
 	
 	glfwTerminate();
 
     return EXIT_SUCCESS;
-}
-
-// Is called whenever a key is pressed/released via GLFW
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
-{
-	if (key == GLFW_KEY_R && action == GLFW_PRESS)
-	{
-		slats.clear();
-		Slatissima *slat;
-		unsigned int nSlats = 4u;
-		float spaceBetween = 5.f;
-
-		for (int i = 0u; i < nSlats; ++i)
-		{
-			delete slats[i];
-			slat = new Slatissima(0.5f);
-			slat->setPosition(glm::vec3(-(nSlats * spaceBetween / 2) + i * spaceBetween, 0.f, 0.f));
-			//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
-			slat->setOrientation(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
-			slat->initPhysics(settings.m_pPhysicsSystem->getSoftDynamicsWorld());
-			slat->anchorToBody(settings.m_pPhysicsSystem->getGroundBody());
-			slats.push_back(slat);
-		}
-	}
 }
 
 GLFWwindow* init_gl_context(std::string winName)
