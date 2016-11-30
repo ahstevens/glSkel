@@ -3,16 +3,25 @@
 #include <glSkel/shader.h>
 
 #include <glSkel/Observer.h>
+#include <glSkel/shader.h>
+#include <glSkel/camera.h>
+#include <glSkel/mesh.h>
+#include <glSkel/lighting.h>
 
 #include "PhysicsSystem.h"
 #include "GLFWInputBroadcaster.h"
 #include "SLatissima.h"
 
+#define MS_PER_UPDATE 0.0333333333f
+
 class Settings : public Observer
 {
 public:
+	GLFWwindow* m_pWindow;
 	PhysicsSystem* m_pPhysicsSystem;
+	LightingSystem* m_pLightingSystem;
 
+	bool m_bRunPhysics;
 	bool m_bShowLights;
 	bool m_bShowNormals;
 	bool m_bExplode; 
@@ -20,34 +29,54 @@ public:
 	// Constants
 	const int m_iWidth = 1280;
 	const int m_iHeight = 800;
+	const float m_fStepSize = 1.f / 120.f;
 
 	float m_fDeltaTime;	// Time between current frame and last frame
-	float m_fLastFrame; // Time of last frame
+	float m_fLastTime; // Time of last frame
 
-	Shader *m_pShaderLighting, *m_pShaderLamps, *m_pShaderNormals, *m_pShaderExplode, *m_pShaderLines;
+	Camera  *m_pCamera;
+	std::vector<Shader*> m_vpShaders;
+	Shader *m_pShaderLighting, *m_pShaderLamps, *m_pShaderNormals, *m_pShaderExplode, *m_pShaderLines; 
+	
+	GLint m_iViewLocLightingShader;
+	GLint m_iProjLocLightingShader;
+	GLint m_iViewPosLocLightingShader;
+	GLint m_iShininessLightingShader;
 
 	std::vector<Slatissima *> slats;
 
 public:
 	Settings()
-		: m_pPhysicsSystem(NULL)
+		: m_pWindow(NULL)
+		, m_pPhysicsSystem(NULL)
+		, m_pLightingSystem(NULL)
+		, m_bRunPhysics(false)
 		, m_bShowLights(true)
 		, m_bShowNormals(false)
 		, m_bExplode(false)
 		, m_fDeltaTime(0.f)
-		, m_fLastFrame(0.f)
+		, m_fLastTime(0.f)
+		, m_pCamera(NULL)
 		, m_pShaderLighting(NULL)
 		, m_pShaderLamps(NULL)
 		, m_pShaderNormals(NULL)
 		, m_pShaderExplode(NULL)
 		, m_pShaderLines(NULL)
+		, m_iViewLocLightingShader(-1)
+		, m_iProjLocLightingShader(-1)
+		, m_iViewPosLocLightingShader(-1)
+		, m_iShininessLightingShader(-1)
 	{
-
 	}
 
 	~Settings()
 	{
-
+		if (slats.size())
+		{
+			for (auto s : slats) 
+				delete s;
+			slats.clear();			
+		}
 	}
 
 	void receiveEvent(Object * obj, const int event, void * data)
@@ -65,7 +94,186 @@ public:
 				m_bExplode = !m_bExplode;
 			if (key == GLFW_KEY_R)
 				generateModels();
+			if (key == GLFW_KEY_SPACE)
+				m_bRunPhysics = !m_bRunPhysics;
 		}
+	}
+
+	bool init()
+	{
+		m_pWindow = init_gl_context("Saccharina latissima");
+
+		if (!m_pWindow)
+			return false;
+
+		GLFWInputBroadcaster::getInstance().init(m_pWindow);
+		GLFWInputBroadcaster::getInstance().attach(this);  // Register self with input broadcaster
+
+		m_pPhysicsSystem = new PhysicsSystem();
+		m_pPhysicsSystem->init();
+
+		init_shaders();
+		init_camera();
+		init_lighting();
+		generateModels();
+	}
+
+	void mainLoop()
+	{
+		m_fLastTime = static_cast<float>(glfwGetTime());
+
+		// Main Rendering Loop
+		while (!glfwWindowShouldClose(m_pWindow)) {
+			// Calculate deltatime of current frame
+			float newTime = static_cast<float>(glfwGetTime());
+			m_fDeltaTime = newTime - m_fLastTime;
+			m_fLastTime = newTime;
+
+			// Poll input events first
+			GLFWInputBroadcaster::getInstance().poll();
+
+			update(m_fStepSize);
+
+			render();
+
+			// Flip buffers and render to screen
+			glfwSwapBuffers(m_pWindow);
+		}
+	}
+
+	void update(float dt)
+	{
+
+		m_pCamera->update(dt);
+
+		// update soft mesh vertices
+		for (auto s : slats) 
+			s->update();
+
+		if (m_bRunPhysics)
+		{
+			m_pPhysicsSystem->update(dt);
+
+			m_pPhysicsSystem->update(dt);
+		}
+	}
+
+	void render()
+	{
+		// OpenGL options
+		glEnable(GL_DEPTH_TEST);
+		glLineWidth(5.f);
+
+		// Background Fill Color
+		glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Use corresponding shader when setting uniforms/drawing objects
+		m_pShaderLighting->Use();
+		glUniform3f(m_iViewPosLocLightingShader, m_pCamera->getPosition().x, m_pCamera->getPosition().y, m_pCamera->getPosition().z);
+
+		m_pLightingSystem->sLight.position = m_pCamera->getPosition();
+		m_pLightingSystem->sLight.direction = glm::vec3(m_pCamera->getOrientation()[2]);
+
+		m_pLightingSystem->SetupLighting(*m_pShaderLighting);
+
+		// Create camera transformations
+		glm::mat4 view = m_pCamera->getViewMatrix();
+		glm::mat4 projection = glm::perspective(
+			glm::radians(m_pCamera->getZoom()),
+			static_cast<float>(m_iWidth) / static_cast<float>(m_iHeight),
+			0.01f,
+			1000.0f
+			);
+
+		// Pass the matrices to the shader
+		glUniformMatrix4fv(m_iViewLocLightingShader, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(m_iProjLocLightingShader, 1, GL_FALSE, glm::value_ptr(projection));
+
+		// Set material properties
+		glUniform1f(m_iShininessLightingShader, 32.0f);		
+
+		for (auto& shader : m_vpShaders)
+		{
+			if (shader->status())
+			{
+				shader->Use();
+				glUniformMatrix4fv(glGetUniformLocation(shader->Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+				glUniformMatrix4fv(glGetUniformLocation(shader->Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+				if (shader == m_pShaderLines)
+				{
+					m_pPhysicsSystem->getDebugDrawer()->Draw(*shader);
+				}
+				else if (shader == m_pShaderLamps)
+				{
+					m_pLightingSystem->Draw(*shader);
+				}
+				else
+				{
+					for (auto& s : slats) 
+						s->Draw(*shader);
+				}
+			}
+		}
+
+		Shader::Off();
+	}
+
+private:
+	GLFWwindow* init_gl_context(std::string winName)
+	{
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+		glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+		GLFWwindow* mWindow = glfwCreateWindow(m_iWidth, m_iHeight, winName.c_str(), nullptr, nullptr);
+
+		// Check for Valid Context
+		if (mWindow == nullptr)
+			return nullptr;
+
+		// Create Context and Load OpenGL Functions
+		glfwMakeContextCurrent(mWindow);
+
+		// GLFW Options
+		glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+		// Set this to true so GLEW knows to use a modern approach to retrieving function pointers and extensions
+		glewExperimental = GL_TRUE;
+		glewInit();
+		fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
+
+		// Define the viewport dimensions
+		glViewport(0, 0, m_iWidth, m_iHeight);
+
+		return mWindow;
+	}
+
+	// Initialize the lighting system
+	void init_lighting()
+	{
+		m_pLightingSystem = new LightingSystem();
+		GLFWInputBroadcaster::getInstance().attach(m_pLightingSystem);
+
+		// Directional light
+		m_pLightingSystem->addDLight(glm::vec3(-1.f, -1.f, -1.f), glm::vec3(0.05f), glm::vec3(0.25f));
+
+		// Positions of the point lights
+		m_pLightingSystem->addPLight(glm::vec3(-5.f, 0.f, -5.f));
+		m_pLightingSystem->addPLight(glm::vec3(5.f, 0.f, -5.f));
+		m_pLightingSystem->addPLight(glm::vec3(5.f, 0.f, 5.f));
+		m_pLightingSystem->addPLight(glm::vec3(-5.f, 0.f, 5.f));
+
+		// Spotlight
+		m_pLightingSystem->addSLight();
+	}
+
+	void init_camera()
+	{
+		m_pCamera = new Camera(glm::vec3(0.0f, 50.0f, 50.0f));
+		GLFWInputBroadcaster::getInstance().attach(m_pCamera);
 	}
 
 	void init_shaders()
@@ -75,24 +283,42 @@ public:
 			"shaders/multiple_lights.vs",
 			"shaders/multiple_lights.frag"
 			);
+		m_pShaderLighting->enable();
+		m_vpShaders.push_back(m_pShaderLighting);
+
 		m_pShaderLamps = new Shader(
 			"shaders/lamp.vs",
 			"shaders/lamp.frag"
 			);
+		m_pShaderLamps->enable();
+		m_vpShaders.push_back(m_pShaderLamps);
+
 		m_pShaderNormals = new Shader(
 			"shaders/normals.vs",
 			"shaders/normals.frag",
 			"shaders/normals.geom"
 			);
+		m_vpShaders.push_back(m_pShaderNormals);
+
 		m_pShaderExplode = new Shader(
 			"shaders/explode.vs",
 			"shaders/explode.frag",
 			"shaders/explode.geom"
 			);
+		m_vpShaders.push_back(m_pShaderExplode);
+
 		m_pShaderLines = new Shader(
 			"shaders/line.vs",
 			"shaders/line.frag"
 			);
+		m_pShaderLines->enable();
+		m_vpShaders.push_back(m_pShaderLines);
+		
+		// Get the uniform locations
+		m_iViewLocLightingShader = glGetUniformLocation(m_pShaderLighting->Program, "view");
+		m_iProjLocLightingShader = glGetUniformLocation(m_pShaderLighting->Program, "projection");
+		m_iViewPosLocLightingShader = glGetUniformLocation(m_pShaderLighting->Program, "viewPos"); 
+		m_iShininessLightingShader = glGetUniformLocation(m_pShaderLighting->Program, "material.shininess");
 	}
 
 	void generateModels()
@@ -125,9 +351,6 @@ public:
 			GLFWInputBroadcaster::getInstance().attach(slat);
 			slats.push_back(slat);
 		}
-	}
-
-private:
-	
+	}	
 };
 

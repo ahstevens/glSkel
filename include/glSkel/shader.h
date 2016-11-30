@@ -12,8 +12,11 @@ class Shader
 {
 public:
     GLuint Program;
+
     // Constructor generates the shader on the fly
     Shader(const GLchar* vertexPath, const GLchar* fragmentPath, const GLchar* geometryPath = nullptr)
+		: Program(0)
+		, m_bEnabled(false)
     {
         // 1. Retrieve the vertex/fragment source code from filePath
         std::string vertexCode;
@@ -100,7 +103,14 @@ public:
     // Turn off shaders
     static void Off() { glUseProgram(0); }
 
+	void enable() { m_bEnabled = true; }
+	void disable() { m_bEnabled = false; }
+	void toggle() { m_bEnabled = !m_bEnabled; }
+	bool status() { return m_bEnabled; }
+
 private:
+	bool m_bEnabled;
+
     void checkCompileErrors(GLuint shader, std::string type)
 	{
 		GLint success;

@@ -13,6 +13,22 @@ PhysicsSystem::PhysicsSystem()
 
 PhysicsSystem::~PhysicsSystem()
 {
+	for (int i = m_pDynamicsWorld->getNumCollisionObjects() - 1; i >= 0; --i)
+	{
+		btCollisionObject* obj = m_pDynamicsWorld->getCollisionObjectArray()[i];
+		btRigidBody* body = btRigidBody::upcast(obj);
+
+		if (body && body->getMotionState())
+			delete body->getMotionState();
+
+		m_pDynamicsWorld->removeCollisionObject(obj);
+		delete obj;
+	}
+
+	delete m_pDynamicsWorld;
+	delete m_pSolver;
+	delete m_pBroadphase;
+	delete m_pDispatcher;
 }
 
 bool PhysicsSystem::init()
@@ -45,9 +61,9 @@ bool PhysicsSystem::init()
 	return true;
 }
 
-void PhysicsSystem::update()
+void PhysicsSystem::update(float dt)
 {
-	m_pDynamicsWorld->stepSimulation(1.f / 120.f, 10);
+	m_pDynamicsWorld->stepSimulation(dt);
 }
 
 btDynamicsWorld * PhysicsSystem::getDynamicsWorld()

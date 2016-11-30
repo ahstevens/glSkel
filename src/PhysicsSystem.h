@@ -15,7 +15,7 @@ public:
 
 	bool init();
 
-	void update();
+	void update(float dt);
 
 	btDynamicsWorld* getDynamicsWorld();
 	btSoftRigidDynamicsWorld* getSoftDynamicsWorld();

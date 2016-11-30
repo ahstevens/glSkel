@@ -15,7 +15,7 @@ public:
 
 	bool keyPressed(const int glfwKeyCode);
 
-	void update();
+	void poll();
 
 private:
 	GLFWInputBroadcaster();

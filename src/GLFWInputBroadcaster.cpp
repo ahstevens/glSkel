@@ -34,7 +34,7 @@ bool GLFWInputBroadcaster::keyPressed(const int glfwKeyCode)
 	return keys[glfwKeyCode];
 }
 
-void GLFWInputBroadcaster::update()
+void GLFWInputBroadcaster::poll()
 {
 	glfwPollEvents();
 }
