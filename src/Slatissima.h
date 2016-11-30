@@ -13,10 +13,8 @@
 class Slatissima : public Observer
 {
 public:
-	Slatissima(float solidThickness);
+	Slatissima(float solidThickness, glm::vec3 position, glm::quat orientation, btSoftRigidDynamicsWorld* dynamicsWorld);
 	~Slatissima();
-
-	void initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld);
 
 	void rotateX(float degrees);
 	void rotateY(float degrees);
@@ -50,6 +48,7 @@ private:
 	std::vector<Gabor*> gabors;
 
 	void buildModel();
+	void initPhysics();
 
 	void generateGabors(float x);
 	float calculateEnvelope(float currentRatio, float begin, float max1, float max2, float end);

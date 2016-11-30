@@ -29,10 +29,10 @@ const float LW_RATIO_STD = 2.010f;
 const float LP_RATIO_AVG = 7.738f;
 const float LP_RATIO_STD = 2.389f;
 
-Slatissima::Slatissima(float solidThickness)
+Slatissima::Slatissima(float solidThickness, glm::vec3 position, glm::quat orientation, btSoftRigidDynamicsWorld* dynamicsWorld)
 	: m_bPhysicsInit(false)
 	, m_bSolidMesh(solidThickness > 0.f)
-	, m_pDynamicsWorld(NULL)
+	, m_pDynamicsWorld(dynamicsWorld)
 	, m_pSoftBody(NULL)
 	, m_debugDrawFlags(0)
 {
@@ -51,6 +51,10 @@ Slatissima::Slatissima(float solidThickness)
 
 	this->buildModel();
 	if(m_bSolidMesh) mesh->solidify(solidThickness);
+	mesh->setPosition(position);
+	mesh->setRotation(orientation);
+
+	initPhysics();
 }
 
 
@@ -115,10 +119,6 @@ void Slatissima::toggleDebugDrawFlag(int flag)
 
 void Slatissima::bump(btVector3 dir)
 {
-	glm::mat4 trans = glm::translate(glm::mat4(1.f), mesh->getPosition());
-	glm::mat4 rot = glm::mat4_cast(mesh->getRotation());
-	glm::mat4 m = glm::inverse(trans * rot);
-	glm::vec3 d = glm::vec3(m * glm::vec4(dir.getX(), dir.getY(), dir.getZ(), 0.f));
 	m_pSoftBody->activate();
 	m_pSoftBody->addForce(dir);
 }
@@ -127,8 +127,6 @@ void Slatissima::anchorToBody(btRigidBody * body)
 {
 	for (int i = 0; i < center_nVertsWide; ++i)
 	{
-		//m_pSoftBody->setMass(i, 0.f);
-		//m_pSoftBody->setMass(mesh->m_vOpposingVertPairs[i], 0.f);
 		m_pSoftBody->appendAnchor(i, body);
 		m_pSoftBody->appendAnchor(mesh->m_vOpposingVertPairs[i], body);
 	}
@@ -201,10 +199,8 @@ void Slatissima::Draw(Shader s)
 		mesh->Draw(s);
 }
 
-void Slatissima::initPhysics(btSoftRigidDynamicsWorld* dynamicsWorld)
+void Slatissima::initPhysics()
 {
-	m_pDynamicsWorld = dynamicsWorld;
-
 	btSoftBodyWorldInfo &sbInfo = m_pDynamicsWorld->getWorldInfo();
 
 	std::vector<int> inds;

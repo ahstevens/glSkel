@@ -152,9 +152,7 @@ public:
 
 		if (m_bRunPhysics)
 		{
-			m_pPhysicsSystem->update(dt);
-
-			m_pPhysicsSystem->update(dt);
+			m_pPhysicsSystem->update(dt * 2.f);
 		}
 	}
 
@@ -342,13 +340,15 @@ private:
 				delete slats[i];
 			}
 
-			slat = new Slatissima(0.5f);
-			slat->setPosition(glm::vec3(-(nSlats * spaceBetween / 2) + i * spaceBetween, 0.f, 0.f));
-			//slat->setOrientation(glm::angleAxis(glm::radians((static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 180.f), glm::vec3(0.f, 1.f, 0.f)));
-			slat->setOrientation(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
-			slat->initPhysics(m_pPhysicsSystem->getSoftDynamicsWorld());
+			glm::vec3 pos(-(nSlats * spaceBetween / 2) + i * spaceBetween, 0.f, 0.f);
+			glm::quat rot(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
+
+			slat = new Slatissima(0.5f, pos, rot, m_pPhysicsSystem->getSoftDynamicsWorld());
+
 			slat->anchorToBody(m_pPhysicsSystem->getGroundBody());
+
 			GLFWInputBroadcaster::getInstance().attach(slat);
+
 			slats.push_back(slat);
 		}
 	}	

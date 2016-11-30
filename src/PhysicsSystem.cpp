@@ -63,7 +63,7 @@ bool PhysicsSystem::init()
 
 void PhysicsSystem::update(float dt)
 {
-	m_pDynamicsWorld->stepSimulation(dt);
+	m_pDynamicsWorld->stepSimulation(dt, 2);
 }
 
 btDynamicsWorld * PhysicsSystem::getDynamicsWorld()
