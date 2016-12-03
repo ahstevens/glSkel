@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Message.h"
+#include "Events.h"
 
 class Component
 {
@@ -12,7 +12,7 @@ public:
 	virtual void Update(float dt) = 0;
 	virtual void Shutdown() = 0;
 
-	virtual void SendMessage(Message *msg) = 0;
+	virtual void SendMessage(Event *msg) = 0;
 
 	bool IsActive() const { return m_bActive; }
 	const std::string& GetName() const { return m_strName; }
