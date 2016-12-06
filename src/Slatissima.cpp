@@ -152,7 +152,7 @@ void Slatissima::update()
 void Slatissima::receiveEvent(Object* obj, const int event, void * data)
 {
 
-	if (event == Observer::KEY_PRESS)
+	if (event == BroadcastSystem::EVENT::KEY_PRESS)
 	{	
 		int key;
 		memcpy(&key, data, sizeof(key));
@@ -188,14 +188,14 @@ void Slatissima::receiveEvent(Object* obj, const int event, void * data)
 			m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * shrinkRayAmount);
 	}
 
-	if (event == Observer::GROW_RAY || event == Observer::SHRINK_RAY)
+	if (event == BroadcastSystem::EVENT::GROW_RAY || event == BroadcastSystem::EVENT::SHRINK_RAY)
 	{
 		glm::vec3 payload[2];
 		memcpy(&payload, data, sizeof(payload));
 
 		btSoftBody::sRayCast results;
 		if (m_pSoftBody->rayTest(btVector3(payload[0].x, payload[0].y, payload[0].z), btVector3(payload[1].x, payload[1].y, payload[1].z), results))
-			m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * (event == GROW_RAY ? growRayAmount : shrinkRayAmount));		
+			m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * (event == BroadcastSystem::EVENT::GROW_RAY ? growRayAmount : shrinkRayAmount));
 	}
 }
 

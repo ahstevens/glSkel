@@ -1,6 +1,6 @@
 #pragma once
 #include <glSkel/Object.h>
-#include <glSkel/Observer.h>
+#include <glSkel/BroadcastSystem.h>
 #include <glSkel/Mesh.h>
 #include <glSkel/Shader.h>
 
@@ -11,7 +11,7 @@
 #include <bullet/BulletSoftBody/btSoftRigidDynamicsWorld.h>
 #include <bullet/BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 
-class Slatissima : public Object, public Observer
+class Slatissima : public Object, public BroadcastSystem::Listener
 {
 public:
 	Slatissima(float solidThickness, glm::vec3 position, glm::quat orientation, btSoftRigidDynamicsWorld* dynamicsWorld);

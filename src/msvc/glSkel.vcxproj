@@ -161,10 +161,9 @@ exit 0</Command>
     <ClInclude Include="..\..\include\glSkel\lighting.h" />
     <ClInclude Include="..\..\include\glSkel\mesh.h" />
     <ClInclude Include="..\..\include\glSkel\Object.h" />
-    <ClInclude Include="..\..\include\glSkel\Observer.h" />
+    <ClInclude Include="..\..\include\glSkel\BroadcastSystem.h" />
     <ClInclude Include="..\..\include\glSkel\Engine.h" />
     <ClInclude Include="..\..\include\glSkel\shader.h" />
-    <ClInclude Include="..\..\include\glSkel\Subject.h" />
     <ClInclude Include="..\..\include\glSkel\TorusMesh.h" />
     <ClInclude Include="..\GaborTest.h" />
     <ClInclude Include="..\GLFWInputBroadcaster.h" />

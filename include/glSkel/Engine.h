@@ -2,7 +2,7 @@
 #include <glSkel/mesh.h>
 #include <glSkel/shader.h>
 
-#include <glSkel/Observer.h>
+#include <glSkel/BroadcastSystem.h>
 #include <glSkel/shader.h>
 #include <glSkel/camera.h>
 #include <glSkel/mesh.h>
@@ -15,7 +15,7 @@
 #define MS_PER_UPDATE 0.0333333333f
 #define CAST_RAY_LEN 1000.f
 
-class Engine : public Observer
+class Engine : public BroadcastSystem::Listener
 {
 public:
 	GLFWwindow* m_pWindow;
@@ -84,7 +84,7 @@ public:
 	{
 		
 
-		if (event == Observer::KEY_PRESS)
+		if (event == BroadcastSystem::EVENT::KEY_PRESS)
 		{
 			int key;
 			memcpy(&key, data, sizeof(key));
@@ -101,7 +101,7 @@ public:
 				m_bRunPhysics = !m_bRunPhysics;
 		}
 
-		if (event == Observer::MOUSE_UNCLICK)
+		if (event == BroadcastSystem::EVENT::MOUSE_UNCLICK)
 		{
 			int button;
 			memcpy(&button, data, sizeof(button));
@@ -112,7 +112,7 @@ public:
 				glm::vec3 rayTo = rayFrom + m_pCamera->getOrientation()[2] * CAST_RAY_LEN;
 				glm::vec3 payload[2] = { rayFrom, rayTo };
 
-				Observer::EVENT rayType = button == GLFW_MOUSE_BUTTON_LEFT ? GROW_RAY : SHRINK_RAY;
+				BroadcastSystem::EVENT rayType = button == GLFW_MOUSE_BUTTON_LEFT ? BroadcastSystem::EVENT::GROW_RAY : BroadcastSystem::EVENT::SHRINK_RAY;
 
 				for (auto& s : slats)
 					s->receiveEvent(m_pCamera, rayType, &payload);

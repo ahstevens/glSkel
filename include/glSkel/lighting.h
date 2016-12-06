@@ -3,7 +3,7 @@
 
 #include <GL/glew.h>
 
-#include <glSkel/Observer.h>
+#include <glSkel/BroadcastSystem.h>
 #include <glSkel/shader.h>
 
 struct BasicLight {	
@@ -34,7 +34,7 @@ struct SLight : PLight {
 #define MAX_N_PLIGHTS 4
 
 
-class LightingSystem : public Observer
+class LightingSystem : public BroadcastSystem::Listener
 {
 public:
 	DLight dLight;
@@ -193,7 +193,7 @@ public:
 
 	void receiveEvent(Object * obj, const int event, void * data)
 	{
-		if (event == Observer::KEY_PRESS)
+		if (event == BroadcastSystem::EVENT::KEY_PRESS)
 		{
 			int key;
 			memcpy(&key, data, sizeof(key));

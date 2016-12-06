@@ -8,7 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <glSkel/Object.h>
-#include <glSkel/Observer.h>
+#include <glSkel/BroadcastSystem.h>
 #include "GLFWInputBroadcaster.h"
 
 // Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
@@ -31,7 +31,7 @@ const float m_fDefaultZoomMin         =  45.f;
 const float m_fDefaultZoomMax         =   1.f;
 
 // An abstract camera class that processes input and calculates the corresponding Euler Angles, Vectors and Matrices for use in OpenGL
-class Camera : public Object, public Observer
+class Camera : public Object, public BroadcastSystem::Listener
 {
 public:
     // Constructor with vectors
@@ -68,7 +68,7 @@ public:
 
 	void receiveEvent(Object * obj, const int event, void * data)
 	{
-		if (event == Observer::KEY_PRESS)
+		if (event == BroadcastSystem::EVENT::KEY_PRESS)
 		{
 			int key;
 			memcpy(&key, data, sizeof(key));
@@ -84,7 +84,7 @@ public:
 				m_brMovementState[RIGHT] = true;
 		}
 
-		if (event == Observer::KEY_UNPRESS)
+		if (event == BroadcastSystem::EVENT::KEY_UNPRESS)
 		{
 			int key;
 			memcpy(&key, data, sizeof(key));
@@ -100,14 +100,14 @@ public:
 				m_brMovementState[RIGHT] = false;
 		}
 
-		if (event == Observer::MOUSE_MOVE)
+		if (event == BroadcastSystem::EVENT::MOUSE_MOVE)
 		{
 			float offset[2];
 			memcpy(offset, data, sizeof(offset)); // recover array
 			look(offset[0], offset[1]);
 		}
 
-		if (event == Observer::MOUSE_SCROLL)
+		if (event == BroadcastSystem::EVENT::MOUSE_SCROLL)
 		{
 			float yoffset;
 			memcpy(&yoffset, data, sizeof(yoffset));

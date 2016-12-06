@@ -53,12 +53,12 @@ void GLFWInputBroadcaster::key_callback(GLFWwindow* window, int key, int scancod
 		if (action == GLFW_PRESS)
 		{
 			getInstance().keys[key] = true;
-			getInstance().notify(NULL, Observer::KEY_PRESS, &key);
+			getInstance().notify(NULL, BroadcastSystem::EVENT::KEY_PRESS, &key);
 		}
 		else if (action == GLFW_RELEASE)
 		{
 			getInstance().keys[key] = false;
-			getInstance().notify(NULL, Observer::KEY_UNPRESS, &key);
+			getInstance().notify(NULL, BroadcastSystem::EVENT::KEY_UNPRESS, &key);
 		}
 	}
 }
@@ -66,9 +66,9 @@ void GLFWInputBroadcaster::key_callback(GLFWwindow* window, int key, int scancod
 void GLFWInputBroadcaster::mouse_button_callback(GLFWwindow * window, int button, int action, int mods)
 {
 	if (action == GLFW_PRESS)
-		getInstance().notify(NULL, Observer::MOUSE_CLICK, &button);
+		getInstance().notify(NULL, BroadcastSystem::EVENT::MOUSE_CLICK, &button);
 	else if (action == GLFW_RELEASE)
-		getInstance().notify(NULL, Observer::MOUSE_UNCLICK, &button);
+		getInstance().notify(NULL, BroadcastSystem::EVENT::MOUSE_UNCLICK, &button);
 }
 
 void GLFWInputBroadcaster::mouse_position_callback(GLFWwindow * window, double xpos, double ypos)
@@ -88,11 +88,11 @@ void GLFWInputBroadcaster::mouse_position_callback(GLFWwindow * window, double x
 
 	float offset[2] = { static_cast<float>(xoffset), static_cast<float>(yoffset) };
 
-	getInstance().notify(NULL, Observer::MOUSE_MOVE, &offset);
+	getInstance().notify(NULL, BroadcastSystem::EVENT::MOUSE_MOVE, &offset);
 }
 
 void GLFWInputBroadcaster::scroll_callback(GLFWwindow * window, double xoffset, double yoffset)
 {
 	float offset = static_cast<float>(yoffset);
-	getInstance().notify(NULL, Observer::MOUSE_SCROLL, &offset);
+	getInstance().notify(NULL, BroadcastSystem::EVENT::MOUSE_SCROLL, &offset);
 }

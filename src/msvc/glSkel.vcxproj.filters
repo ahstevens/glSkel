@@ -94,12 +94,6 @@
     <ClInclude Include="..\..\include\glSkel\BulletDebugDrawer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\glSkel\Subject.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\glSkel\Observer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\GLFWInputBroadcaster.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -119,6 +113,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\glSkel\lighting.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\glSkel\BroadcastSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

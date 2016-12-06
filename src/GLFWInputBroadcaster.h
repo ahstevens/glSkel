@@ -2,11 +2,11 @@
 #include <vector>
 #include <algorithm>
 
-#include <glSkel/Subject.h>
+#include <glSkel/BroadcastSystem.h>
 
 #include <GLFW/glfw3.h>
 
-class GLFWInputBroadcaster : public Subject
+class GLFWInputBroadcaster : public BroadcastSystem::Broadcaster
 {
 public:
 	static GLFWInputBroadcaster& getInstance();
@@ -28,4 +28,7 @@ private:
 	bool keys[1024];
 	bool firstMouse;
 	float lastX, lastY;
+
+	GLFWInputBroadcaster(GLFWInputBroadcaster const&) = delete; // no copies of singletons (C++11)
+	void operator=(GLFWInputBroadcaster const&) = delete; // no assigning of singletons (C++11)
 };
