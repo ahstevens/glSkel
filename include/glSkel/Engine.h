@@ -14,7 +14,7 @@
 
 #define MS_PER_UPDATE 0.0333333333f
 
-class Settings : public Observer
+class Engine : public Observer
 {
 public:
 	GLFWwindow* m_pWindow;
@@ -46,7 +46,7 @@ public:
 	std::vector<Slatissima *> slats;
 
 public:
-	Settings()
+	Engine()
 		: m_pWindow(NULL)
 		, m_pPhysicsSystem(NULL)
 		, m_pLightingSystem(NULL)
@@ -69,7 +69,7 @@ public:
 	{
 	}
 
-	~Settings()
+	~Engine()
 	{
 		if (slats.size())
 		{
@@ -116,6 +116,8 @@ public:
 		init_camera();
 		init_lighting();
 		generateModels();
+
+		return true;
 	}
 
 	void mainLoop()

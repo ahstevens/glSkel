@@ -10,12 +10,12 @@
 #include <ctime> // for time()
 
 // Our classes
-#include <glSkel/Settings.h>
+#include <glSkel/Engine.h>
 
 std::default_random_engine generator;
 
 // Camera
-Settings *settings;
+Engine *engine;
 
 int main(int argc, char * argv[]) 
 {
@@ -24,15 +24,15 @@ int main(int argc, char * argv[])
     // Load GLFW and Create a Window
     glfwInit();
 
-	settings = new Settings();
+	engine = new Engine();
 
-	if(!settings->init())
+	if(!engine->init())
 	{
 		fprintf(stderr, "Failed to Create OpenGL Context");
 		return EXIT_FAILURE;
 	}
 
-	settings->mainLoop();
+	engine->mainLoop();
 
 	glfwTerminate();
 
