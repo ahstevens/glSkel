@@ -201,5 +201,9 @@ private:
         // Also re-calculate the Right and Up vector
 		m_vec3Right = glm::normalize(glm::cross(m_vec3Front, m_vec3WorldUp));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
 		m_vec3Up    = glm::normalize(glm::cross(m_vec3Right, m_vec3Front));
+
+		m_mat3Rotation[0] = m_vec3Right;
+		m_mat3Rotation[1] = m_vec3Up;
+		m_mat3Rotation[2] = m_vec3Front;
     }
 };

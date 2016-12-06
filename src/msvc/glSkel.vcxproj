@@ -154,12 +154,15 @@ exit 0</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\glSkel\BulletDebugDrawer.h" />
+    <ClInclude Include="..\..\include\glSkel\camera.h" />
     <ClInclude Include="..\..\include\glSkel\Gabor.h" />
     <ClInclude Include="..\..\include\glSkel\GeometryStrip.h" />
+    <ClInclude Include="..\..\include\glSkel\lighting.h" />
     <ClInclude Include="..\..\include\glSkel\mesh.h" />
     <ClInclude Include="..\..\include\glSkel\Object.h" />
     <ClInclude Include="..\..\include\glSkel\Observer.h" />
     <ClInclude Include="..\..\include\glSkel\Engine.h" />
+    <ClInclude Include="..\..\include\glSkel\shader.h" />
     <ClInclude Include="..\..\include\glSkel\Subject.h" />
     <ClInclude Include="..\..\include\glSkel\TorusMesh.h" />
     <ClInclude Include="..\GaborTest.h" />

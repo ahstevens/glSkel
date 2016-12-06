@@ -14,7 +14,7 @@
 
 std::default_random_engine generator;
 
-// Camera
+// Engine
 Engine *engine;
 
 int main(int argc, char * argv[]) 
