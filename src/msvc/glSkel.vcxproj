@@ -133,7 +133,6 @@ exit 0</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Cube.cpp" />
     <ClCompile Include="..\GLFWInputBroadcaster.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\PhysicsSystem.cpp" />
@@ -163,7 +162,6 @@ exit 0</Command>
     <ClInclude Include="..\..\include\glSkel\Engine.h" />
     <ClInclude Include="..\..\include\glSkel\Subject.h" />
     <ClInclude Include="..\..\include\glSkel\TorusMesh.h" />
-    <ClInclude Include="..\Cube.h" />
     <ClInclude Include="..\GaborTest.h" />
     <ClInclude Include="..\GLFWInputBroadcaster.h" />
     <ClInclude Include="..\PhysicsSystem.h" />
