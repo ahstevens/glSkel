@@ -13,6 +13,7 @@
 #include "SLatissima.h"
 
 #define MS_PER_UPDATE 0.0333333333f
+#define CAST_RAY_LEN 1000.f
 
 class Engine : public Observer
 {
@@ -81,11 +82,13 @@ public:
 
 	void receiveEvent(Object * obj, const int event, void * data)
 	{
-		int key;
-		memcpy(&key, data, sizeof(key));
+		
 
 		if (event == Observer::KEY_PRESS)
 		{
+			int key;
+			memcpy(&key, data, sizeof(key));
+
 			if (key == GLFW_KEY_L)
 				m_bShowLights = !m_bShowLights;
 			if (key == GLFW_KEY_N)
@@ -96,6 +99,24 @@ public:
 				generateModels();
 			if (key == GLFW_KEY_SPACE)
 				m_bRunPhysics = !m_bRunPhysics;
+		}
+
+		if (event == Observer::MOUSE_UNCLICK)
+		{
+			int button;
+			memcpy(&button, data, sizeof(button));
+
+			if (button == GLFW_MOUSE_BUTTON_LEFT || button == GLFW_MOUSE_BUTTON_RIGHT)
+			{
+				glm::vec3 rayFrom = m_pCamera->getPosition();
+				glm::vec3 rayTo = rayFrom + m_pCamera->getOrientation()[2] * CAST_RAY_LEN;
+				glm::vec3 payload[2] = { rayFrom, rayTo };
+
+				Observer::EVENT rayType = button == GLFW_MOUSE_BUTTON_LEFT ? GROW_RAY : SHRINK_RAY;
+
+				for (auto& s : slats)
+					s->receiveEvent(m_pCamera, rayType, &payload);
+			}
 		}
 	}
 
@@ -154,7 +175,7 @@ public:
 
 		if (m_bRunPhysics)
 		{
-			m_pPhysicsSystem->update(dt * 2.f);
+			m_pPhysicsSystem->update(dt);
 		}
 	}
 

@@ -18,6 +18,9 @@ const unsigned int center_nVertsWide = 3u;
 const unsigned int edge_nVertsWide = 3u;
 const float edgeCutoffPercent = 0.05f;
 
+const float shrinkRayAmount = 0.95f;
+const float growRayAmount = 1.05f;
+
 const float L_AVG = 148.1f;
 const float L_STD = 55.26f;
 const float W_AVG = 23.73f;
@@ -85,23 +88,6 @@ void Slatissima::rotateZ(float degrees)
 	this->mesh->addRotation(q);
 }
 
-void Slatissima::setOrientation(glm::quat orientation) { this->mesh->setRotation(orientation); }
-
-glm::quat Slatissima::getOrientation()
-{
-	return mesh->getRotation();;
-}
-
-void Slatissima::setPosition(glm::vec3 pos)
-{
-	mesh->setPosition(pos);
-}
-
-glm::vec3 Slatissima::getPosition()
-{
-	return mesh->getPosition();
-}
-
 void Slatissima::setDebugDrawFlags(int flags)
 {
 	m_debugDrawFlags = flags;
@@ -134,6 +120,9 @@ void Slatissima::anchorToBody(btRigidBody * body)
 
 void Slatissima::update()
 {
+	mesh->setPosition(m_vec3Position);
+	mesh->setRotation(glm::quat(m_mat3Rotation));
+
 	btAlignedObjectArray<btSoftBody::Node> nodes = m_pSoftBody->m_nodes;
 	std::vector<float> data_serialized;
 	for (size_t i = 0; i < nodes.size(); ++i)
@@ -160,13 +149,14 @@ void Slatissima::update()
 	debugDraw();
 }
 
-void Slatissima::receiveEvent(Object * obj, const int event, void * data)
-{	
-	int key;
-	memcpy(&key, data, sizeof(key));
+void Slatissima::receiveEvent(Object* obj, const int event, void * data)
+{
 
 	if (event == Observer::KEY_PRESS)
-	{
+	{	
+		int key;
+		memcpy(&key, data, sizeof(key));
+
 		if (key == GLFW_KEY_KP_0)
 			toggleDebugDrawFlag(fDrawFlags::Std);
 		if (key == GLFW_KEY_KP_1)
@@ -190,6 +180,22 @@ void Slatissima::receiveEvent(Object * obj, const int event, void * data)
 			bump(btVector3(0.f, 0.f, -1.f));
 		if (key == GLFW_KEY_K)
 			bump(btVector3(0.f, 0.f, 1.f));
+
+		if (key == GLFW_KEY_L)
+			m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * growRayAmount);
+
+		if (key == GLFW_KEY_K)
+			m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * shrinkRayAmount);
+	}
+
+	if (event == Observer::GROW_RAY || event == Observer::SHRINK_RAY)
+	{
+		glm::vec3 payload[2];
+		memcpy(&payload, data, sizeof(payload));
+
+		btSoftBody::sRayCast results;
+		if (m_pSoftBody->rayTest(btVector3(payload[0].x, payload[0].y, payload[0].z), btVector3(payload[1].x, payload[1].y, payload[1].z), results))
+			m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * (event == GROW_RAY ? growRayAmount : shrinkRayAmount));		
 	}
 }
 

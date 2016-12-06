@@ -41,8 +41,7 @@ public:
 		float yaw = m_fDefaultYaw,
 		float pitch = m_fDefaultPitch
 	) 
-		: m_vec3Front(glm::vec3(0.f, 0.f, -1.f))
-		, m_fMovementSpeed(m_fDefaultSpeed)
+		: m_fMovementSpeed(m_fDefaultSpeed)
 		, m_fSensitivity(m_fDefaultSensitivity)
 		, m_fZoom(m_fDefaultZoom)
 		, m_fZoomMin(m_fDefaultZoomMin)
@@ -59,7 +58,7 @@ public:
     // Returns the view matrix calculated using Eular Angles and the LookAt Matrix
     glm::mat4 getViewMatrix()
     {
-        return glm::lookAt(m_vec3Position, m_vec3Position + m_vec3Front, m_vec3Up);
+        return glm::lookAt(m_vec3Position, m_vec3Position + m_mat3Rotation[2], m_mat3Rotation[1]);
     }
 
 	float getZoom() 
@@ -127,9 +126,6 @@ public:
 
 private:
 	// Camera Attributes
-	glm::vec3 m_vec3Front;
-	glm::vec3 m_vec3Up;
-	glm::vec3 m_vec3Right;
 	glm::vec3 m_vec3WorldUp;
 
 	// Eular Angles
@@ -149,13 +145,13 @@ private:
 	{
 		float velocity = m_fMovementSpeed * deltaTime;
 		if (m_brMovementState[FORWARD])
-			m_vec3Position += m_vec3Front * velocity;
+			m_vec3Position += m_mat3Rotation[2] * velocity;
 		if (m_brMovementState[BACKWARD])
-			m_vec3Position -= m_vec3Front * velocity;
+			m_vec3Position -= m_mat3Rotation[2] * velocity;
 		if (m_brMovementState[LEFT])
-			m_vec3Position -= m_vec3Right * velocity;
+			m_vec3Position -= m_mat3Rotation[0] * velocity;
 		if (m_brMovementState[RIGHT])
-			m_vec3Position += m_vec3Right * velocity;
+			m_vec3Position += m_mat3Rotation[0] * velocity;
 	}
 
 	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
@@ -196,14 +192,10 @@ private:
         front.x = cos(glm::radians(m_fYaw)) * cos(glm::radians(m_fPitch));
         front.y = sin(glm::radians(m_fPitch));
         front.z = sin(glm::radians(m_fYaw)) * cos(glm::radians(m_fPitch));
-		m_vec3Front = glm::normalize(front);
+		m_mat3Rotation[2] = glm::normalize(front);
 
         // Also re-calculate the Right and Up vector
-		m_vec3Right = glm::normalize(glm::cross(m_vec3Front, m_vec3WorldUp));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-		m_vec3Up    = glm::normalize(glm::cross(m_vec3Right, m_vec3Front));
-
-		m_mat3Rotation[0] = m_vec3Right;
-		m_mat3Rotation[1] = m_vec3Up;
-		m_mat3Rotation[2] = m_vec3Front;
+		m_mat3Rotation[0] = glm::normalize(glm::cross(m_mat3Rotation[2], m_vec3WorldUp));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+		m_mat3Rotation[1] = glm::normalize(glm::cross(m_mat3Rotation[0], m_mat3Rotation[2]));
     }
 };

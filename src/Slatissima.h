@@ -1,4 +1,5 @@
 #pragma once
+#include <glSkel/Object.h>
 #include <glSkel/Observer.h>
 #include <glSkel/Mesh.h>
 #include <glSkel/Shader.h>
@@ -10,7 +11,7 @@
 #include <bullet/BulletSoftBody/btSoftRigidDynamicsWorld.h>
 #include <bullet/BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 
-class Slatissima : public Observer
+class Slatissima : public Object, public Observer
 {
 public:
 	Slatissima(float solidThickness, glm::vec3 position, glm::quat orientation, btSoftRigidDynamicsWorld* dynamicsWorld);
@@ -19,10 +20,6 @@ public:
 	void rotateX(float degrees);
 	void rotateY(float degrees);
 	void rotateZ(float degrees);
-	void setOrientation(glm::quat orientation = glm::quat());
-	glm::quat getOrientation();
-	void setPosition(glm::vec3 pos);
-	glm::vec3 getPosition();
 
 	void setDebugDrawFlags(int flags);
 	int getDebugDrawFlags();
