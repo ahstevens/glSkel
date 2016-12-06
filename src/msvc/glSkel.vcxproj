@@ -133,6 +133,7 @@ exit 0</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\include\glSkel\mesh.cpp" />
     <ClCompile Include="..\GLFWInputBroadcaster.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\PhysicsSystem.cpp" />
