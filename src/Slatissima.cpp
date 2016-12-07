@@ -21,12 +21,12 @@ const float edgeCutoffPercent = 0.05f;
 const float shrinkRayAmount = 0.95f;
 const float growRayAmount = 1.05f;
 
-const float L_AVG = 148.1f;
-const float L_STD = 55.26f;
-const float W_AVG = 23.73f;
-const float W_STD = 6.933f;
-const float P_AVG = 19.97f;
-const float P_STD = 3.446f;
+const float L_AVG = 148.1f;        // avg length
+const float L_STD = 55.26f;        // std. dev. length
+const float W_AVG = 23.73f;        // avg width
+const float W_STD = 6.933f;        // std. dev. width
+const float P_AVG = 19.97f;        // avg periodicity
+const float P_STD = 3.446f;        // std. dev. periodicity
 const float LW_RATIO_AVG = 6.277f;
 const float LW_RATIO_STD = 2.010f;
 const float LP_RATIO_AVG = 7.738f;
@@ -39,10 +39,10 @@ Slatissima::Slatissima(float solidThickness, glm::vec3 position, glm::quat orien
 	, m_pSoftBody(NULL)
 	, m_debugDrawFlags(0)
 {
-	std::normal_distribution<float> length_dist(148.1f, 55.26f);
-	std::normal_distribution<float> lwr_dist(6.277f, 2.010f);
-	std::normal_distribution<float> lpr_dist(7.738f, 2.389f);
-	std::normal_distribution<float> waveAmp_dist(7.738f, 1.f);
+	std::normal_distribution<float> length_dist(L_AVG, L_STD);
+	std::normal_distribution<float> lwr_dist(LW_RATIO_AVG, LW_RATIO_STD);
+	std::normal_distribution<float> lpr_dist(LP_RATIO_AVG, LP_RATIO_STD);
+	std::normal_distribution<float> waveAmp_dist(LP_RATIO_AVG, 1.f);
 
 	length = length_dist(generator);
 	width = length / lwr_dist(generator);
