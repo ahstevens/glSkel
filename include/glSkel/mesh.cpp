@@ -3,8 +3,6 @@
 
 Mesh::Mesh(std::vector<glm::vec3> vvec3Vertices, std::vector<GLuint> vuiIndices, std::vector<Texture> vTextures)
 {
-	this->position = glm::vec3(0.f, 0.f, 0.f);
-	this->orientation = glm::mat3();
 	this->m_vTextures = vTextures;
 	this->m_pBoundaryEdge = NULL;
 
@@ -130,26 +128,6 @@ void Mesh::getIndexedVerticesMirrored(std::vector<int>& i, std::vector<glm::vec3
 
 	for (auto vert : m_vpVertices)
 		v.push_back(vert->pos);
-}
-
-void Mesh::setRotation(glm::mat3 & q)
-{
-	this->orientation = q;
-}
-
-glm::mat3 Mesh::getRotation()
-{
-	return this->orientation;
-}
-
-void Mesh::setPosition(glm::vec3 & pos)
-{
-	this->position = pos;
-}
-
-glm::vec3 Mesh::getPosition()
-{
-	return this->position;
 }
 
 void Mesh::solidify(float distBetweenLayers)
@@ -339,7 +317,7 @@ void Mesh::updateMeshSerial(std::vector<float>& data)
 	glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data[0], GL_STREAM_DRAW);
 }
 
-void Mesh::Draw(Shader shader)
+void Mesh::Draw(Shader& shader, glm::mat4& modelMatrix)
 {
 	// Bind appropriate textures
 	GLuint diffuseNr = 1;
@@ -368,12 +346,7 @@ void Mesh::Draw(Shader shader)
 		glBindTexture(GL_TEXTURE_2D, this->m_vTextures[i].id);
 	}
 
-	glm::mat4 model = glm::mat4(1.f);
-	glm::mat4 t = glm::translate(glm::mat4(1.f), position);
-	glm::mat4 o = glm::mat4(orientation);
-	model = t * o;
-
-	glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
 
 	// triangle mesh has 3 indices per face
 	GLsizei nIndices = static_cast<GLsizei>(this->m_vpFaces.size() * 3);

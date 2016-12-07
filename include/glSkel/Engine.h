@@ -279,7 +279,8 @@ private:
 		GLFWInputBroadcaster::getInstance().attach(m_pLightingSystem);
 
 		// Directional light
-		m_pLightingSystem->addDLight(glm::vec3(-1.f, -1.f, -1.f), glm::vec3(0.05f), glm::vec3(0.25f));
+		m_pLightingSystem->addDLight(glm::vec3(-1.f, -1.f, -1.f), glm::vec3(0.1f), glm::vec3(0.25f), glm::vec3(0.5f));
+		m_pLightingSystem->addDLight(glm::vec3(1.f, 1.f, 1.f), glm::vec3(0.1f), glm::vec3(0.25f), glm::vec3(0.5f));
 
 		// Positions of the point lights
 		m_pLightingSystem->addPLight(glm::vec3(-5.f, 0.f, -5.f));
@@ -346,7 +347,7 @@ private:
 	{
 		Slatissima *slat;
 		unsigned int nSlats = 4u;
-		float spaceBetween = 5.f;
+		float spaceBetween = 7.5f;
 
 		bool isEmpty = slats.size() == 0;
 
@@ -366,7 +367,7 @@ private:
 			glm::vec3 pos(-(nSlats * spaceBetween / 2) + i * spaceBetween, 0.f, 0.f);
 			glm::mat3 rot(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
 
-			slat = new Slatissima(0.5f, pos, rot, m_pPhysicsSystem->getSoftDynamicsWorld());
+			slat = new Slatissima(0.f, pos, rot, m_pPhysicsSystem->getSoftDynamicsWorld());
 
 			slat->anchorToBody(m_pPhysicsSystem->getGroundBody());
 

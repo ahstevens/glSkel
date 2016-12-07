@@ -48,21 +48,13 @@ public:
 	void getIndexedVertices(std::vector<int> &i, std::vector<glm::vec3> &v);
 
 	void getIndexedVerticesMirrored(std::vector<int> &i, std::vector<glm::vec3> &v);
-	
-	void setRotation(glm::mat3 &q);
-
-	glm::mat3 getRotation();
-
-	void setPosition(glm::vec3& pos);
-
-	glm::vec3 getPosition();
 
 	void solidify(float distBetweenLayers);
 
 	void updateMeshSerial(std::vector<float> &data);
 
 	// Render the mesh
-	void Draw(Shader shader);
+	void Draw(Shader& shader, glm::mat4& modelMatrix);
 
 /************** HALF-EDGE (HE) DATA STRUCTS *******************/
 private:
@@ -140,10 +132,6 @@ private:
 		glm::vec3 norm;
 		glm::vec2 tex;
 	};
-
-	/*  Mesh Data  */
-	glm::vec3 position;
-	glm::mat3 orientation;
 
     /*  Render data  */
     GLuint m_glVAO, m_glVBO, m_glEBO;

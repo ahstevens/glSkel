@@ -33,7 +33,8 @@ const float LP_RATIO_AVG = 7.738f;
 const float LP_RATIO_STD = 2.389f;
 
 Slatissima::Slatissima(float solidThickness, glm::vec3 position, glm::mat3 orientation, btSoftRigidDynamicsWorld* dynamicsWorld)
-	: m_bPhysicsInit(false)
+	: Object(position, orientation)
+	, m_bPhysicsInit(false)
 	, m_bSolidMesh(solidThickness > 0.f)
 	, m_pDynamicsWorld(dynamicsWorld)
 	, m_pSoftBody(NULL)
@@ -54,8 +55,6 @@ Slatissima::Slatissima(float solidThickness, glm::vec3 position, glm::mat3 orien
 
 	this->buildModel();
 	if(m_bSolidMesh) mesh->solidify(solidThickness);
-	mesh->setPosition(position);
-	mesh->setRotation(orientation);
 
 	initPhysics();
 }
@@ -102,16 +101,13 @@ void Slatissima::anchorToBody(btRigidBody * body)
 
 void Slatissima::update()
 {
-	mesh->setPosition(m_vec3Position);
-	mesh->setRotation(m_mat3Rotation);
-
 	btAlignedObjectArray<btSoftBody::Node> nodes = m_pSoftBody->m_nodes;
 	std::vector<float> data_serialized;
 	for (size_t i = 0; i < nodes.size(); ++i)
 	{
 		glm::vec3 pos(nodes[i].m_x.getX(), nodes[i].m_x.getY(), nodes[i].m_x.getZ());
 		glm::vec3 norm(nodes[i].m_n.getX(), nodes[i].m_n.getY(), nodes[i].m_n.getZ());
-		glm::mat4 m = glm::translate(glm::mat4(), mesh->getPosition()) * glm::mat4(mesh->getRotation());
+		glm::mat4 m = glm::translate(glm::mat4(), m_vec3Position) * glm::mat4(m_mat3Rotation);
 		m = glm::inverse(m);
 		pos = glm::vec3(m * glm::vec4(pos, 1.f));
 		//norm = glm::vec3(m * glm::vec4(norm, 1.f));
@@ -183,8 +179,11 @@ void Slatissima::receiveEvent(Object* obj, const int event, void * data)
 
 void Slatissima::Draw(Shader s)
 {
-	if(!(m_debugDrawFlags & fDrawFlags::Faces) && !(m_debugDrawFlags & fDrawFlags::Nodes))
-		mesh->Draw(s);
+	if (!(m_debugDrawFlags & fDrawFlags::Faces) && !(m_debugDrawFlags & fDrawFlags::Nodes))
+	{
+		glm::mat4 modelMat = glm::translate(glm::mat4(), m_vec3Position) * glm::mat4(m_mat3Rotation);
+		mesh->Draw(s, modelMat);
+	}
 }
 
 void Slatissima::initPhysics()
@@ -226,18 +225,20 @@ void Slatissima::initPhysics()
 	}
 
 	m_pSoftBody->randomizeConstraints();
-	glm::quat q = glm::quat_cast(mesh->getRotation());
-	btQuaternion o(q.x, q.y, q.z, q.w);
-	btVector3 pos(mesh->getPosition().x, mesh->getPosition().y, mesh->getPosition().z);
+
+	btMatrix3x3 o; 
+	o.setFromOpenGLSubMatrix(glm::value_ptr(glm::mat4(m_mat3Rotation)));
+	btVector3 pos(m_vec3Position.x, m_vec3Position.y, m_vec3Position.z);
 	btTransform trans(o, pos);
 	m_pSoftBody->transform(trans);
 	m_pSoftBody->setTotalMass(10, true);
 	
-	//m_pSoftBody->generateClusters(0);
-
 	this->m_pDynamicsWorld->addSoftBody(m_pSoftBody);
 
 	sbInfo.m_sparsesdf.Reset();
+
+	m_pSoftBody->getCollisionShape()->setMargin(0.2f); // COLLISION MARGIN
+	m_pSoftBody->setUserPointer(this);
 
 	m_bPhysicsInit = true;
 }
