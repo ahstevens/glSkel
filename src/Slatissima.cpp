@@ -269,19 +269,19 @@ void Slatissima::buildModel()
 	float centerBladeWidth = width * centerBladeWidthPercent;
 	for (GLuint row = 0; row < nVertsTall; ++row)
 	{
-		GLfloat heightRatio = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
+		GLfloat dy = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
 
 		std::vector<glm::vec3> vecRow;
 
 		for (GLuint col = 0; col < center_nVertsWide; ++col)
 		{
-			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(center_nVertsWide - 1);
+			GLfloat dx = static_cast<GLfloat>(col) / static_cast<GLfloat>(center_nVertsWide - 1);
 
-			GLfloat displacement = -(centerBladeWidth / 2.f) + widthRatio * centerBladeWidth;
-			GLfloat sineOffset = sin((0.1f + 0.8f * heightRatio) * glm::pi<GLfloat>());
+			GLfloat displacement = -(centerBladeWidth / 2.f) + dx * centerBladeWidth;
+			GLfloat sineOffset = sin((0.1f + 0.8f * dy) * glm::pi<GLfloat>());
 			tempVert.x = sineOffset * displacement;
 
-			tempVert.y = heightRatio * length;
+			tempVert.y = dy * length;
 						
 			tempVert.z = 0.f;
 
@@ -295,7 +295,7 @@ void Slatissima::buildModel()
 	
 	vertices.clear();
 
-	float edgeWidthPercent = 0.375f;
+	float edgeWidthPercent = (1.f - centerBladeWidthPercent) * 0.5f;
 	float edgeWidth = width * edgeWidthPercent;
 	
 	generateGabors(-width / 2.f);
@@ -303,21 +303,21 @@ void Slatissima::buildModel()
 	for (GLuint row = 0; row < nVertsTall; ++row)
 	{
 		std::vector<glm::vec3> vecRow;
-		GLfloat heightRatio = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
+		GLfloat dy = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
 
 		for (GLuint col = 0; col < edge_nVertsWide; ++col)
 		{
-			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(edge_nVertsWide - 1);
+			GLfloat dx = static_cast<GLfloat>(col) / static_cast<GLfloat>(edge_nVertsWide - 1);
 
-			tempVert.x = (widthRatio - 0.5f) * edgeWidth * calculateEnvelope(heightRatio, 0.f, 0.1f, 0.9f, 1.f);
+			tempVert.x = (dx - 0.5f) * edgeWidth * calculateEnvelope(dy, 0.f, 0.1f, 0.9f, 1.f);
 			
-			tempVert.y = heightRatio * length;
+			tempVert.y = dy * length;
 
 			tempVert.z = 0.f;
 			for(auto g : gabors)
 				tempVert.z += g->get(glm::vec2(tempVert));
 
-			tempVert.z *= calculateEnvelope(heightRatio, 0.05f, 0.1f, 0.9f, 0.95f);
+			tempVert.z *= calculateEnvelope(dy, 0.05f, 0.1f, 0.9f, 0.95f);
 			vecRow.push_back(tempVert);
 		}
 
@@ -336,21 +336,21 @@ void Slatissima::buildModel()
 	for (GLuint row = 0; row < nVertsTall; ++row)
 	{
 		std::vector<glm::vec3> vecRow;
-		GLfloat heightRatio = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
+		GLfloat dy = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
 
 		for (GLuint col = 0; col < edge_nVertsWide; ++col)
 		{
-			GLfloat widthRatio = static_cast<GLfloat>(col) / static_cast<GLfloat>(edge_nVertsWide - 1);
+			GLfloat dx = static_cast<GLfloat>(col) / static_cast<GLfloat>(edge_nVertsWide - 1);
 
-			tempVert.x = (widthRatio - 0.5f) * edgeWidth * calculateEnvelope(heightRatio, 0.f, 0.1f, 0.9f, 1.f);
+			tempVert.x = (dx - 0.5f) * edgeWidth * calculateEnvelope(dy, 0.f, 0.1f, 0.9f, 1.f);
 
-			tempVert.y = heightRatio * length;
+			tempVert.y = dy * length;
 
 			tempVert.z = 0.f;
 			for (auto g : gabors)
 				tempVert.z += g->get(glm::vec2(tempVert));
 
-			tempVert.z *= calculateEnvelope(heightRatio, 0.05f, 0.1f, 0.9f, 0.95f);
+			tempVert.z *= calculateEnvelope(dy, 0.05f, 0.1f, 0.9f, 0.95f);
 			vecRow.push_back(tempVert);
 		}
 
