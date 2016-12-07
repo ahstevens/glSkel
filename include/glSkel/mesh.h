@@ -48,12 +48,10 @@ public:
 	void getIndexedVertices(std::vector<int> &i, std::vector<glm::vec3> &v);
 
 	void getIndexedVerticesMirrored(std::vector<int> &i, std::vector<glm::vec3> &v);
+	
+	void setRotation(glm::mat3 &q);
 
-	void addRotation(glm::quat &q);
-
-	void setRotation(glm::quat &q);
-
-	glm::quat getRotation();
+	glm::mat3 getRotation();
 
 	void setPosition(glm::vec3& pos);
 
@@ -145,7 +143,7 @@ private:
 
 	/*  Mesh Data  */
 	glm::vec3 position;
-	glm::quat orientation;
+	glm::mat3 orientation;
 
     /*  Render data  */
     GLuint m_glVAO, m_glVBO, m_glEBO;

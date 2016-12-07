@@ -14,12 +14,8 @@
 class Slatissima : public Object, public BroadcastSystem::Listener
 {
 public:
-	Slatissima(float solidThickness, glm::vec3 position, glm::quat orientation, btSoftRigidDynamicsWorld* dynamicsWorld);
+	Slatissima(float solidThickness, glm::vec3 position, glm::mat3 orientation, btSoftRigidDynamicsWorld* dynamicsWorld);
 	~Slatissima();
-
-	void rotateX(float degrees);
-	void rotateY(float degrees);
-	void rotateZ(float degrees);
 
 	void setDebugDrawFlags(int flags);
 	int getDebugDrawFlags();

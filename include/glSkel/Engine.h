@@ -364,7 +364,7 @@ private:
 			}
 
 			glm::vec3 pos(-(nSlats * spaceBetween / 2) + i * spaceBetween, 0.f, 0.f);
-			glm::quat rot(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
+			glm::mat3 rot(glm::angleAxis(glm::radians(90.f), glm::vec3(0.f, 1.f, 0.f)));
 
 			slat = new Slatissima(0.5f, pos, rot, m_pPhysicsSystem->getSoftDynamicsWorld());
 

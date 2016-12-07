@@ -4,7 +4,7 @@
 Mesh::Mesh(std::vector<glm::vec3> vvec3Vertices, std::vector<GLuint> vuiIndices, std::vector<Texture> vTextures)
 {
 	this->position = glm::vec3(0.f, 0.f, 0.f);
-	this->orientation = glm::quat();
+	this->orientation = glm::mat3();
 	this->m_vTextures = vTextures;
 	this->m_pBoundaryEdge = NULL;
 
@@ -132,17 +132,12 @@ void Mesh::getIndexedVerticesMirrored(std::vector<int>& i, std::vector<glm::vec3
 		v.push_back(vert->pos);
 }
 
-void Mesh::addRotation(glm::quat & q)
-{
-	this->orientation *= q;
-}
-
-void Mesh::setRotation(glm::quat & q)
+void Mesh::setRotation(glm::mat3 & q)
 {
 	this->orientation = q;
 }
 
-glm::quat Mesh::getRotation()
+glm::mat3 Mesh::getRotation()
 {
 	return this->orientation;
 }
@@ -375,7 +370,7 @@ void Mesh::Draw(Shader shader)
 
 	glm::mat4 model = glm::mat4(1.f);
 	glm::mat4 t = glm::translate(glm::mat4(1.f), position);
-	glm::mat4 o = glm::mat4_cast(orientation);
+	glm::mat4 o = glm::mat4(orientation);
 	model = t * o;
 
 	glUniformMatrix4fv(glGetUniformLocation(shader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));

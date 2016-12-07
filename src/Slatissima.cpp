@@ -32,7 +32,7 @@ const float LW_RATIO_STD = 2.010f;
 const float LP_RATIO_AVG = 7.738f;
 const float LP_RATIO_STD = 2.389f;
 
-Slatissima::Slatissima(float solidThickness, glm::vec3 position, glm::quat orientation, btSoftRigidDynamicsWorld* dynamicsWorld)
+Slatissima::Slatissima(float solidThickness, glm::vec3 position, glm::mat3 orientation, btSoftRigidDynamicsWorld* dynamicsWorld)
 	: m_bPhysicsInit(false)
 	, m_bSolidMesh(solidThickness > 0.f)
 	, m_pDynamicsWorld(dynamicsWorld)
@@ -70,24 +70,6 @@ Slatissima::~Slatissima()
 	delete m_pSoftBody;
 }
 
-void Slatissima::rotateX(float degrees)
-{
-	glm::quat q = glm::quat(glm::vec3(glm::radians(degrees), 0.f, 0.f));
-	this->mesh->addRotation(q);
-}
-
-void Slatissima::rotateY(float degrees)
-{
-	glm::quat q = glm::quat(glm::vec3(0.f, glm::radians(degrees), 0.f));
-	this->mesh->addRotation(q);
-}
-
-void Slatissima::rotateZ(float degrees)
-{
-	glm::quat q = glm::quat(glm::vec3(0.f, 0.f, glm::radians(degrees)));
-	this->mesh->addRotation(q);
-}
-
 void Slatissima::setDebugDrawFlags(int flags)
 {
 	m_debugDrawFlags = flags;
@@ -121,7 +103,7 @@ void Slatissima::anchorToBody(btRigidBody * body)
 void Slatissima::update()
 {
 	mesh->setPosition(m_vec3Position);
-	mesh->setRotation(glm::quat(m_mat3Rotation));
+	mesh->setRotation(m_mat3Rotation);
 
 	btAlignedObjectArray<btSoftBody::Node> nodes = m_pSoftBody->m_nodes;
 	std::vector<float> data_serialized;
@@ -129,7 +111,7 @@ void Slatissima::update()
 	{
 		glm::vec3 pos(nodes[i].m_x.getX(), nodes[i].m_x.getY(), nodes[i].m_x.getZ());
 		glm::vec3 norm(nodes[i].m_n.getX(), nodes[i].m_n.getY(), nodes[i].m_n.getZ());
-		glm::mat4 m = glm::translate(glm::mat4(), mesh->getPosition()) * glm::mat4_cast(mesh->getRotation());
+		glm::mat4 m = glm::translate(glm::mat4(), mesh->getPosition()) * glm::mat4(mesh->getRotation());
 		m = glm::inverse(m);
 		pos = glm::vec3(m * glm::vec4(pos, 1.f));
 		//norm = glm::vec3(m * glm::vec4(norm, 1.f));
@@ -244,7 +226,8 @@ void Slatissima::initPhysics()
 	}
 
 	m_pSoftBody->randomizeConstraints();
-	btQuaternion o(mesh->getRotation().x, mesh->getRotation().y, mesh->getRotation().z, mesh->getRotation().w);
+	glm::quat q = glm::quat_cast(mesh->getRotation());
+	btQuaternion o(q.x, q.y, q.z, q.w);
 	btVector3 pos(mesh->getPosition().x, mesh->getPosition().y, mesh->getPosition().z);
 	btTransform trans(o, pos);
 	m_pSoftBody->transform(trans);
