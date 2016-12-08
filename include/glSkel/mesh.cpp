@@ -112,24 +112,6 @@ void Mesh::getIndexedVertices(std::vector<int>& i, std::vector<glm::vec3>& v)
 		v.push_back(vert->pos);
 }
 
-void Mesh::getIndexedVerticesMirrored(std::vector<int>& i, std::vector<glm::vec3>& v)
-{
-	for (std::vector<HE_Face*>::iterator it = m_vpFaces.begin(); it != m_vpFaces.end(); it++)
-	{
-		HE_Edge *begin = (*it)->edge;
-		HE_Edge *e = begin;
-
-		do
-		{
-			i.push_back(e->head->id);
-			e = e->next;
-		} while (e != begin);
-	}
-
-	for (auto vert : m_vpVertices)
-		v.push_back(vert->pos);
-}
-
 void Mesh::solidify(float distBetweenLayers)
 {
 	std::vector<HE_Vertex*> backVerts;

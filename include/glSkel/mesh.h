@@ -47,8 +47,6 @@ public:
 
 	void getIndexedVertices(std::vector<int> &i, std::vector<glm::vec3> &v);
 
-	void getIndexedVerticesMirrored(std::vector<int> &i, std::vector<glm::vec3> &v);
-
 	void solidify(float distBetweenLayers);
 
 	void updateMeshSerial(std::vector<float> &data);
