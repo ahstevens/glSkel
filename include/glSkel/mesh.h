@@ -47,6 +47,8 @@ public:
 
 	void getIndexedVertices(std::vector<int> &i, std::vector<glm::vec3> &v);
 
+	bool isBoundaryVertex(int index);
+
 	void solidify(float distBetweenLayers);
 
 	void updateMeshSerial(std::vector<float> &data);

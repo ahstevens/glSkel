@@ -173,7 +173,24 @@ void Slatissima::receiveEvent(Object* obj, const int event, void * data)
 
 		btSoftBody::sRayCast results;
 		if (m_pSoftBody->rayTest(btVector3(payload[0].x, payload[0].y, payload[0].z), btVector3(payload[1].x, payload[1].y, payload[1].z), results))
-			m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * (event == BroadcastSystem::EVENT::GROW_RAY ? growRayAmount : shrinkRayAmount));
+		{
+			//m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * (event == BroadcastSystem::EVENT::GROW_RAY ? growRayAmount : shrinkRayAmount));
+			for (int i = 0; i < m_pSoftBody->m_links.size(); ++i)
+			{
+				int node1Index = *static_cast<int*>(m_pSoftBody->m_links[i].m_n[0]->m_tag);
+				int node2Index = *static_cast<int*>(m_pSoftBody->m_links[i].m_n[1]->m_tag);
+
+				if (mesh->isBoundaryVertex(node1Index) && 
+					mesh->isBoundaryVertex(node2Index))
+				{
+					m_pSoftBody->m_links[i].m_rl *= event == BroadcastSystem::EVENT::GROW_RAY ? growRayAmount : shrinkRayAmount;
+					m_pSoftBody->m_links[i].m_c1 = m_pSoftBody->m_links[i].m_rl * m_pSoftBody->m_links[i].m_rl;
+				}
+			}
+
+			if (m_pSoftBody->getActivationState() == ISLAND_SLEEPING)
+				m_pSoftBody->activate();
+		}
 	}
 }
 
@@ -199,6 +216,12 @@ void Slatissima::initPhysics()
 		, (int)mesh->getFaceCount()
 		, true
 	);
+
+	for (int i = 0; i < m_pSoftBody->m_nodes.size(); ++i)
+	{
+		int* ind = new int(i);
+		m_pSoftBody->m_nodes[i].m_tag = ind;
+	}
 
 	m_pSoftBody->generateBendingConstraints(2);
 	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;

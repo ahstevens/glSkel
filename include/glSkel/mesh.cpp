@@ -112,6 +112,23 @@ void Mesh::getIndexedVertices(std::vector<int>& i, std::vector<glm::vec3>& v)
 		v.push_back(vert->pos);
 }
 
+bool Mesh::isBoundaryVertex(int index)
+{
+	if (!m_pBoundaryEdge)
+		return false;
+
+	HE_Edge* begin = m_pBoundaryEdge;
+	HE_Edge* e = begin;
+	do
+	{
+		if (index == e->head->id)
+			return true;
+		e = e->next;
+	} while (e != begin);
+
+	return false;
+}
+
 void Mesh::solidify(float distBetweenLayers)
 {
 	std::vector<HE_Vertex*> backVerts;
