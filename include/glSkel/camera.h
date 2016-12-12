@@ -82,6 +82,9 @@ public:
 				m_brMovementState[LEFT] = true;
 			if (key == GLFW_KEY_D)
 				m_brMovementState[RIGHT] = true;
+
+			if (key == GLFW_KEY_LEFT_SHIFT)
+				m_fMovementSpeed *= 5.f;
 		}
 
 		if (event == BroadcastSystem::EVENT::KEY_UNPRESS)
@@ -98,6 +101,9 @@ public:
 				m_brMovementState[LEFT] = false;
 			if (key == GLFW_KEY_D)
 				m_brMovementState[RIGHT] = false;
+
+			if (key == GLFW_KEY_LEFT_SHIFT)
+				m_fMovementSpeed *= 0.2f;
 		}
 
 		if (event == BroadcastSystem::EVENT::MOUSE_MOVE)

@@ -18,8 +18,7 @@ const unsigned int center_nVertsWide = 3u;
 const unsigned int edge_nVertsWide = 3u;
 const float edgeCutoffPercent = 0.05f;
 
-const float shrinkRayAmount = 0.95f;
-const float growRayAmount = 1.05f;
+const float rayStrength = 0.05f;
 
 const float L_AVG = 148.1f;        // avg length
 const float L_STD = 55.26f;        // std. dev. length
@@ -31,6 +30,14 @@ const float LW_RATIO_AVG = 6.277f;
 const float LW_RATIO_STD = 2.010f;
 const float LP_RATIO_AVG = 7.738f;
 const float LP_RATIO_STD = 2.389f;
+
+struct Payload
+{
+	int index;
+	float x0;
+	float y0;
+	float z0;
+};
 
 Slatissima::Slatissima(float solidThickness, glm::vec3 position, glm::mat3 orientation, btSoftRigidDynamicsWorld* dynamicsWorld)
 	: Object(position, orientation)
@@ -160,10 +167,10 @@ void Slatissima::receiveEvent(Object* obj, const int event, void * data)
 			bump(btVector3(0.f, 0.f, 1.f));
 
 		if (key == GLFW_KEY_L)
-			m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * growRayAmount);
+			m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * (1.f + rayStrength));
 
 		if (key == GLFW_KEY_K)
-			m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * shrinkRayAmount);
+			m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * (1.f - rayStrength));
 	}
 
 	if (event == BroadcastSystem::EVENT::GROW_RAY || event == BroadcastSystem::EVENT::SHRINK_RAY)
@@ -177,19 +184,18 @@ void Slatissima::receiveEvent(Object* obj, const int event, void * data)
 			//m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * (event == BroadcastSystem::EVENT::GROW_RAY ? growRayAmount : shrinkRayAmount));
 			for (int i = 0; i < m_pSoftBody->m_links.size(); ++i)
 			{
-				int node1Index = *static_cast<int*>(m_pSoftBody->m_links[i].m_n[0]->m_tag);
-				int node2Index = *static_cast<int*>(m_pSoftBody->m_links[i].m_n[1]->m_tag);
+				Payload p1 = *static_cast<Payload*>(m_pSoftBody->m_links[i].m_n[0]->m_tag);
+				Payload p2 = *static_cast<Payload*>(m_pSoftBody->m_links[i].m_n[1]->m_tag);
 
-				if (mesh->isBoundaryVertex(node1Index) && 
-					mesh->isBoundaryVertex(node2Index))
+				if (mesh->isBoundaryVertex(p1.index) && 
+					mesh->isBoundaryVertex(p2.index))
 				{
-					m_pSoftBody->m_links[i].m_rl *= event == BroadcastSystem::EVENT::GROW_RAY ? growRayAmount : shrinkRayAmount;
+					float ratio = ((p1.y0 + p2.y0) / 2) / length;
+					float changeAmount = rayStrength * calculateEnvelope(ratio, 0.05f, 0.45f, 0.55f, 0.95f);
+					m_pSoftBody->m_links[i].m_rl *= 1.f + (event == BroadcastSystem::EVENT::GROW_RAY ? changeAmount : -changeAmount);
 					m_pSoftBody->m_links[i].m_c1 = m_pSoftBody->m_links[i].m_rl * m_pSoftBody->m_links[i].m_rl;
 				}
 			}
-
-			if (m_pSoftBody->getActivationState() == ISLAND_SLEEPING)
-				m_pSoftBody->activate();
 		}
 	}
 }
@@ -219,27 +225,25 @@ void Slatissima::initPhysics()
 
 	for (int i = 0; i < m_pSoftBody->m_nodes.size(); ++i)
 	{
-		int* ind = new int(i);
-		m_pSoftBody->m_nodes[i].m_tag = ind;
+		Payload* p = new Payload();
+		p->index = i;
+		p->x0 = m_pSoftBody->m_nodes[i].m_x.getX();
+		p->y0 = m_pSoftBody->m_nodes[i].m_x.getY();
+		p->z0 = m_pSoftBody->m_nodes[i].m_x.getZ();
+
+		m_pSoftBody->m_nodes[i].m_tag = p;
 	}
 
 	m_pSoftBody->generateBendingConstraints(2);
 	m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::VF_SS;
-	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SELF;
-	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_RS;
-	//m_pSoftBody->m_cfg.collisions |= btSoftBody::fCollision::CL_SS;
-	m_pSoftBody->m_cfg.kCHR = 1.f;
-	m_pSoftBody->m_cfg.kSHR = 1.f;
-	m_pSoftBody->m_cfg.piterations = 5.f;
-	m_pSoftBody->m_materials[0]->m_flags |= btSoftBody::fMaterial::DebugDraw;
+	//m_pSoftBody->m_cfg.piterations = 5.f;
 
 	if (m_bSolidMesh)
 	{
 		btSoftBody::Material *supportLinkMat = new btSoftBody::Material();
 		supportLinkMat->m_kLST = 1.f;
 		supportLinkMat->m_kAST = 1.f;
-		supportLinkMat->m_kVST = 1.f;
-		//supportLinkMat->m_flags |= btSoftBody::fMaterial::DebugDraw;
+		supportLinkMat->m_kVST = 1.f;                                                                                           
 
 		for (auto p : mesh->m_vOpposingVertPairs)
 			m_pSoftBody->appendLink(p.first, p.second, supportLinkMat);
@@ -321,10 +325,10 @@ void Slatissima::buildModel()
 			tempVert.y = dy * length;
 
 			tempVert.z = 0.f;
-			for(auto g : gabors)
-				tempVert.z += g->get(glm::vec2(tempVert));
+			//for(auto g : gabors)
+			//	tempVert.z += g->get(glm::vec2(tempVert));
 
-			tempVert.z *= calculateEnvelope(dy, 0.05f, 0.1f, 0.9f, 0.95f);
+			//tempVert.z *= calculateEnvelope(dy, 0.05f, 0.1f, 0.9f, 0.95f);
 			vecRow.push_back(tempVert);
 		}
 
@@ -354,10 +358,10 @@ void Slatissima::buildModel()
 			tempVert.y = dy * length;
 
 			tempVert.z = 0.f;
-			for (auto g : gabors)
-				tempVert.z += g->get(glm::vec2(tempVert));
+			//for (auto g : gabors)
+			//	tempVert.z += g->get(glm::vec2(tempVert));
 
-			tempVert.z *= calculateEnvelope(dy, 0.05f, 0.1f, 0.9f, 0.95f);
+			//tempVert.z *= calculateEnvelope(dy, 0.05f, 0.1f, 0.9f, 0.95f);
 			vecRow.push_back(tempVert);
 		}
 
