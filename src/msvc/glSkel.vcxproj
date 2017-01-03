@@ -134,6 +134,7 @@ exit 0</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\include\glSkel\mesh.cpp" />
+    <ClCompile Include="..\AnchorPoint.cpp" />
     <ClCompile Include="..\GLFWInputBroadcaster.cpp" />
     <ClCompile Include="..\Ground.cpp" />
     <ClCompile Include="..\main.cpp" />
@@ -166,6 +167,7 @@ exit 0</Command>
     <ClInclude Include="..\..\include\glSkel\Engine.h" />
     <ClInclude Include="..\..\include\glSkel\shader.h" />
     <ClInclude Include="..\..\include\glSkel\TorusMesh.h" />
+    <ClInclude Include="..\AnchorPoint.h" />
     <ClInclude Include="..\GaborTest.h" />
     <ClInclude Include="..\GLFWInputBroadcaster.h" />
     <ClInclude Include="..\Ground.h" />

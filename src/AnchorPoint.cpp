@@ -1,10 +1,7 @@
-#include "Ground.h"
+#include "AnchorPoint.h"
 
-Ground::Ground(float width, float length, float depth, btDynamicsWorld* dynamicsWorld)
-	: Object(glm::vec3(), glm::mat3())
-	, m_fWidth(width)
-	, m_fLength(length)
-	, m_fDepth(depth)
+AnchorPoint::AnchorPoint(glm::vec3 position, btDynamicsWorld* dynamicsWorld)
+	: Object(position, glm::mat3())
 	, m_bPhysicsInit(false)
 	, m_pDynamicsWorld(dynamicsWorld)
 	, m_pRigidBody(NULL)
@@ -13,7 +10,8 @@ Ground::Ground(float width, float length, float depth, btDynamicsWorld* dynamics
 	initPhysics();
 }
 
-Ground::~Ground()
+
+AnchorPoint::~AnchorPoint()
 {
 	if (m_pMesh)
 		delete(m_pMesh);
@@ -22,30 +20,28 @@ Ground::~Ground()
 	delete m_pRigidBody;
 }
 
-btRigidBody * Ground::getRigidBody()
+btRigidBody * AnchorPoint::getRigidBody()
 {
 	return m_pRigidBody;
 }
 
-void Ground::Draw(Shader s)
+void AnchorPoint::Draw(Shader s)
 {
 	glm::mat4 modelMat = glm::translate(glm::mat4(), m_vec3Position) * glm::mat4(m_mat3Rotation);
 	m_pMesh->Draw(s, modelMat);
 }
 
-void Ground::initPhysics()
+void AnchorPoint::initPhysics()
 {
-	btCollisionShape* groundShape = new btBoxShape(btVector3(m_fWidth, m_fDepth, m_fLength));
+	
+	btCollisionShape* collisionShape = new btEmptyShape();
 	{
 		btScalar mass(0.f);
 		btVector3 localInertia(0.f, 0.f, 0.f);
-		btMatrix3x3 m;
-		m.setIdentity();
-		btTransform trans(m, btVector3(0.f, -m_fDepth, 0.f));
 
 		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
-		btDefaultMotionState* myMotionState = new btDefaultMotionState(trans);
-		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
+		btDefaultMotionState* myMotionState = new btDefaultMotionState();
+		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, collisionShape, localInertia);
 		m_pRigidBody = new btRigidBody(rbInfo);
 
 		//add the body to the dynamics world
@@ -55,23 +51,24 @@ void Ground::initPhysics()
 	m_bPhysicsInit = true;
 }
 
-void Ground::buildModel()
+void AnchorPoint::buildModel()
 {
 	std::vector<glm::vec3> vertices;
 	std::vector<unsigned int> indices;
 
-	float halfWidth = m_fWidth / 2.f;
-	float halfLength = m_fLength / 2.f;
+	float halfWidth = 0.1f;
+	float halfLength = 0.1f;
+	float halfDepth = 0.1f;
 
-	vertices.push_back(glm::vec3(-halfWidth, 0.f, -halfLength));       // 0
-	vertices.push_back(glm::vec3(halfWidth, 0.f, -halfLength));        // 1
-	vertices.push_back(glm::vec3(halfWidth, 0.f, halfLength));         // 2
-	vertices.push_back(glm::vec3(-halfWidth, 0.f, halfLength));        // 3
+	vertices.push_back(glm::vec3(-halfWidth, halfDepth, -halfLength));  // 0
+	vertices.push_back(glm::vec3(halfWidth, halfDepth, -halfLength));   // 1
+	vertices.push_back(glm::vec3(halfWidth, halfDepth, halfLength));    // 2
+	vertices.push_back(glm::vec3(-halfWidth, halfDepth, halfLength));   // 3
 
-	vertices.push_back(glm::vec3(halfWidth, -m_fDepth, -halfLength));  // 4
-	vertices.push_back(glm::vec3(-halfWidth, -m_fDepth, -halfLength)); // 5
-	vertices.push_back(glm::vec3(-halfWidth, -m_fDepth, halfLength));  // 6
-	vertices.push_back(glm::vec3(halfWidth, -m_fDepth, halfLength));   // 7
+	vertices.push_back(glm::vec3(halfWidth, -halfDepth, -halfLength));  // 4
+	vertices.push_back(glm::vec3(-halfWidth, -halfDepth, -halfLength)); // 5
+	vertices.push_back(glm::vec3(-halfWidth, -halfDepth, halfLength));  // 6
+	vertices.push_back(glm::vec3(halfWidth, -halfDepth, halfLength));   // 7
 
 	//top face
 	indices.push_back(0);
@@ -124,14 +121,14 @@ void Ground::buildModel()
 	m_pMesh = new Mesh(vertices, indices, this->loadTextures());
 }
 
-std::vector<Texture> Ground::loadTextures()
+std::vector<Texture> AnchorPoint::loadTextures()
 {
 	// Load textures
 	Texture diffuseMap, specularMap;
 	glGenTextures(1, &diffuseMap.id);
 	glGenTextures(1, &specularMap.id);
 	int width = 1, height = 1;
-	unsigned char image[3] = { 0xFF, 0xFF, 0x11 };
+	unsigned char image[3] = { 0xFF, 0x00, 0x00 };
 
 	// Diffuse map
 	diffuseMap.type = "texture_diffuse";

@@ -5,19 +5,17 @@
 
 #include <bullet/btBulletDynamicsCommon.h>
 
-class Ground : public Object
+class AnchorPoint : public Object
 {
 public:
-	Ground(float width, float length, float depth, btDynamicsWorld* dynamicsWorld);
-	~Ground();
+	AnchorPoint(glm::vec3 position, btDynamicsWorld* dynamicsWorld);
+	~AnchorPoint();
 
 	btRigidBody* getRigidBody();
 
 	void Draw(Shader s);
 
-private:
-	float m_fLength, m_fWidth, m_fDepth;
-	
+private:	
 	Mesh* m_pMesh;
 	
 	void buildModel();
