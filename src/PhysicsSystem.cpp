@@ -7,7 +7,6 @@ PhysicsSystem::PhysicsSystem()
 	, m_pBroadphase(NULL)
 	, m_pSolver(NULL)
 	, m_pDebugDrawer(NULL)
-	, m_pGroundBody(NULL)
 {
 }
 
@@ -56,8 +55,6 @@ bool PhysicsSystem::init()
 	m_pDebugDrawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
 	m_pDynamicsWorld->setDebugDrawer(m_pDebugDrawer);
 
-	setupGround();
-
 	return true;
 }
 
@@ -79,30 +76,4 @@ btSoftRigidDynamicsWorld * PhysicsSystem::getSoftDynamicsWorld()
 BulletDebugDrawer * PhysicsSystem::getDebugDrawer()
 {
 	return m_pDebugDrawer;
-}
-
-btRigidBody * PhysicsSystem::getGroundBody()
-{
-	return m_pGroundBody;
-}
-
-void PhysicsSystem::setupGround()
-{
-	btCollisionShape* groundShape = new btBoxShape(btVector3(500.f, 10.f, 500.f));
-	{
-		btScalar mass(0.f);
-		btVector3 localInertia(0.f, 0.f, 0.f);
-		btMatrix3x3 m;
-		m.setIdentity();
-		btTransform trans(m, btVector3(0.f, -10.f, 0.f));
-
-		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
-		btDefaultMotionState* myMotionState = new btDefaultMotionState(trans);
-		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
-		m_pGroundBody = new btRigidBody(rbInfo);
-
-		m_pGroundBody;
-		//add the body to the dynamics world
-		m_pDynamicsWorld->addRigidBody(m_pGroundBody);
-	}
 }

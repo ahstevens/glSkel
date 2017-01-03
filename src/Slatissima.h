@@ -15,6 +15,7 @@ class Slatissima : public Object, public BroadcastSystem::Listener
 {
 public:
 	Slatissima(float solidThickness, glm::vec3 position, glm::mat3 orientation, btSoftRigidDynamicsWorld* dynamicsWorld);
+	Slatissima(float solidThickness, float length, float width, float edgeWaveAmplitude, glm::vec3 position, glm::mat3 orientation, btSoftRigidDynamicsWorld* dynamicsWorld);
 	~Slatissima();
 
 	void setDebugDrawFlags(int flags);
@@ -35,7 +36,7 @@ private:
 	Mesh* mesh;
 	std::vector<GLuint> indices;
 
-	GLfloat length, width, edgeWaveAmplitude;
+	GLfloat m_fLength, m_fWidth, m_fEdgeWaveAmplitude;
 	GLuint nVertsTall;
 
 	std::vector<Gabor*> gabors;
@@ -51,7 +52,9 @@ private:
 
 	void debugDraw();
 
-	bool m_bPhysicsInit, m_bSolidMesh;;
+	std::vector<int> getNodesAtY(float yVal, float margin);
+
+	bool m_bPhysicsInit, m_bSolidMesh;
 	btSoftRigidDynamicsWorld* m_pDynamicsWorld;
 	btSoftBody* m_pSoftBody;
 

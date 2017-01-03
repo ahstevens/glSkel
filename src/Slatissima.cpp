@@ -52,16 +52,38 @@ Slatissima::Slatissima(float solidThickness, glm::vec3 position, glm::mat3 orien
 	std::normal_distribution<float> lpr_dist(LP_RATIO_AVG, LP_RATIO_STD);
 	std::normal_distribution<float> waveAmp_dist(LP_RATIO_AVG, 1.f);
 
-	length = length_dist(generator);
-	width = length / lwr_dist(generator);
-	edgeWaveAmplitude = waveAmp_dist(generator);
+	m_fLength = length_dist(generator);
+	m_fWidth = m_fLength / lwr_dist(generator);
+	m_fEdgeWaveAmplitude = waveAmp_dist(generator);
+	
+	std::cout << "Length: " << m_fLength << " | Width: " << m_fWidth << std::endl;
 
-	std::cout << "Length: " << length << " | Width: " << width << std::endl;
-
-	this->nVertsTall = static_cast<GLuint>(length / lengthGridSpacing);
+	this->nVertsTall = static_cast<GLuint>(m_fLength / lengthGridSpacing);
 
 	this->buildModel();
-	if(m_bSolidMesh) mesh->solidify(solidThickness);
+	if (m_bSolidMesh) mesh->solidify(solidThickness);
+
+	initPhysics();
+}
+
+Slatissima::Slatissima(float solidThickness, float length, float width, float edgeWaveAmplitude, glm::vec3 position, glm::mat3 orientation, btSoftRigidDynamicsWorld* dynamicsWorld)
+	: Object(position, orientation)
+	, m_bPhysicsInit(false)
+	, m_bSolidMesh(solidThickness > 0.f)
+	, m_pDynamicsWorld(dynamicsWorld)
+	, m_pSoftBody(NULL)
+	, m_debugDrawFlags(0)
+{
+	m_fLength = length;
+	m_fWidth = width;
+	m_fEdgeWaveAmplitude = edgeWaveAmplitude;
+
+	std::cout << "Length: " << m_fLength << " | Width: " << m_fWidth << std::endl;
+
+	this->nVertsTall = static_cast<GLuint>(m_fLength / lengthGridSpacing);
+
+	this->buildModel();
+	if (m_bSolidMesh) mesh->solidify(solidThickness);
 
 	initPhysics();
 }
@@ -136,7 +158,6 @@ void Slatissima::update()
 
 void Slatissima::receiveEvent(Object* obj, const int event, void * data)
 {
-
 	if (event == BroadcastSystem::EVENT::KEY_PRESS)
 	{	
 		int key;
@@ -167,10 +188,42 @@ void Slatissima::receiveEvent(Object* obj, const int event, void * data)
 			bump(btVector3(0.f, 0.f, 1.f));
 
 		if (key == GLFW_KEY_L)
-			m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * (1.f + rayStrength));
+		{
+			//m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * (event == BroadcastSystem::EVENT::GROW_RAY ? growRayAmount : shrinkRayAmount));
+			for (int i = 0; i < m_pSoftBody->m_links.size(); ++i)
+			{
+				Payload p1 = *static_cast<Payload*>(m_pSoftBody->m_links[i].m_n[0]->m_tag);
+				Payload p2 = *static_cast<Payload*>(m_pSoftBody->m_links[i].m_n[1]->m_tag);
+
+				if (mesh->isBoundaryVertex(p1.index) &&
+					mesh->isBoundaryVertex(p2.index))
+				{
+					float ratio = ((p1.y0 + p2.y0) / 2) / m_fLength;
+					float changeAmount = rayStrength * calculateEnvelope(ratio, 0.05f, 0.45f, 0.55f, 0.95f);
+					m_pSoftBody->m_links[i].m_rl *= 1.f + changeAmount;
+					m_pSoftBody->m_links[i].m_c1 = m_pSoftBody->m_links[i].m_rl * m_pSoftBody->m_links[i].m_rl;
+				}
+			}
+		}
 
 		if (key == GLFW_KEY_K)
-			m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * (1.f - rayStrength));
+		{
+			//m_pSoftBody->setRestLengthScale(m_pSoftBody->getRestLengthScale() * (event == BroadcastSystem::EVENT::GROW_RAY ? growRayAmount : shrinkRayAmount));
+			for (int i = 0; i < m_pSoftBody->m_links.size(); ++i)
+			{
+				Payload p1 = *static_cast<Payload*>(m_pSoftBody->m_links[i].m_n[0]->m_tag);
+				Payload p2 = *static_cast<Payload*>(m_pSoftBody->m_links[i].m_n[1]->m_tag);
+
+				if (mesh->isBoundaryVertex(p1.index) &&
+					mesh->isBoundaryVertex(p2.index))
+				{
+					float ratio = ((p1.y0 + p2.y0) / 2) / m_fLength;
+					float changeAmount = rayStrength * calculateEnvelope(ratio, 0.05f, 0.45f, 0.55f, 0.95f);
+					m_pSoftBody->m_links[i].m_rl *= 1.f - changeAmount;
+					m_pSoftBody->m_links[i].m_c1 = m_pSoftBody->m_links[i].m_rl * m_pSoftBody->m_links[i].m_rl;
+				}
+			}
+		}
 	}
 
 	if (event == BroadcastSystem::EVENT::GROW_RAY || event == BroadcastSystem::EVENT::SHRINK_RAY)
@@ -190,9 +243,13 @@ void Slatissima::receiveEvent(Object* obj, const int event, void * data)
 				if (mesh->isBoundaryVertex(p1.index) && 
 					mesh->isBoundaryVertex(p2.index))
 				{
-					float ratio = ((p1.y0 + p2.y0) / 2) / length;
-					float changeAmount = rayStrength * calculateEnvelope(ratio, 0.05f, 0.45f, 0.55f, 0.95f);
+					float ratioY = ((p1.y0 + p2.y0) / 2) / m_fLength;
+					float changeAmount = rayStrength * calculateEnvelope(ratioY, 0.05f, 0.45f, 0.55f, 0.95f);
+
+					// update resting length
 					m_pSoftBody->m_links[i].m_rl *= 1.f + (event == BroadcastSystem::EVENT::GROW_RAY ? changeAmount : -changeAmount);
+
+					// update resting length squared (c1)
 					m_pSoftBody->m_links[i].m_c1 = m_pSoftBody->m_links[i].m_rl * m_pSoftBody->m_links[i].m_rl;
 				}
 			}
@@ -223,6 +280,7 @@ void Slatissima::initPhysics()
 		, true
 	);
 
+	// Use Bullet's Feature m_tag property to store its mesh index and original position
 	for (int i = 0; i < m_pSoftBody->m_nodes.size(); ++i)
 	{
 		Payload* p = new Payload();
@@ -277,7 +335,7 @@ void Slatissima::buildModel()
 	
 	// CENTRAL BLADE VERTICES
 	float centerBladeWidthPercent = 0.25f;
-	float centerBladeWidth = width * centerBladeWidthPercent;
+	float centerBladeWidth = m_fWidth * centerBladeWidthPercent;
 	for (GLuint row = 0; row < nVertsTall; ++row)
 	{
 		GLfloat dy = static_cast<GLfloat>(row) / static_cast<GLfloat>(nVertsTall - 1);
@@ -292,7 +350,7 @@ void Slatissima::buildModel()
 			GLfloat sineOffset = sin((0.1f + 0.8f * dy) * glm::pi<GLfloat>());
 			tempVert.x = sineOffset * displacement;
 
-			tempVert.y = dy * length;
+			tempVert.y = dy * m_fLength;
 						
 			tempVert.z = 0.f;
 
@@ -307,9 +365,9 @@ void Slatissima::buildModel()
 	vertices.clear();
 
 	float edgeWidthPercent = (1.f - centerBladeWidthPercent) * 0.5f;
-	float edgeWidth = width * edgeWidthPercent;
+	float edgeWidth = m_fWidth * edgeWidthPercent;
 	
-	generateGabors(-width / 2.f);
+	generateGabors(-m_fWidth / 2.f);
 
 	for (GLuint row = 0; row < nVertsTall; ++row)
 	{
@@ -322,7 +380,7 @@ void Slatissima::buildModel()
 
 			tempVert.x = (dx - 0.5f) * edgeWidth * calculateEnvelope(dy, 0.f, 0.1f, 0.9f, 1.f);
 			
-			tempVert.y = dy * length;
+			tempVert.y = dy * m_fLength;
 
 			tempVert.z = 0.f;
 			//for(auto g : gabors)
@@ -341,7 +399,7 @@ void Slatissima::buildModel()
 
 	//generateGabors(width / 2.f);
 	for (int i = 0; i < gabors.size(); ++i)
-		gabors[i]->setGaussianKernelCenter(glm::vec2(width / 2.f, gabors[i]->getGaussianKernelCenter().y));
+		gabors[i]->setGaussianKernelCenter(glm::vec2(m_fWidth / 2.f, gabors[i]->getGaussianKernelCenter().y));
 
 	vertices.clear();
 	for (GLuint row = 0; row < nVertsTall; ++row)
@@ -355,7 +413,7 @@ void Slatissima::buildModel()
 
 			tempVert.x = (dx - 0.5f) * edgeWidth * calculateEnvelope(dy, 0.f, 0.1f, 0.9f, 1.f);
 
-			tempVert.y = dy * length;
+			tempVert.y = dy * m_fLength;
 
 			tempVert.z = 0.f;
 			//for (auto g : gabors)
@@ -387,12 +445,12 @@ void Slatissima::generateGabors(float x)
 	{
 		//float y = length * (i / (nLFWaves - 1.f));
 		//float y = length * getRandRatio();
-		float y = length / 2.f;
+		float y = m_fLength / 2.f;
 		Gabor *mainG = new Gabor();
 		mainG->setGaussianKernelCenter(glm::vec2(x, y));
-		mainG->setGaussianKernelSpread(glm::vec2(width / 5.f, length / nLFWaves));
-		mainG->setGaussianKernelAmplitude(edgeWaveAmplitude * (0.75f + 0.25f * getRandRatio()));
-		mainG->setComplexSinusoidDistance((5.f + 5.f * getRandRatio()) / length);
+		mainG->setGaussianKernelSpread(glm::vec2(m_fWidth / 5.f, m_fLength / nLFWaves));
+		mainG->setGaussianKernelAmplitude(m_fEdgeWaveAmplitude * (0.75f + 0.25f * getRandRatio()));
+		mainG->setComplexSinusoidDistance((5.f + 5.f * getRandRatio()) / m_fLength);
 
 		gabors.push_back(mainG);
 	}
@@ -400,11 +458,11 @@ void Slatissima::generateGabors(float x)
 	for (unsigned int i = 0; i < nHFWaves; ++i)
 	{
 		//float y = length * (i / (nHFWaves - 1.f));
-		float y = length * getRandRatio();
+		float y = m_fLength * getRandRatio();
 		Gabor *g = new Gabor();
 		g->setGaussianKernelCenter(glm::vec2(x, y));
-		g->setGaussianKernelSpread(glm::vec2(width / 10.f, length / nHFWaves));
-		g->setGaussianKernelAmplitude(edgeWaveAmplitude * 2.f);
+		g->setGaussianKernelSpread(glm::vec2(m_fWidth / 10.f, m_fLength / nHFWaves));
+		g->setGaussianKernelAmplitude(m_fEdgeWaveAmplitude * 2.f);
 		g->setComplexSinusoidDistance(0.5f + 5.5f * getRandRatio());
 
 		gabors.push_back(g);
@@ -503,4 +561,21 @@ void Slatissima::debugDraw()
 			}
 		}
 	}
+}
+
+std::vector<int> Slatissima::getNodesAtY(float yVal, float margin)
+{
+	std::vector<int> nodeIndices;
+
+	float yValRange[2] = { yVal - margin, yVal + margin };
+
+	for (int i = 0; i < m_pSoftBody->m_nodes.size(); ++i)
+	{
+		Payload* p = static_cast<Payload*>(m_pSoftBody->m_nodes[i].m_tag);
+
+		if (p->y0 >= yValRange[0] || p->y0 <= yValRange[1])
+			nodeIndices.push_back(p->index);
+	}
+
+	return nodeIndices;
 }

@@ -10,6 +10,7 @@
 
 #include "PhysicsSystem.h"
 #include "GLFWInputBroadcaster.h"
+#include <Ground.h>
 #include "SLatissima.h"
 
 #define MS_PER_UPDATE 0.0333333333f
@@ -45,6 +46,7 @@ public:
 	GLint m_iShininessLightingShader;
 
 	std::vector<Slatissima *> slats;
+	Ground* m_pGround;
 
 public:
 	Engine()
@@ -82,8 +84,6 @@ public:
 
 	void receiveEvent(Object * obj, const int event, void * data)
 	{
-		
-
 		if (event == BroadcastSystem::EVENT::KEY_PRESS)
 		{
 			int key;
@@ -115,7 +115,9 @@ public:
 				BroadcastSystem::EVENT rayType = button == GLFW_MOUSE_BUTTON_LEFT ? BroadcastSystem::EVENT::GROW_RAY : BroadcastSystem::EVENT::SHRINK_RAY;
 
 				for (auto& s : slats)
+				{
 					s->receiveEvent(m_pCamera, rayType, &payload);
+				}
 			}
 		}
 	}
@@ -166,7 +168,6 @@ public:
 
 	void update(float dt)
 	{
-
 		m_pCamera->update(dt);
 
 		// update soft mesh vertices
@@ -232,6 +233,8 @@ public:
 				}
 				else
 				{
+					m_pGround->Draw(*shader);
+
 					for (auto& s : slats) 
 						s->Draw(*shader);
 				}
@@ -283,10 +286,10 @@ private:
 		m_pLightingSystem->addDLight(glm::vec3(1.f, 1.f, 1.f), glm::vec3(0.1f), glm::vec3(0.25f), glm::vec3(0.5f));
 
 		// Positions of the point lights
-		m_pLightingSystem->addPLight(glm::vec3(-5.f, 0.f, -5.f));
-		m_pLightingSystem->addPLight(glm::vec3(5.f, 0.f, -5.f));
-		m_pLightingSystem->addPLight(glm::vec3(5.f, 0.f, 5.f));
-		m_pLightingSystem->addPLight(glm::vec3(-5.f, 0.f, 5.f));
+		m_pLightingSystem->addPLight(glm::vec3(-5.f, 5.f, -5.f));
+		m_pLightingSystem->addPLight(glm::vec3(5.f, 5.f, -5.f));
+		m_pLightingSystem->addPLight(glm::vec3(5.f, 5.f, 5.f));
+		m_pLightingSystem->addPLight(glm::vec3(-5.f, 5.f, 5.f));
 
 		// Spotlight
 		m_pLightingSystem->addSLight();
@@ -345,6 +348,8 @@ private:
 
 	void generateModels()
 	{
+		m_pGround = new Ground(500.f, 500.f, 10.f, m_pPhysicsSystem->getDynamicsWorld());
+
 		Slatissima *slat;
 		unsigned int nSlats = 4u;
 		float spaceBetween = 7.5f;
@@ -369,7 +374,7 @@ private:
 
 			slat = new Slatissima(0.f, pos, rot, m_pPhysicsSystem->getSoftDynamicsWorld());
 
-			slat->anchorToBody(m_pPhysicsSystem->getGroundBody());
+			slat->anchorToBody(m_pGround->getRigidBody());
 
 			GLFWInputBroadcaster::getInstance().attach(slat);
 

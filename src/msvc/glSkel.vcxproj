@@ -135,6 +135,7 @@ exit 0</Command>
   <ItemGroup>
     <ClCompile Include="..\..\include\glSkel\mesh.cpp" />
     <ClCompile Include="..\GLFWInputBroadcaster.cpp" />
+    <ClCompile Include="..\Ground.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\PhysicsSystem.cpp" />
     <ClCompile Include="..\Slatissima.cpp" />
@@ -167,6 +168,7 @@ exit 0</Command>
     <ClInclude Include="..\..\include\glSkel\TorusMesh.h" />
     <ClInclude Include="..\GaborTest.h" />
     <ClInclude Include="..\GLFWInputBroadcaster.h" />
+    <ClInclude Include="..\Ground.h" />
     <ClInclude Include="..\PhysicsSystem.h" />
     <ClInclude Include="..\Slatissima.h" />
   </ItemGroup>
