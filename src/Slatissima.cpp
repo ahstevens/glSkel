@@ -119,13 +119,20 @@ void Slatissima::bump(btVector3 dir)
 	m_pSoftBody->addForce(dir);
 }
 
-void Slatissima::anchorToBody(btRigidBody * body)
+void Slatissima::anchorBaseToBody(btRigidBody * body)
 {
 	for (int i = 0; i < center_nVertsWide; ++i)
 	{
 		m_pSoftBody->appendAnchor(i, body);
 		m_pSoftBody->appendAnchor(mesh->m_vOpposingVertPairs[i], body);
 	}
+}
+
+void Slatissima::pinToBody(float lengthPercent, btRigidBody * body)
+{
+	float targetY = lengthPercent * this->m_fLength;
+	int nodeIndex = this->getClosestNodeIndex(0.f, targetY);
+
 }
 
 void Slatissima::update()
@@ -563,7 +570,7 @@ void Slatissima::debugDraw()
 	}
 }
 
-std::vector<int> Slatissima::getNodesAtY(float yVal, float margin)
+int Slatissima::getClosestNodeIndex(float xVal, float yVal)
 {
 	std::vector<int> nodeIndices;
 

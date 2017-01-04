@@ -24,7 +24,8 @@ public:
 
 	void bump(btVector3 dir);
 	
-	void anchorToBody(btRigidBody* body);
+	void anchorBaseToBody(btRigidBody* body);
+	void pinToBody(float lengthPercent, btRigidBody* body);
 	
 	void update();
 
@@ -52,7 +53,7 @@ private:
 
 	void debugDraw();
 
-	std::vector<int> getNodesAtY(float yVal, float margin);
+	int getClosestNodeIndex(float xVal, float yVal);
 
 	bool m_bPhysicsInit, m_bSolidMesh;
 	btSoftRigidDynamicsWorld* m_pDynamicsWorld;
