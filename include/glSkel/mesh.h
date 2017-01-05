@@ -53,6 +53,10 @@ public:
 
 	void updateMeshSerial(std::vector<float> &data);
 
+	int getClosestVertexIndex(float x, float y, float z);
+
+	std::vector<int> getClosestVertexIndices(float x, float y, float z, float margin);
+
 	// Render the mesh
 	void Draw(Shader& shader, glm::mat4& modelMatrix);
 

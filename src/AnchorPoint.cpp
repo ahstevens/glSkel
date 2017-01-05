@@ -39,8 +39,14 @@ void AnchorPoint::initPhysics()
 		btScalar mass(0.f);
 		btVector3 localInertia(0.f, 0.f, 0.f);
 
+		btTransform trans;
+		trans.setIdentity();
+		trans.setOrigin(btVector3(m_vec3Position.x, m_vec3Position.y, m_vec3Position.z));
+
 		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
 		btDefaultMotionState* myMotionState = new btDefaultMotionState();
+		myMotionState->setWorldTransform(trans);
+
 		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, collisionShape, localInertia);
 		m_pRigidBody = new btRigidBody(rbInfo);
 

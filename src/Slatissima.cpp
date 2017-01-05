@@ -13,7 +13,7 @@
 
 extern std::default_random_engine generator;
 
-const float lengthGridSpacing = 0.5f; // cm, approx
+const float lengthGridSpacing = 1.5f; // cm, approx
 const unsigned int center_nVertsWide = 3u;
 const unsigned int edge_nVertsWide = 3u;
 const float edgeCutoffPercent = 0.05f;
@@ -128,11 +128,13 @@ void Slatissima::anchorBaseToBody(btRigidBody * body)
 	}
 }
 
-void Slatissima::pinToBody(float lengthPercent, btRigidBody * body)
+void Slatissima::pinToBody(float lengthRatio, btRigidBody * body)
 {
-	float targetY = lengthPercent * this->m_fLength;
-	int nodeIndex = this->getClosestNodeIndex(0.f, targetY);
+	float targetY = lengthRatio * this->m_fLength;
+	std::vector<int> nodeIndices = mesh->getClosestVertexIndices(0.f, targetY, 0.f, 2.f);
 
+	for (auto const &i : nodeIndices)
+		m_pSoftBody->appendAnchor(i, body, true);
 }
 
 void Slatissima::update()
@@ -184,6 +186,8 @@ void Slatissima::receiveEvent(Object* obj, const int event, void * data)
 			toggleDebugDrawFlag(fDrawFlags::Contacts);
 		if (key == GLFW_KEY_KP_6)
 			toggleDebugDrawFlag(fDrawFlags::Clusters);
+		if (key == GLFW_KEY_KP_7)
+			toggleDebugDrawFlag(fDrawFlags::Anchors);
 
 		if (key == GLFW_KEY_O)
 			bump(btVector3(0.f, -1.f, 0.f));
@@ -191,8 +195,8 @@ void Slatissima::receiveEvent(Object* obj, const int event, void * data)
 			bump(btVector3(0.f, 1.f, 0.f));
 		if (key == GLFW_KEY_I)
 			bump(btVector3(0.f, 0.f, -1.f));
-		if (key == GLFW_KEY_K)
-			bump(btVector3(0.f, 0.f, 1.f));
+		//if (key == GLFW_KEY_K)
+		//	bump(btVector3(0.f, 0.f, 1.f));
 
 		if (key == GLFW_KEY_L)
 		{
@@ -568,21 +572,4 @@ void Slatissima::debugDraw()
 			}
 		}
 	}
-}
-
-int Slatissima::getClosestNodeIndex(float xVal, float yVal)
-{
-	std::vector<int> nodeIndices;
-
-	float yValRange[2] = { yVal - margin, yVal + margin };
-
-	for (int i = 0; i < m_pSoftBody->m_nodes.size(); ++i)
-	{
-		Payload* p = static_cast<Payload*>(m_pSoftBody->m_nodes[i].m_tag);
-
-		if (p->y0 >= yValRange[0] || p->y0 <= yValRange[1])
-			nodeIndices.push_back(p->index);
-	}
-
-	return nodeIndices;
 }

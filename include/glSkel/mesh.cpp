@@ -316,6 +316,45 @@ void Mesh::updateMeshSerial(std::vector<float>& data)
 	glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data[0], GL_STREAM_DRAW);
 }
 
+//Brute force; not very pretty but it works for now
+int Mesh::getClosestVertexIndex(float x, float y, float z)
+{
+	float dist_sq = FLT_MAX;
+	
+	HE_Vertex *closestVert = NULL;
+
+	for (auto const &v : m_vpVertices)
+	{
+		float temp_dist_sq = (v->pos.x - x)*(v->pos.x - x) + (v->pos.y - y)*(v->pos.y - y) + (v->pos.z - z)*(v->pos.z - z);
+
+		if (temp_dist_sq < dist_sq)
+		{
+			closestVert = v;
+		}
+	}
+
+	return closestVert ? closestVert->id : -1;
+}
+
+//Brute force; not very pretty but it works for now
+std::vector<int> Mesh::getClosestVertexIndices(float x, float y, float z, float margin)
+{
+	float margin_sq = margin * margin;
+	std::vector<int> validIndices;
+
+	for (auto const &v : m_vpVertices)
+	{
+		float dist_sq = (v->pos.x - x)*(v->pos.x - x) + (v->pos.y - y)*(v->pos.y - y) + (v->pos.z - z)*(v->pos.z - z);
+
+		if (dist_sq <= margin_sq)
+		{
+			validIndices.push_back(v->id);
+		}
+	}
+
+	return validIndices;
+}
+
 void Mesh::Draw(Shader& shader, glm::mat4& modelMatrix)
 {
 	// Bind appropriate textures

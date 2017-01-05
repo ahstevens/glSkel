@@ -25,7 +25,7 @@ public:
 	void bump(btVector3 dir);
 	
 	void anchorBaseToBody(btRigidBody* body);
-	void pinToBody(float lengthPercent, btRigidBody* body);
+	void pinToBody(float lengthRatio, btRigidBody* body);
 	
 	void update();
 
@@ -52,8 +52,6 @@ private:
 	std::vector<Texture> loadTextures();
 
 	void debugDraw();
-
-	int getClosestNodeIndex(float xVal, float yVal);
 
 	bool m_bPhysicsInit, m_bSolidMesh;
 	btSoftRigidDynamicsWorld* m_pDynamicsWorld;
