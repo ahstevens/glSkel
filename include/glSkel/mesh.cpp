@@ -337,22 +337,48 @@ int Mesh::getClosestVertexIndex(float x, float y, float z)
 }
 
 //Brute force; not very pretty but it works for now
-std::vector<int> Mesh::getClosestVertexIndices(float x, float y, float z, float margin)
+std::vector<int> Mesh::getClosestVertexIndicesKernel(float x, float y, float z, float radius)
 {
-	float margin_sq = margin * margin;
-	std::vector<int> validIndices;
+	float r_sq = radius * radius;
+	std::vector<int> foundIndices;
 
 	for (auto const &v : m_vpVertices)
 	{
-		float dist_sq = (v->pos.x - x)*(v->pos.x - x) + (v->pos.y - y)*(v->pos.y - y) + (v->pos.z - z)*(v->pos.z - z);
+		float d_sq = (v->pos.x - x)*(v->pos.x - x) + (v->pos.y - y)*(v->pos.y - y) + (v->pos.z - z)*(v->pos.z - z);
 
-		if (dist_sq <= margin_sq)
+		if (d_sq <= r_sq)
 		{
-			validIndices.push_back(v->id);
+			foundIndices.push_back(v->id);
 		}
 	}
 
-	return validIndices;
+	return foundIndices;
+}
+
+//Brute force; not very pretty but it works for now
+std::vector<int> Mesh::getClosestVertexIndicesKernel(float x, float y, float z, float rx, float ry, float rz)
+{
+	float rx_sq = rx * rx;
+	float ry_sq = ry * ry;
+	float rz_sq = rz * rz;
+
+	std::vector<int> foundIndices;
+
+	for (auto const &v : m_vpVertices)
+	{
+		float dx_sq = (v->pos.x - x) * (v->pos.x - x);
+		float dy_sq = (v->pos.y - y) * (v->pos.y - y);
+		float dz_sq = (v->pos.z - z) * (v->pos.z - z);
+
+		float res = dx_sq / rx_sq + dy_sq / ry_sq + dz_sq / rz_sq;
+
+		if (res <= 1)
+		{
+			foundIndices.push_back(v->id);
+		}
+	}
+
+	return foundIndices;
 }
 
 void Mesh::Draw(Shader& shader, glm::mat4& modelMatrix)

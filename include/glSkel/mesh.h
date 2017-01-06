@@ -55,7 +55,8 @@ public:
 
 	int getClosestVertexIndex(float x, float y, float z);
 
-	std::vector<int> getClosestVertexIndices(float x, float y, float z, float margin);
+	std::vector<int> getClosestVertexIndicesKernel(float x, float y, float z, float radius);
+	std::vector<int> getClosestVertexIndicesKernel(float x, float y, float z, float rx, float ry, float rz);
 
 	// Render the mesh
 	void Draw(Shader& shader, glm::mat4& modelMatrix);

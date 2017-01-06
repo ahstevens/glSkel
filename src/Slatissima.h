@@ -25,7 +25,7 @@ public:
 	void bump(btVector3 dir);
 	
 	void anchorBaseToBody(btRigidBody* body);
-	void pinToBody(float lengthRatio, btRigidBody* body);
+	void pinToBody(float lengthRatio, btRigidBody* body, float influence = 1.f);
 	
 	void update();
 

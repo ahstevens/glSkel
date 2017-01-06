@@ -44,9 +44,9 @@ bool PhysicsSystem::init()
 	m_pDynamicsWorld = new btSoftRigidDynamicsWorld(m_pDispatcher, m_pBroadphase, m_pSolver, m_pCollisionConfiguration);
 
 	btSoftBodyWorldInfo &sbInfo = static_cast<btSoftRigidDynamicsWorld*>(m_pDynamicsWorld)->getWorldInfo();
-	//sbInfo.m_gravity = btVector3(0.f, 0.f, 0.f);
+	sbInfo.m_gravity = btVector3(0.f, 0.f, 0.f);
 	//sbInfo.m_gravity = btVector3(0.f, -9.8f, 0.f);
-	sbInfo.m_gravity = btVector3(1.f, 3.f, -0.5f);
+	//sbInfo.m_gravity = btVector3(1.f, 3.f, -0.5f);
 	sbInfo.m_dispatcher = m_pDispatcher;
 	sbInfo.m_broadphase = m_pBroadphase;
 	sbInfo.m_sparsesdf.Initialize();

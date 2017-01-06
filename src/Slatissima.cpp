@@ -124,17 +124,20 @@ void Slatissima::anchorBaseToBody(btRigidBody * body)
 	for (int i = 0; i < center_nVertsWide; ++i)
 	{
 		m_pSoftBody->appendAnchor(i, body);
-		m_pSoftBody->appendAnchor(mesh->m_vOpposingVertPairs[i], body);
+		if(m_bSolidMesh)
+			m_pSoftBody->appendAnchor(mesh->m_vOpposingVertPairs[i], body);
 	}
 }
 
-void Slatissima::pinToBody(float lengthRatio, btRigidBody * body)
+void Slatissima::pinToBody(float lengthRatio, btRigidBody * body, float influence)
 {
 	float targetY = lengthRatio * this->m_fLength;
-	std::vector<int> nodeIndices = mesh->getClosestVertexIndices(0.f, targetY, 0.f, 2.f);
+	std::vector<int> nodeIndices = mesh->getClosestVertexIndicesKernel(0.f, targetY, 0.f, this->m_fWidth * 0.1, 2.f, 1.f);
+
+	//btTransform &trans = body->getWorldTransform();
 
 	for (auto const &i : nodeIndices)
-		m_pSoftBody->appendAnchor(i, body, true);
+		m_pSoftBody->appendAnchor(i, body, btVector3(1.f, 1.f, 1.f), true, influence);
 }
 
 void Slatissima::update()
