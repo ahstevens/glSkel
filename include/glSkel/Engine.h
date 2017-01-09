@@ -188,6 +188,13 @@ public:
 		{
 			m_pPhysicsSystem->update(dt);
 		}
+
+		btTransform trans;
+		trans.setIdentity();
+
+		// draw the quadrat boundary
+		m_pPhysicsSystem->getDebugDrawer()->setTransform(trans);
+		m_pPhysicsSystem->getDebugDrawer()->drawBox(btVector3(0.f, 0.f, 0.f), btVector3(50.f, 50.f, -50.f), btVector3(1.f, 0.f, 0.f));
 	}
 
 	void render()
@@ -387,7 +394,7 @@ private:
 
 			slat = new Slatissima(0.f, pos, rot, m_pPhysicsSystem->getSoftDynamicsWorld());
 
-			slat->anchorBaseToBody(m_pGround->getRigidBody());
+			slat->pinToBody(0.f, slat->getWidth() * 0.2f, 1.f, 1.f, m_pGround->getRigidBody());
 
 			GLFWInputBroadcaster::getInstance().attach(slat);
 
@@ -396,7 +403,7 @@ private:
 
 		AnchorPoint *a1 = new AnchorPoint(glm::vec3(0.f, 20.f, 0.f), m_pPhysicsSystem->getDynamicsWorld());
 
-		slats[0]->anchorBaseToBody(a1->getRigidBody());
+		slats[0]->pinToBody(0.f, slats[0]->getWidth() * 0.2f, 1.f, 1.f, a1->getRigidBody());
 	}
 
 	void generateQuad1Models()
@@ -422,25 +429,26 @@ private:
 		rot = glm::mat3(glm::angleAxis(glm::radians(15.f), glm::vec3(0.f, 1.f, 0.f))) * glm::mat3(glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)));
 		slat1 = new Slatissima(0.f, 164.f, 32.f, 5.f, pos, rot, m_pPhysicsSystem->getSoftDynamicsWorld());
 		//slat1->anchorBaseToBody(m_pGround->getRigidBody());
-		slat1->pinToBody(0.f, m_pGround->getRigidBody());
+		slat1->pinToBody(0.f, slat1->getWidth() * 0.2f, 1.f, 1.f, m_pGround->getRigidBody());
 		GLFWInputBroadcaster::getInstance().attach(slat1);
 		slats.push_back(slat1);
 
 		a1 = new AnchorPoint(glm::vec3(28.f, 1.f, 0.f), m_pPhysicsSystem->getDynamicsWorld());
-		slat1->pinToBody(0.25f, a1->getRigidBody(), 0.5f);
+		//slat1->pinToBody(0.25f, a1->getRigidBody(), 0.5f);
+		slat1->pinToBody(28.f, 1.f, 0.f, slat1->getWidth() * 0.2f, 1.f, 1.f, a1->getRigidBody(), 0.5f, true, false, false);
 			
 		pos = glm::vec3(40.f, 2.f, -55.f);
 		rot = glm::mat3(glm::angleAxis(glm::radians(5.f), glm::vec3(0.f, 1.f, 0.f))) * glm::mat3(glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)));
 		slat2 = new Slatissima(0.f, 147.f, 30.f, 5.f, pos, rot, m_pPhysicsSystem->getSoftDynamicsWorld());
-		slat2->anchorBaseToBody(m_pGround->getRigidBody());
+		slat2->pinToBody(0.f, slat2->getWidth() * 0.2f, 1.f, 1.f, m_pGround->getRigidBody());
 		GLFWInputBroadcaster::getInstance().attach(slat2);
 		slats.push_back(slat2);
 
 		AnchorPoint *a2 = new AnchorPoint(glm::vec3(41.f, 2.f, -50.f), m_pPhysicsSystem->getDynamicsWorld());
-		slat2->pinToBody(0.05f, a2->getRigidBody(), 0.5f);
+		slat2->pinToBody(0.05f, slat2->getWidth() * 0.2f, 1.f, 1.f, a2->getRigidBody(), 0.5f, true, true, false);
 
 		AnchorPoint *a3 = new AnchorPoint(glm::vec3(45.f, 2.f, 0.f), m_pPhysicsSystem->getDynamicsWorld());
-		slat2->pinToBody(0.35f, a3->getRigidBody(), 0.5f);
+		slat2->pinToBody(0.35f, slat2->getWidth() * 0.2f, 1.f, 1.f, a3->getRigidBody(), 0.5f, true, false, false);
 
 		//pos = glm::vec3(20.f, 3.f, -38.f);
 		//rot = glm::mat3(glm::angleAxis(glm::radians(-45.f), glm::vec3(0.f, 1.f, 0.f))) * glm::mat3(glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)));

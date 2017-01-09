@@ -113,31 +113,85 @@ void Slatissima::toggleDebugDrawFlag(int flag)
 	m_debugDrawFlags ^= flag;
 }
 
+float Slatissima::getLength()
+{
+	return m_fLength;
+}
+
+float Slatissima::getWidth()
+{
+	return m_fWidth;
+}
+
 void Slatissima::bump(btVector3 dir)
 {
 	m_pSoftBody->activate();
 	m_pSoftBody->addForce(dir);
 }
 
-void Slatissima::anchorBaseToBody(btRigidBody * body)
-{
-	for (int i = 0; i < center_nVertsWide; ++i)
-	{
-		m_pSoftBody->appendAnchor(i, body);
-		if(m_bSolidMesh)
-			m_pSoftBody->appendAnchor(mesh->m_vOpposingVertPairs[i], body);
-	}
-}
-
-void Slatissima::pinToBody(float lengthRatio, btRigidBody * body, float influence)
+void Slatissima::pinToBody(float lengthRatio, float kernelX, float kernelY, float kernelZ, btRigidBody * body, float influence, bool disableCollisionsWithBody, bool convergeAnchors, bool anchorInPlace)
 {
 	float targetY = lengthRatio * this->m_fLength;
-	std::vector<int> nodeIndices = mesh->getClosestVertexIndicesKernel(0.f, targetY, 0.f, this->m_fWidth * 0.1, 2.f, 1.f);
 
-	//btTransform &trans = body->getWorldTransform();
+	glm::vec3 worldPt = glm::vec3(glm::translate(glm::mat4(), m_vec3Position) * glm::mat4(m_mat3Rotation) * glm::vec4(0.f, targetY, 0.f, 1.f));
+
+	pinToBody(worldPt.x, worldPt.y, worldPt.z, kernelX, kernelY, kernelZ, body, influence, disableCollisionsWithBody, convergeAnchors, anchorInPlace);
+}
+
+void Slatissima::pinToBody(float worldX, float worldY, float worldZ, float kernelX, float kernelY, float kernelZ, btRigidBody * body, float influence, bool disableCollisionsWithBody, bool convergeAnchors, bool anchorInPlace)
+{
+	glm::vec4 worldPt(worldX, worldY, worldZ, 1.f);
+
+	glm::mat4 modelToWorldMat = glm::translate(glm::mat4(), m_vec3Position) * glm::mat4(m_mat3Rotation);
+	glm::mat4 worldToModelMat = glm::inverse(modelToWorldMat);
+	// transform world position into model space
+	glm::vec4 modelPt = worldToModelMat * worldPt;
+	
+	std::vector<int> nodeIndices = mesh->getClosestVertexIndicesKernel(modelPt.x, modelPt.y, modelPt.z, kernelX, kernelY, kernelZ);
+
+	// short circuit if no node indices found within kernel
+	if (nodeIndices.size() < 1)
+	{
+		std::cerr << "pinToBody: No nodes found near model coordinate (" << modelPt.x << ", " << modelPt.y << ", " << modelPt.z << ") using kernel (" << kernelX << ", " << kernelY << ", " << kernelZ << ")" << std::endl;
+		return;
+	}
+
+	// get centroid (model space)
+	glm::vec3 centroidPt = mesh->getCentroidPosition(nodeIndices);
+	
+	// calc direction vec
+	glm::vec3 centroidToBodyVec;
+	if (!convergeAnchors)
+	{
+		glm::vec3 bodyOriginPt(body->getWorldTransform().getOrigin().getX(), body->getWorldTransform().getOrigin().getY(), body->getWorldTransform().getOrigin().getZ());
+		bodyOriginPt = glm::vec3(worldToModelMat * glm::vec4(bodyOriginPt, 1.f)); // transform to model space
+		centroidToBodyVec = bodyOriginPt - centroidPt;
+	}
 
 	for (auto const &i : nodeIndices)
-		m_pSoftBody->appendAnchor(i, body, btVector3(1.f, 1.f, 1.f), true, influence);
+	{
+		glm::vec3 worldPivot;
+
+		// if not converging anchors, project point along centroid vector and convert to world coords
+		if (convergeAnchors)
+		{
+			if (anchorInPlace)
+				worldPivot = glm::vec3(modelToWorldMat * glm::vec4(centroidPt, 1.f));
+			else
+				worldPivot = glm::vec3(modelToWorldMat * glm::vec4(centroidPt + centroidToBodyVec, 1.f));
+		}
+		else
+		{
+			if (anchorInPlace)
+				worldPivot = glm::vec3(modelToWorldMat * glm::vec4(mesh->getPositionAtIndex(i), 1.f));
+			else
+				worldPivot = glm::vec3(modelToWorldMat * glm::vec4(mesh->getPositionAtIndex(i) + centroidToBodyVec, 1.f));
+		}
+		
+		btVector3 localPivot = body->getWorldTransform().inverse() * btVector3(worldPivot.x, worldPivot.y, worldPivot.z);
+
+		m_pSoftBody->appendAnchor(i, body, localPivot, disableCollisionsWithBody, influence);
+	}
 }
 
 void Slatissima::update()

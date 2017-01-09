@@ -22,10 +22,31 @@ public:
 	int getDebugDrawFlags();
 	void toggleDebugDrawFlag(int flag);
 
+	float getLength();
+	float getWidth();
+
 	void bump(btVector3 dir);
 	
-	void anchorBaseToBody(btRigidBody* body);
-	void pinToBody(float lengthRatio, btRigidBody* body, float influence = 1.f);
+	void pinToBody(float lengthRatio
+		, float kernelX
+		, float kernelY
+		, float kernelZ
+		, btRigidBody* body
+		, float influence = 1.f
+		, bool disableCollisionsWithBody = false
+		, bool convergeAnchors = false
+		, bool anchorInPlace = true
+		);
+	void pinToBody(float worldX, float worldY, float worldZ
+		, float kernelX
+		, float kernelY
+		, float kernelZ
+		, btRigidBody* body
+		, float influence = 1.f
+		, bool disableCollisionsWithBody = false
+		, bool convergeAnchors = false
+		, bool anchorInPlace = true
+		);
 	
 	void update();
 

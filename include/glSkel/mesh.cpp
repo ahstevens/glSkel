@@ -381,6 +381,26 @@ std::vector<int> Mesh::getClosestVertexIndicesKernel(float x, float y, float z, 
 	return foundIndices;
 }
 
+glm::vec3 Mesh::getCentroidPosition(const std::vector<int> &indices)
+{
+	if (indices.size() < 1)
+		return glm::vec3(0.f);
+
+	glm::vec3 sumPts = glm::vec3(0.f);
+
+	for (auto const &i : indices)	
+		sumPts += m_vpVertices[i]->pos;
+	
+	sumPts /= static_cast<float>(indices.size());
+
+	return sumPts;
+}
+
+glm::vec3 Mesh::getPositionAtIndex(const int & index)
+{
+	return m_vpVertices[index]->pos;
+}
+
 void Mesh::Draw(Shader& shader, glm::mat4& modelMatrix)
 {
 	// Bind appropriate textures
