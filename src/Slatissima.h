@@ -28,9 +28,25 @@ public:
 	void bump(btVector3 dir);
 	
 	void pinToBody(float lengthRatio
+		, glm::vec3 kernel
+		, btRigidBody* body
+		, float influence = 1.f
+		, bool disableCollisionsWithBody = false
+		, bool convergeAnchors = false
+		, bool anchorInPlace = true
+		); 
+	void pinToBody(float lengthRatio
 		, float kernelX
 		, float kernelY
 		, float kernelZ
+		, btRigidBody* body
+		, float influence = 1.f
+		, bool disableCollisionsWithBody = false
+		, bool convergeAnchors = false
+		, bool anchorInPlace = true
+		);
+	void pinToBody(glm::vec3 worldPos
+		, glm::vec3 kernelSize
 		, btRigidBody* body
 		, float influence = 1.f
 		, bool disableCollisionsWithBody = false

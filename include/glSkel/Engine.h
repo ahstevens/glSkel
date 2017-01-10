@@ -17,8 +17,6 @@
 #define MS_PER_UPDATE 0.0333333333f
 #define CAST_RAY_LEN 1000.f
 
-AnchorPoint *a1 = NULL;
-
 class Engine : public BroadcastSystem::Listener
 {
 public:
@@ -48,7 +46,8 @@ public:
 	GLint m_iViewPosLocLightingShader;
 	GLint m_iShininessLightingShader;
 
-	std::vector<Slatissima *> slats;
+	std::vector<Slatissima*> slats;
+	std::vector<AnchorPoint*> anchors;
 	Ground* m_pGround;
 
 public:
@@ -102,12 +101,6 @@ public:
 				generateModels();
 			if (key == GLFW_KEY_SPACE)
 				m_bRunPhysics = !m_bRunPhysics;
-			if (key == GLFW_KEY_T)
-			{
-				btTransform trans;
-				trans.setIdentity();
-				a1->getRigidBody()->setWorldTransform(trans);
-			}
 		}
 
 		if (event == BroadcastSystem::EVENT::MOUSE_UNCLICK)
@@ -148,7 +141,8 @@ public:
 		init_camera();
 		init_lighting();
 		//generateModels();
-		generateQuad1Models();
+		//generateQuad1Models();
+		generateQuad2Models();
 
 		return true;
 	}
@@ -181,7 +175,7 @@ public:
 		m_pCamera->update(dt);
 
 		// update soft mesh vertices
-		for (auto s : slats) 
+		for (auto &s : slats) 
 			s->update();
 
 		if (m_bRunPhysics)
@@ -251,8 +245,11 @@ public:
 				else
 				{
 					m_pGround->Draw(*shader);
+					
+					for (auto &a : anchors)
+						a->Draw(*shader);
 
-					for (auto& s : slats) 
+					for (auto &s : slats) 
 						s->Draw(*shader);
 				}
 			}
@@ -415,11 +412,22 @@ private:
 
 		Slatissima *slat1, *slat2, *slat3, *slat4, *slat56, *slat7, *slat8;
 
-		bool isEmpty = slats.size() == 0;
-
-		if (!isEmpty)
+		if (slats.size() > 0)
 		{
+			for (auto &s : slats)
+			{
+				GLFWInputBroadcaster::getInstance().detach(s);
+				delete s;
+			}
 			slats.clear();
+		}
+
+		if (anchors.size() > 0)
+		{
+			for (auto &a : anchors)
+				delete a;
+
+			anchors.clear();
 		}
 
 		glm::vec3 pos;
@@ -427,15 +435,25 @@ private:
 
 		pos = glm::vec3(17.f, 1.f, -33.f);
 		rot = glm::mat3(glm::angleAxis(glm::radians(15.f), glm::vec3(0.f, 1.f, 0.f))) * glm::mat3(glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)));
-		slat1 = new Slatissima(0.f, 164.f, 32.f, 5.f, pos, rot, m_pPhysicsSystem->getSoftDynamicsWorld());
-		//slat1->anchorBaseToBody(m_pGround->getRigidBody());
-		slat1->pinToBody(0.f, slat1->getWidth() * 0.2f, 1.f, 1.f, m_pGround->getRigidBody());
+		slat1 = new Slatissima(0.f
+			, 164.f
+			, 32.f
+			, 5.f
+			, pos
+			, rot
+			, m_pPhysicsSystem->getSoftDynamicsWorld()
+			);
+		slat1->pinToBody(0.f
+			, slat1->getWidth() * 0.01f, 1.f, 1.f
+			, m_pGround->getRigidBody()
+			);
 		GLFWInputBroadcaster::getInstance().attach(slat1);
 		slats.push_back(slat1);
 
-		a1 = new AnchorPoint(glm::vec3(28.f, 1.f, 0.f), m_pPhysicsSystem->getDynamicsWorld());
+		AnchorPoint *anchor = new AnchorPoint(glm::vec3(28.f, 1.f, 0.f), m_pPhysicsSystem->getDynamicsWorld());
+		anchors.push_back(anchor);
 		//slat1->pinToBody(0.25f, a1->getRigidBody(), 0.5f);
-		slat1->pinToBody(28.f, 1.f, 0.f, slat1->getWidth() * 0.2f, 1.f, 1.f, a1->getRigidBody(), 0.5f, true, false, false);
+		slat1->pinToBody(28.f, 1.f, 0.f, slat1->getWidth() * 0.2f, 1.f, 1.f, anchor->getRigidBody(), 0.5f, true, false, false);
 			
 		pos = glm::vec3(40.f, 2.f, -55.f);
 		rot = glm::mat3(glm::angleAxis(glm::radians(5.f), glm::vec3(0.f, 1.f, 0.f))) * glm::mat3(glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)));
@@ -444,11 +462,13 @@ private:
 		GLFWInputBroadcaster::getInstance().attach(slat2);
 		slats.push_back(slat2);
 
-		AnchorPoint *a2 = new AnchorPoint(glm::vec3(41.f, 2.f, -50.f), m_pPhysicsSystem->getDynamicsWorld());
-		slat2->pinToBody(0.05f, slat2->getWidth() * 0.2f, 1.f, 1.f, a2->getRigidBody(), 0.5f, true, true, false);
+		anchor = new AnchorPoint(glm::vec3(41.f, 2.f, -50.f), m_pPhysicsSystem->getDynamicsWorld());
+		anchors.push_back(anchor);
+		slat2->pinToBody(0.05f, slat2->getWidth() * 0.2f, 1.f, 1.f, anchor->getRigidBody(), 0.5f, true, true, false);
 
-		AnchorPoint *a3 = new AnchorPoint(glm::vec3(45.f, 2.f, 0.f), m_pPhysicsSystem->getDynamicsWorld());
-		slat2->pinToBody(0.35f, slat2->getWidth() * 0.2f, 1.f, 1.f, a3->getRigidBody(), 0.5f, true, false, false);
+		anchor = new AnchorPoint(glm::vec3(45.f, 2.f, 0.f), m_pPhysicsSystem->getDynamicsWorld());
+		anchors.push_back(anchor);
+		slat2->pinToBody(0.35f, slat2->getWidth() * 0.2f, 1.f, 1.f, anchor->getRigidBody(), 0.5f, true, false, false);
 
 		//pos = glm::vec3(20.f, 3.f, -38.f);
 		//rot = glm::mat3(glm::angleAxis(glm::radians(-45.f), glm::vec3(0.f, 1.f, 0.f))) * glm::mat3(glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)));
@@ -488,6 +508,166 @@ private:
 		//AnchorPoint *a1 = new AnchorPoint(glm::vec3(0.f, 20.f, 0.f), m_pPhysicsSystem->getDynamicsWorld());
 
 		//slats[0]->anchorBaseToBody(a1->getRigidBody());
+	}
+
+	void generateQuad2Models()
+	{
+		if (!m_pGround)
+		{
+			m_pGround = new Ground(500.f, 500.f, 10.f, m_pPhysicsSystem->getDynamicsWorld());
+		}
+		
+		if (slats.size() > 0)
+		{
+			for (auto &s : slats)
+			{
+				GLFWInputBroadcaster::getInstance().detach(s);
+				delete s;
+			}
+			slats.clear();
+		}
+
+		if (anchors.size() > 0)
+		{
+			for (auto &a : anchors)				
+				delete a;
+
+			anchors.clear();
+		}
+
+		std::vector<glm::vec3> anchorPositions;
+		glm::vec3 kernel(1.f);
+
+		glm::vec3 pos;
+
+		float modelLength, modelWidth, modelWavinessAmplitude, rotAngle;
+
+		int nModels = 9;
+
+		for (int i = 1; i <= nModels; ++i)
+		{
+			anchorPositions.clear();
+
+			switch (i) {
+			case 1:
+				modelLength = 217.f;
+				modelWidth = 22.f;
+				modelWavinessAmplitude = 5.f;
+				pos = glm::vec3(-6.f, i * 3.f, -42.f);
+				rotAngle = 110.f;
+				anchorPositions.push_back(glm::vec3(15.f, i * 3.f, -50.f));
+				break;
+
+			case 2:
+				modelLength = 148.f;
+				modelWidth = 15.f;
+				modelWavinessAmplitude = 5.f;
+				pos = glm::vec3(-8.f, i * 3.f, -34.f);
+				rotAngle = 115.f;
+				anchorPositions.push_back(glm::vec3(25.f, i * 3.f, -50.f));
+				break;
+
+			case 3:
+				modelLength = 255.f;
+				modelWidth = 28.f;
+				modelWavinessAmplitude = 5.f;
+				pos = glm::vec3(-5.f, i * 3.f, -28.f);
+				rotAngle = 118.f;
+				anchorPositions.push_back(glm::vec3(35.f, i * 3.f, -50.f));
+				break;
+
+			case 4:
+				modelLength = 180.f;
+				modelWidth = 24.f;
+				modelWavinessAmplitude = 5.f;
+				pos = glm::vec3(-7.f, i * 3.f, -12.f);
+				rotAngle = 125.f;
+				anchorPositions.push_back(glm::vec3(48.f, i * 3.f, -50.f));
+				break;
+
+			case 5:
+				modelLength = 52.f;
+				modelWidth = 14.f;
+				modelWavinessAmplitude = 5.f;
+				pos = glm::vec3(19.f, i * 3.f, -32.f);
+				rotAngle = 120.f;
+				anchorPositions.push_back(glm::vec3(50.f, i * 3.f, -50.f));
+				break;
+
+			case 6:
+				modelLength = 194.f;
+				modelWidth = 23.f;
+				modelWavinessAmplitude = 5.f;
+				pos = glm::vec3(-8.f, i * 3.f, -4.f);
+				rotAngle = 127.f;
+				anchorPositions.push_back(glm::vec3(50.f, i * 3.f, -49.f));
+				break;
+
+			case 7:
+				modelLength = 124.f;
+				modelWidth = 22.f;
+				modelWavinessAmplitude = 5.f;
+				pos = glm::vec3(0.f, i * 3.f, 7.f);
+				rotAngle = 123.f;
+				anchorPositions.push_back(glm::vec3(50.f, i * 3.f, -26.f));
+				break;
+
+			case 8:
+				modelLength = 174.f;
+				modelWidth = 22.f;
+				modelWavinessAmplitude = 5.f;
+				pos = glm::vec3(7.f, i * 3.f, -5.f);
+				rotAngle = 103.f;
+				anchorPositions.push_back(glm::vec3(50.f, i * 3.f, -15.f));
+				break;
+
+			case 9:
+				modelLength = 154.f;
+				modelWidth = 24.f;
+				modelWavinessAmplitude = 5.f;
+				pos = glm::vec3(65.f, i * 3.f, -22.f);
+				rotAngle = -66.f;
+				anchorPositions.push_back(glm::vec3(50.f, i * 3.f, -16.f));
+				anchorPositions.push_back(glm::vec3(15.f, i * 3.f, 0.f));
+				break;
+			}
+
+			glm::mat3 rot = glm::mat3(glm::angleAxis(glm::radians(rotAngle), glm::vec3(0.f, 1.f, 0.f))) * glm::mat3(glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)));
+
+			Slatissima *slat = new Slatissima(0.f
+				, modelLength
+				, modelWidth
+				, modelWavinessAmplitude
+				, pos
+				, rot
+				, m_pPhysicsSystem->getSoftDynamicsWorld()
+				);
+			GLFWInputBroadcaster::getInstance().attach(slat);
+			slats.push_back(slat);  
+
+			// anchor to the ground
+			kernel.x = slat->getWidth() * 0.01f;
+			slat->pinToBody(0.f
+				, kernel
+				, m_pGround->getRigidBody()
+				);
+
+			// pin model at quadrat boundary			
+			kernel.x = slat->getWidth() * 0.2f;
+			for (auto &anchorPos : anchorPositions)
+			{
+				AnchorPoint *anchor = new AnchorPoint(anchorPos, m_pPhysicsSystem->getDynamicsWorld());
+				anchors.push_back(anchor);
+				slat->pinToBody(anchorPos
+					, kernel
+					, anchor->getRigidBody()
+					, 0.1f
+					, true
+					, false
+					, false
+					);
+			}
+		}
 	}
 };
 

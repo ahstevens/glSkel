@@ -134,7 +134,7 @@ std::vector<Texture> AnchorPoint::loadTextures()
 	glGenTextures(1, &diffuseMap.id);
 	glGenTextures(1, &specularMap.id);
 	int width = 1, height = 1;
-	unsigned char image[3] = { 0xFF, 0x00, 0x00 };
+	unsigned char image[3] = { 0xFF, 0xFF, 0xFF };
 
 	// Diffuse map
 	diffuseMap.type = "texture_diffuse";

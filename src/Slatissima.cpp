@@ -129,6 +129,11 @@ void Slatissima::bump(btVector3 dir)
 	m_pSoftBody->addForce(dir);
 }
 
+void Slatissima::pinToBody(float lengthRatio, glm::vec3 kernel, btRigidBody * body, float influence, bool disableCollisionsWithBody, bool convergeAnchors, bool anchorInPlace)
+{
+	pinToBody(lengthRatio, kernel.x, kernel.y, kernel.z, body, influence, disableCollisionsWithBody, convergeAnchors, anchorInPlace);
+}
+
 void Slatissima::pinToBody(float lengthRatio, float kernelX, float kernelY, float kernelZ, btRigidBody * body, float influence, bool disableCollisionsWithBody, bool convergeAnchors, bool anchorInPlace)
 {
 	float targetY = lengthRatio * this->m_fLength;
@@ -136,6 +141,11 @@ void Slatissima::pinToBody(float lengthRatio, float kernelX, float kernelY, floa
 	glm::vec3 worldPt = glm::vec3(glm::translate(glm::mat4(), m_vec3Position) * glm::mat4(m_mat3Rotation) * glm::vec4(0.f, targetY, 0.f, 1.f));
 
 	pinToBody(worldPt.x, worldPt.y, worldPt.z, kernelX, kernelY, kernelZ, body, influence, disableCollisionsWithBody, convergeAnchors, anchorInPlace);
+}
+
+void Slatissima::pinToBody(glm::vec3 worldPos, glm::vec3 kernelSize, btRigidBody * body, float influence, bool disableCollisionsWithBody, bool convergeAnchors, bool anchorInPlace)
+{
+	pinToBody(worldPos.x, worldPos.y, worldPos.z, kernelSize.x, kernelSize.y, kernelSize.z, body, influence, disableCollisionsWithBody, convergeAnchors, anchorInPlace);
 }
 
 void Slatissima::pinToBody(float worldX, float worldY, float worldZ, float kernelX, float kernelY, float kernelZ, btRigidBody * body, float influence, bool disableCollisionsWithBody, bool convergeAnchors, bool anchorInPlace)
