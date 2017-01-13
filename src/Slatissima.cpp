@@ -6,8 +6,9 @@
 
 #include <algorithm>
 #include <cmath>
-
 #include <random>
+#include <fstream>
+#include <sys/stat.h> // stat()
 
 #include <bullet/BulletSoftBody/btSoftBodyHelpers.h>
 
@@ -18,7 +19,7 @@ const unsigned int center_nVertsWide = 3u;
 const unsigned int edge_nVertsWide = 3u;
 const float edgeCutoffPercent = 0.05f;
 
-const float rayStrength = 0.05f;
+const float rayStrength = 0.01f;
 
 const float L_AVG = 148.1f;        // avg length
 const float L_STD = 55.26f;        // std. dev. length
@@ -262,8 +263,9 @@ void Slatissima::receiveEvent(Object* obj, const int event, void * data)
 			bump(btVector3(0.f, 1.f, 0.f));
 		if (key == GLFW_KEY_I)
 			bump(btVector3(0.f, 0.f, -1.f));
-		//if (key == GLFW_KEY_K)
-		//	bump(btVector3(0.f, 0.f, 1.f));
+
+		if (key == GLFW_KEY_KP_ENTER)
+			saveAsObj("test");
 
 		if (key == GLFW_KEY_L)
 		{
@@ -639,4 +641,58 @@ void Slatissima::debugDraw()
 			}
 		}
 	}
+}
+
+bool fileExists(const std::string &fname)
+{
+	struct stat buffer;
+	return (stat(fname.c_str(), &buffer) == 0);
+}
+
+bool Slatissima::saveAsObj(std::string name)
+{
+	std::string outFileName = std::string("export/" + name + ".obj");
+
+	// if file exists, keep trying until we find a filename that doesn't already exist
+	for (int i = 0; fileExists(outFileName); ++i)
+		outFileName = std::string("export/" + name + "_" + std::to_string(i) + ".obj");
+
+	std::ofstream outFile;
+	outFile.open(outFileName);
+
+	if (!outFile.is_open())
+	{
+		std::cout << "Error opening file " << outFileName << " for writing output" << std::endl;
+		return false;
+	}
+
+	std::cout << "Opened file " << outFileName << " for writing output" << std::endl;
+
+	outFile << "#" << outFileName << std::endl;
+
+	outFile << "#vertex data" << std::endl;
+
+	btAlignedObjectArray<btSoftBody::Node> nodes = m_pSoftBody->m_nodes;
+	for (size_t i = 0; i < nodes.size(); ++i)
+	{
+		outFile << "v " << nodes[i].m_x.getX() << " " << nodes[i].m_x.getY() << " " << nodes[i].m_x.getZ() << std::endl;
+		outFile << "vn " << nodes[i].m_n.getX() << " " << nodes[i].m_n.getY() << " " << nodes[i].m_n.getZ() << std::endl;
+	}
+
+	outFile << "#face data" << std::endl;
+
+	std::vector<int> inds;
+	std::vector<glm::vec3> verts;
+	mesh->getIndexedVertices(inds, verts);
+
+	for (int i = 0; i < inds.size(); i += 3)
+	{
+		outFile << "f " << i << "/" << i << "/ " << " " << i + 1 << "/" << i + 1 << "/ " << " " << i + 2 << "/" << i + 2 << "/ " <<  std::endl;
+	}
+
+	outFile << "#end " << outFileName << std::endl;
+
+	outFile.close();
+
+	return true;
 }

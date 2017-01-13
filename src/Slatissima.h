@@ -90,6 +90,8 @@ private:
 
 	void debugDraw();
 
+	bool saveAsObj(std::string name = "untitled_model");
+
 	bool m_bPhysicsInit, m_bSolidMesh;
 	btSoftRigidDynamicsWorld* m_pDynamicsWorld;
 	btSoftBody* m_pSoftBody;
