@@ -671,15 +671,25 @@ bool Slatissima::saveAsObj(std::string name)
 	outFile << "#" << outFileName << std::endl;
 
 	outFile << "#vertex data" << std::endl;
+	outFile << "#v x y z (w = 1.0)" << std::endl;
+	outFile << "#vn i j k" << std::endl;
+	outFile << "#vt u v" << std::endl;
+	outFile << std::endl;
 
 	btAlignedObjectArray<btSoftBody::Node> nodes = m_pSoftBody->m_nodes;
 	for (size_t i = 0; i < nodes.size(); ++i)
 	{
 		outFile << "v " << nodes[i].m_x.getX() << " " << nodes[i].m_x.getY() << " " << nodes[i].m_x.getZ() << std::endl;
 		outFile << "vn " << nodes[i].m_n.getX() << " " << nodes[i].m_n.getY() << " " << nodes[i].m_n.getZ() << std::endl;
+		outFile << "vt " << 0.5 << " " << 0.5 << std::endl;
 	}
 
+	outFile << std::endl;
 	outFile << "#face data" << std::endl;
+	outFile << "#f vertex1Num/texCoord1Num/vertNormal1Num";
+	outFile << " vertex2Num/texCoord2Num/vertNormal2Num";
+	outFile << " vertex3Num/texCoord3Num/vertNormal3Num" << std::endl;
+	outFile << std::endl;
 
 	std::vector<int> inds;
 	std::vector<glm::vec3> verts;
@@ -687,12 +697,17 @@ bool Slatissima::saveAsObj(std::string name)
 
 	for (int i = 0; i < inds.size(); i += 3)
 	{
-		outFile << "f " << i << "/" << i << "/ " << " " << i + 1 << "/" << i + 1 << "/ " << " " << i + 2 << "/" << i + 2 << "/ " <<  std::endl;
+		outFile << "f ";
+		outFile << inds[i] << "/" << inds[i] << "/" << inds[i] << " ";
+		outFile << inds[i + 1] << "/" << inds[i + 1] << "/" << inds[i + 1] << " ";
+		outFile << inds[i + 2] << "/" << inds[i + 2] << "/" << inds[i + 2] << std::endl;
 	}
 
-	outFile << "#end " << outFileName << std::endl;
+	outFile << std::endl << "#end " << outFileName;
 
 	outFile.close();
+
+	std::cout << "Saved file " << outFileName << " successfully" << std::endl;
 
 	return true;
 }
