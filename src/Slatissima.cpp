@@ -698,9 +698,9 @@ bool Slatissima::saveAsObj(std::string name)
 	for (int i = 0; i < inds.size(); i += 3)
 	{
 		outFile << "f ";
-		outFile << inds[i] << "/" << inds[i] << "/" << inds[i] << " ";
-		outFile << inds[i + 1] << "/" << inds[i + 1] << "/" << inds[i + 1] << " ";
-		outFile << inds[i + 2] << "/" << inds[i + 2] << "/" << inds[i + 2] << std::endl;
+		outFile << inds[i] + 1 << "/" << inds[i] + 1 << "/" << inds[i] + 1 << " ";
+		outFile << inds[i + 1] + 1 << "/" << inds[i + 1] + 1 << "/" << inds[i + 1] + 1 << " ";
+		outFile << inds[i + 2] + 1 << "/" << inds[i + 2] + 1 << "/" << inds[i + 2] + 1 << std::endl;
 	}
 
 	outFile << std::endl << "#end " << outFileName;
