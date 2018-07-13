@@ -790,48 +790,46 @@ private:
 				pos = glm::vec3(65.f, i * 3.f, -22.f);
 				rotAngle = -66.f;
 				anchorPositions.push_back(glm::vec3(50.f, i * 3.f, -16.f));
-				anchorPositions.push_back(glm::vec3(15.f, i * 3.f, 0.f));
+				//anchorPositions.push_back(glm::vec3(15.f, i * 3.f, 0.f));
 				break;
 
 			case 10:
-				modelLength = 154.f;
-				modelWidth = 24.f;
+				modelLength = 125.f;
+				modelWidth = 20.f;
 				modelWavinessAmplitude = 5.f;
-				pos = glm::vec3(65.f, i * 3.f, -22.f);
-				rotAngle = -66.f;
-				anchorPositions.push_back(glm::vec3(50.f, i * 3.f, -16.f));
-				anchorPositions.push_back(glm::vec3(15.f, i * 3.f, 0.f));
+				pos = glm::vec3(65.f, 4.f, -22.f);
+				rotAngle = -90.f;
+				anchorPositions.push_back(glm::vec3(50.f, 4.f, -16.f));
+				//anchorPositions.push_back(glm::vec3(15.f, i * 3.f, 0.f));
 				break;
 
-			//case 11:
-			//	modelLength = 154.f;
-			//	modelWidth = 24.f;
-			//	modelWavinessAmplitude = 5.f;
-			//	pos = glm::vec3(65.f, i * 3.f, -22.f);
-			//	rotAngle = -66.f;
-			//	anchorPositions.push_back(glm::vec3(50.f, i * 3.f, -16.f));
-			//	anchorPositions.push_back(glm::vec3(15.f, i * 3.f, 0.f));
-			//	break;
-			//
-			//case 12:
-			//	modelLength = 154.f;
-			//	modelWidth = 24.f;
-			//	modelWavinessAmplitude = 5.f;
-			//	pos = glm::vec3(65.f, i * 3.f, -22.f);
-			//	rotAngle = -66.f;
-			//	anchorPositions.push_back(glm::vec3(50.f, i * 3.f, -16.f));
-			//	anchorPositions.push_back(glm::vec3(15.f, i * 3.f, 0.f));
-			//	break;
-			//
-			//case 13:
-			//	modelLength = 154.f;
-			//	modelWidth = 24.f;
-			//	modelWavinessAmplitude = 5.f;
-			//	pos = glm::vec3(65.f, i * 3.f, -22.f);
-			//	rotAngle = -66.f;
-			//	anchorPositions.push_back(glm::vec3(50.f, i * 3.f, -16.f));
-			//	anchorPositions.push_back(glm::vec3(15.f, i * 3.f, 0.f));
-			//	break;
+			case 11:
+				modelLength = 160.f;
+				modelWidth = 24.f;
+				modelWavinessAmplitude = 6.f;
+				pos = glm::vec3(10.f, 1.f, 10.f);
+				rotAngle = 180.f;
+				anchorPositions.push_back(glm::vec3(10.f, 1.f, 10.f));
+				//anchorPositions.push_back(glm::vec3(15.f, i * 3.f, 0.f));
+				break;
+			
+			case 12:
+				modelLength = 105.f;
+				modelWidth = 17.f;
+				modelWavinessAmplitude = 5.f;
+				pos = glm::vec3(40.f, 1.f, -45.f);
+				rotAngle = 0.f;
+				anchorPositions.push_back(glm::vec3(40.f, 1.f, -45.f));
+				break;
+			
+			case 13:
+				modelLength = 175.f;
+				modelWidth = 30.f;
+				modelWavinessAmplitude = 5.f;
+				pos = glm::vec3(50.f, 16.5f, 0.f);
+				rotAngle = -135.f;
+				anchorPositions.push_back(glm::vec3(0.f, 16.5f, -50.f));
+				break;
 			}
 
 			glm::mat3 rot = glm::mat3(glm::angleAxis(glm::radians(rotAngle), glm::vec3(0.f, 1.f, 0.f))) * glm::mat3(glm::angleAxis(glm::radians(90.f), glm::vec3(1.f, 0.f, 0.f)));
